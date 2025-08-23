@@ -1,0 +1,1 @@
+export const CUSTOMER_SERVICE_PHONE = '400-123-4567'

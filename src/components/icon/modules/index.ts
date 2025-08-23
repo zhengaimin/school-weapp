@@ -1,0 +1,12 @@
+// https://remixicon.com
+export * from './arrows'
+export * from './communication'
+export * from './design'
+export * from './device'
+// export * from './business'
+export * from './document'
+export * from './finance'
+export * from './health'
+export * from './media'
+export * from './system'
+export * from './user'
