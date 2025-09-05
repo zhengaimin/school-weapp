@@ -21,7 +21,7 @@ const props = defineProps({
   // 按钮尺寸
   size: oneOf(['small', 'medium', 'large']).def('medium'),
   // 是否为块级按钮
-  block: bool().def(false),
+  full: bool().def(false),
   // 是否为朴素按钮
   plain: bool().def(false),
   // 是否禁用
@@ -54,8 +54,8 @@ const buttonClass = computed(() => {
   classes.push(`button--${props.size}`)
 
   // 按钮状态
-  if (props.block)
-    classes.push('button--block')
+  if (props.full)
+    classes.push('button--full')
   if (props.plain)
     classes.push('button--plain')
   if (props.disabled)
@@ -75,6 +75,7 @@ function handleClick(event: Event) {
   if (props.disabled || props.loading) {
     return
   }
+
   emit('click', event)
 }
 
@@ -132,7 +133,7 @@ const loadingSize = computed(() => {
     :disabled="disabled"
     :open-type="openType"
     @getphonenumber="e => emit('getphonenumber', e)"
-    @click="handleClick"
+    @click.stop="handleClick"
   >
     <view v-if="loading" class="button__loading-indicator">
       <Loading :loading-color="loadingColor" :loading-size="loadingSize" />
@@ -153,10 +154,11 @@ const loadingSize = computed(() => {
   border: 1px solid transparent;
   outline: none;
   font-weight: 500;
+  margin: 0;
   text-align: center;
   white-space: nowrap;
   user-select: none;
-  @apply rounded-xl;
+  @apply rounded-lg;
 
   // 按钮尺寸
   &--small {
@@ -204,7 +206,7 @@ const loadingSize = computed(() => {
   }
 
   // 按钮状态
-  &--block {
+  &--full {
     @apply w-full;
   }
 

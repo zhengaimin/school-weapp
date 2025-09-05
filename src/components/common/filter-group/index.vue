@@ -10,6 +10,9 @@ export interface FilterConfig {
   icon?: string
   title?: string
   options: FilterOption[]
+  type?: 'select' | 'date' | 'daterange' | 'datetime' | 'datetimerange'
+  /** 是否精简显示文字，对于 daterange 类型，默认显示月+日，设置为 false 时显示完整年月日 */
+  concise?: boolean
 }
 
 // 组件属性
@@ -33,24 +36,40 @@ const props = withDefaults(defineProps<Props>(), {
   gap: 'x-4',
 })
 const emit = defineEmits<{
-  change: [key: string, value: string | number, option: FilterOption]
+  change: [key: string, value: string | number | number[] | [number, number], option?: FilterOption]
 }>()
 
-// 使用 defineModel 定义双向绑定
-const modelValue = defineModel<Record<string, string | number>>({
-  default: () => ({}),
+// 使用 defineModel 定义双向绑定 - 改为数组形式
+const modelValue = defineModel<(string | number | number[] | [number, number])[]>({
+  default: () => [],
 })
 
 // 更新筛选值
-function updateFilter(key: string, value: string | number, option: FilterOption) {
-  modelValue.value = { ...modelValue.value, [key]: value }
+function updateFilter(
+  key: string,
+  value: string | number | number[] | [number, number],
+  option?: FilterOption,
+) {
+  const filterIndex = props.filters.findIndex(f => f.key === key)
+
+  if (filterIndex !== -1) {
+    const newValue = [...modelValue.value]
+    newValue[filterIndex] = value
+    modelValue.value = newValue
+  }
   emit('change', key, value, option)
 }
 
 // 获取筛选器的当前值
 function getFilterValue(key: string) {
-  return modelValue.value[key] || ''
+  const filterIndex = props.filters.findIndex(f => f.key === key)
+  return filterIndex !== -1 ? modelValue.value[filterIndex] : undefined
 }
+
+// 计算每个筛选器的宽度
+const selectorWidth = computed(() => {
+  return props.filters.length > 0 ? `${100 / props.filters.length}%` : 'auto'
+})
 </script>
 
 <template>
@@ -59,9 +78,12 @@ function getFilterValue(key: string) {
       <FilterSelector
         v-for="filter in props.filters"
         :key="filter.key"
+        :style="{ width: selectorWidth }"
         :icon="filter.icon"
         :popup-title="filter.title"
         :options="filter.options"
+        :type="filter.type"
+        :concise="filter.concise"
         :model-value="getFilterValue(filter.key)"
         @change="(value, option) => updateFilter(filter.key, value, option)"
       />

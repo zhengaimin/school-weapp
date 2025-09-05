@@ -10,6 +10,21 @@ export function getLastPage() {
 }
 
 /**
+ * 获取上一个页面，方法调用为 prePage._.exposed.xxx 方法
+ * 参考：prePage._.exposed.refresh
+ */
+export function getPrevPage() {
+  const pages = getCurrentPages()
+  const prevPage = pages[pages.length - 2] as any
+
+  return prevPage || null
+}
+export function getPrevPageExposed(): { refresh?: any } {
+  const prevPage = getPrevPage()
+  return prevPage?._.exposed || null
+}
+
+/**
  * 获取当前页面路由的 path 路径和 redirectPath 路径
  * path 如 '/pages/login/index'
  * redirectPath 如 '/pages/demo/base/route-interceptor'

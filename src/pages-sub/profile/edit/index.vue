@@ -9,18 +9,21 @@
 </route>
 
 <script lang="ts" setup>
-import { ref } from 'vue'
+import { storeToRefs } from 'pinia'
+import { computed } from 'vue'
 
+import { putMeInfoApi } from '@/api/modules/user'
 import TButton from '@/components/common/button/index.vue'
 import Page from '@/components/common/page/index.vue'
 import WhiteCard from '@/components/common/white-card/index.vue'
 import Cell from '@/components/form/cell/index.vue'
+
 import Form from '@/components/form/index/index.vue'
 
+import { ROLE_TYPE, ROLE_TYPE_I18N } from '@/constant/modules/user/role'
 import { useForm } from '@/hooks/useForm'
 import { usePage } from '@/hooks/usePage'
-
-import Skeleton from './components/Skeleton.vue'
+import { useUserStore } from '@/store/user'
 
 // 表单数据接口
 interface FormData {
@@ -32,12 +35,15 @@ interface FormData {
 const { pageLoading, pageError, onLoginSuccess, onLoginFail, getContentHeight } = usePage()
 const { formRef, validate, submitLoading } = useForm()
 
+const userStore = useUserStore()
+const { userInfo, role, phone } = storeToRefs(userStore)
+
 // 表单数据
-const formData = ref<FormData>({
-  userName: '张女士',
-  role: '家长',
-  phone: '138****5678',
-})
+const formData = computed<FormData>(() => ({
+  userName: userInfo.value?.userName || '',
+  role: ROLE_TYPE_I18N[role.value],
+  phone: phone.value ? `${phone.value.slice(0, 3)}****${phone.value.slice(-4)}` : '',
+}))
 
 // 表单验证规则
 const rules = {
@@ -55,27 +61,48 @@ const contentHeight = computed(() => {
 async function onSaveProfile() {
   try {
     // 使用 wot ui 表单验证
-    const { valid } = await validate(['userName', 'role', 'phone'])
+    const { valid } = await validate(['userName'])
+    if (!valid)
+      return
 
     submitLoading.value = true
-    setTimeout(() => {
-      if (valid) {
-        // 模拟保存
-        uni.showToast({
-          title: '个人信息保存成功！',
-          icon: 'none',
-        })
 
-        // 延迟返回上一页
-        setTimeout(() => {
-          uni.navigateBack()
-        }, 1500)
-      }
-      submitLoading.value = false
-    }, 1000)
+    // 调用更新用户信息 API
+    const result = await putMeInfoApi({
+      name: formData.value.userName,
+      phone: phone.value,
+    })
+
+    if (result.code === 0) {
+      // 更新成功，更新 store 中的用户信息
+      await userStore.getUserInfo()
+
+      uni.showToast({
+        title: '个人信息保存成功！',
+        icon: 'none',
+      })
+
+      // 延迟返回上一页
+      setTimeout(() => {
+        uni.navigateBack()
+      }, 1500)
+    }
+    else {
+      uni.showToast({
+        title: result.msg || '保存失败，请重试',
+        icon: 'none',
+      })
+    }
   }
   catch (error) {
-    console.log('表单验证失败:', error)
+    console.error('保存失败:', error)
+    uni.showToast({
+      title: '保存失败，请重试',
+      icon: 'none',
+    })
+  }
+  finally {
+    submitLoading.value = false
   }
 }
 </script>
@@ -122,13 +149,9 @@ async function onSaveProfile() {
     </view>
 
     <view p="4">
-      <TButton type="primary" block size="large" :loading="submitLoading" @click="onSaveProfile">
+      <TButton type="primary" full size="large" :loading="submitLoading" @click="onSaveProfile">
         保存
       </TButton>
     </view>
-
-    <template #skeleton>
-      <Skeleton />
-    </template>
   </Page>
 </template>

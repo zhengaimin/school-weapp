@@ -28,6 +28,36 @@ export interface BottomPopupProps {
   headerStyle?: string
   /** 内容区域自定义样式 */
   contentStyle?: string
+  /** 是否显示关闭按钮 (wot-ui 原生属性) */
+  closable?: boolean
+  /** 是否显示遮罩 */
+  modal?: boolean
+  /** 自定义modal蒙层样式 */
+  modalStyle?: string
+  /** 是否当关闭时将弹出层隐藏 */
+  hideWhenClose?: boolean
+  /** 弹层内容懒渲染 */
+  lazyRender?: boolean
+  /** 动画类型 */
+  transition?: 'fade' | 'fade-up' | 'fade-down' | 'fade-left' | 'fade-right' | 'slide-up' | 'slide-down' | 'slide-left' | 'slide-right' | 'zoom-in' | ''
+  /** 是否锁定背景滚动 */
+  lockScroll?: boolean
+  /** 动画持续时间 */
+  duration?: number | boolean
+  /** 点击遮罩时触发 */
+  onClickModal?: () => void
+  /** 进入前触发 */
+  onBeforeEnter?: () => void
+  /** 进入时触发 */
+  onEnter?: () => void
+  /** 进入后触发 */
+  onAfterEnter?: () => void
+  /** 离开前触发 */
+  onBeforeLeave?: () => void
+  /** 离开时触发 */
+  onLeave?: () => void
+  /** 离开后触发 */
+  onAfterLeave?: () => void
 }
 
 // 组件事件接口

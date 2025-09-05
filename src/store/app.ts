@@ -8,6 +8,8 @@ interface INavBarInfo {
   navBarHeight: number
   top: number
   width: number
+  // 窗口高度
+  windowHeight: string | number
   menuBottom: number
   menuRight: number
   menuHeight: number
@@ -31,13 +33,13 @@ export const useAppStore = defineStore(
           statusBarHeight: 0,
           top: 0,
           width: 0,
+          windowHeight: '100vh',
         }
         return null
       }
 
       const menuButtonInfo = uni.getMenuButtonBoundingClientRect()
-      const { statusBarHeight } = uni.getWindowInfo()
-      const { screenWidth } = uni.getWindowInfo()
+      const { statusBarHeight, screenWidth, windowHeight } = uni.getWindowInfo()
       const { top, height, right, width } = menuButtonInfo
 
       // 导航栏高度 = 状态栏到胶囊的间距（胶囊距上距离-状态栏高度） * 2 + 胶囊高度 + 状态栏高度
@@ -51,6 +53,7 @@ export const useAppStore = defineStore(
         menuBottom: top - statusBarHeight,
         menuRight: screenWidth - right,
         menuHeight: height,
+        windowHeight: `${windowHeight}px`,
       }
     }
 

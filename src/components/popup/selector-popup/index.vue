@@ -59,14 +59,15 @@ function selectOption(option: SelectorOption) {
   emit('change', option.value, option)
 
   if (!props.showConfirmButton) {
-    handleConfirm()
+    handleConfirm(option)
   }
 }
 
 // 确认选择
-function handleConfirm() {
-  if (selectedOption.value) {
-    emit('confirm', selectedValue.value, selectedOption.value)
+function handleConfirm(option?: SelectorOption) {
+  const currentOption = option || selectedOption.value
+  if (currentOption) {
+    emit('confirm', currentOption.value, currentOption)
   }
   show.value = false
 }
@@ -93,7 +94,9 @@ function handleCancel() {
           >
             <text
               text="sm"
-              :class="[selectedValue === option.value ? 'text-primary font-medium' : 'text-gray-700']"
+              :class="[
+                selectedValue === option.value ? 'text-primary font-medium' : 'text-gray-700',
+              ]"
             >
               {{ option.label }}
             </text>
@@ -111,7 +114,14 @@ function handleCancel() {
       <!-- 操作按钮 -->
       <view v-if="showConfirmButton" p="4" pt-0>
         <view flex="~ gap-3">
-          <TButton flex-1 bg-gray-100 p-3 text="gray-700 sm" border="rounded-lg" @click="handleCancel">
+          <TButton
+            flex-1
+            bg-gray-100
+            p-3
+            text="gray-700 sm"
+            border="rounded-lg"
+            @click="handleCancel"
+          >
             取消
           </TButton>
           <TButton
@@ -121,7 +131,7 @@ function handleCancel() {
             border="rounded-lg"
             :class="[selectedOption ? 'bg-primary' : 'bg-gray-300']"
             :disabled="!selectedOption"
-            @click="handleConfirm"
+            @click="() => handleConfirm()"
           >
             确定
           </TButton>

@@ -1,0 +1,1 @@
+let merge=(...r)=>{let t={};for(let e=0;e<r.length;e++){o=void 0;var o,l=r[e];for(o in l)l.hasOwnProperty(o)&&("[object Object]"===Object.prototype.toString.call(l[o])?t[o]=merge(t[o],l[o]):t[o]=l[o])}return t};module.exports={merge:merge};

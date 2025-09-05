@@ -1,0 +1,27 @@
+// #region 消费来源
+// Types
+export const CONSUMPTION_SOURCE = {
+  GIFT: 'gift',
+  PACKAGE: 'package',
+  BALANCE: 'balance',
+  MIXED: 'mixed',
+} as const
+
+export type TConsumptionSource = (typeof CONSUMPTION_SOURCE)[keyof typeof CONSUMPTION_SOURCE]
+
+// I18N
+export const CONSUMPTION_SOURCE_I18N: Record<TConsumptionSource, string> = {
+  [CONSUMPTION_SOURCE.GIFT]: '赠送',
+  [CONSUMPTION_SOURCE.PACKAGE]: '套餐',
+  [CONSUMPTION_SOURCE.BALANCE]: '余额',
+  [CONSUMPTION_SOURCE.MIXED]: '混合',
+}
+
+// Options
+export const CONSUMPTION_SOURCE_OPTIONS = [
+  { label: CONSUMPTION_SOURCE_I18N[CONSUMPTION_SOURCE.GIFT], value: CONSUMPTION_SOURCE.GIFT },
+  { label: CONSUMPTION_SOURCE_I18N[CONSUMPTION_SOURCE.PACKAGE], value: CONSUMPTION_SOURCE.PACKAGE },
+  { label: CONSUMPTION_SOURCE_I18N[CONSUMPTION_SOURCE.BALANCE], value: CONSUMPTION_SOURCE.BALANCE },
+  { label: CONSUMPTION_SOURCE_I18N[CONSUMPTION_SOURCE.MIXED], value: CONSUMPTION_SOURCE.MIXED },
+]
+// #endregion

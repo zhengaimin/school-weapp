@@ -1,0 +1,1 @@
+Page({data:{},onLoad:async function(o){console.log("onLoad index:","options=>",o)}});

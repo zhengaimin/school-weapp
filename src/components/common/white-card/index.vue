@@ -13,6 +13,7 @@ withDefaults(defineProps<Props>(), {
   customClass: '',
   customStyle: '',
 })
+const emit = defineEmits(['click'])
 </script>
 
 <template>
@@ -23,6 +24,7 @@ withDefaults(defineProps<Props>(), {
     overflow-hidden
     :class="[showBorder ? 'border border-bg-muted border-solid' : '', customClass]"
     :style="customStyle"
+    @click="e => emit('click', e)"
   >
     <slot />
   </view>

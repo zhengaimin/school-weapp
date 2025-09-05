@@ -1,19 +1,29 @@
 <script setup lang="ts">
 import { onLaunch } from '@dcloudio/uni-app'
 import { provide, ref } from 'vue'
-import { usePageAuth } from '@/hooks/usePageAuth'
 import { useAppStore } from '@/store/app'
+import { isMpWeixin } from './utils/platform'
 import 'abortcontroller-polyfill/dist/abortcontroller-polyfill-only'
-
-usePageAuth()
 
 const { initNavBarInfo } = useAppStore()
 
 const isFirstLaunch = ref(true)
 provide('isFirstLaunch', isFirstLaunch)
 
+function initWxVerity() {
+  if (!isMpWeixin)
+    return
+
+  // eslint-disable-next-line ts/no-require-imports
+  const verify = require('./wxcomponents/verify_mpsdk/main')
+
+  verify?.init()
+}
+
 onLaunch(() => {
   initNavBarInfo()
+
+  initWxVerity()
 })
 </script>
 

@@ -1,0 +1,24 @@
+{
+  "disableScroll": true,
+  "component": true,
+  "usingComponents": {
+    "cus-notify": "../components/common/notify/index",
+    "dialog": "../components/common/dialog/dialog",
+    "navtip": "../components/common/navTip/navTip",
+    "flow-index": "../components/flow/Index/index",
+    "flow-sms": "../components/flow/Sms/sms",
+    "flow-ocr": "../components/flow/Ocr/ocr",
+    "flow-rt-live": "../components/flow/RTLive/RTLive",
+    "flow-livingbody": "../components/flow/Livingbody/livingbody",
+    "flow-result": "../components/flow/Result/result"
+  },
+  "navigationStyle": "default",
+  "componentPlaceholder": {
+    "intention-verify": "view",
+    "intention-interactive": "view",
+    "dialog": "view",
+    "rt-live": "view",
+    "result": "view",
+    "flow-intention-voic": "view"
+  }
+}

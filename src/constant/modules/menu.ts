@@ -1,14 +1,15 @@
 import {
+  BALANCE_HOME_PATH,
   COMMON_FACE_COLLECTION_PATH,
   COMMON_ROLE_SWITCH_PATH,
   DEVICE_SUBSCRIBE_PATH,
   FAMILY_MANAGE_PATH,
-  FINANCE_BALANCE_PATH,
-  FINANCE_CONSUMPTION_HISTORY_PATH,
+  FUND_BALANCE_HISTORY_PATH,
+  PACKAGE_LIST_PATH,
+  PARENT_CONSUMPTION_HISTORY_PATH,
   PARENT_STUDENT_BIND_PATH,
   PARENT_STUDENT_DETAIL_PATH,
   PROFILE_EDIT_PATH,
-  RECHARGE_HOME_PATH,
   REFUND_APPLY_PATH,
 } from '@/constant/router'
 
@@ -86,23 +87,23 @@ export const MENU_FAMILY_NUMBER: IMenuItem = {
   path: FAMILY_MANAGE_PATH,
 }
 
-/** 余额查询 - blue */
-export const MENU_BALANCE: IMenuItem = {
-  id: 'balance',
-  title: '余额查询',
+/** 账户信息 - blue */
+export const MENU_ACCOUNT_INFO: IMenuItem = {
+  id: 'account-info',
+  title: '账户信息',
   icon: 'wallet-3-line',
   color: '#3b82f6', // blue-500
   bgColor: '#dbeafe', // blue-100
-  path: FINANCE_BALANCE_PATH,
+  path: BALANCE_HOME_PATH,
 }
 
-/** 账户充值 - emerald */
-export const MENU_RECHARGE: IMenuItem = {
-  icon: 'add-circle-line',
-  title: '公话充值',
+/** 套餐购买 - emerald */
+export const MENU_PACKAGE: IMenuItem = {
+  icon: 'coupon-line',
+  title: '套餐购买',
   color: '#10b981', // emerald-500
   bgColor: '#d1fae5', // emerald-100
-  path: RECHARGE_HOME_PATH,
+  path: PACKAGE_LIST_PATH,
 }
 
 /** 申请退费 - red */
@@ -121,6 +122,16 @@ export const MENU_FEEDBACK: IMenuItem = {
   color: '#f43f5e', // rose-500
   bgColor: '#ffe4e6', // rose-100
   path: '/pages-sub/common/feedback/index',
+}
+
+/** 留言 - violet */
+export const MENU_MESSAGE: IMenuItem = {
+  id: 'message',
+  title: '留言',
+  icon: 'message-3-line',
+  color: '#8b5cf6', // violet-500
+  bgColor: '#ede9fe', // violet-100
+  path: '/pages-sub/chat/index',
 }
 
 /** 关于我们 - gray */
@@ -147,23 +158,37 @@ export const MENU_CONSUMPTION_RECORD: IMenuItem = {
   title: '消费记录',
   color: '#6366f1', // indigo-500
   bgColor: '#e0e7ff', // indigo-100
-  path: FINANCE_CONSUMPTION_HISTORY_PATH,
+  path: PARENT_CONSUMPTION_HISTORY_PATH,
+}
+
+/** 资金流水 - sky */
+export const MENU_BALANCE_DETAILS: IMenuItem = {
+  id: 'balance-details',
+  title: '资金流水',
+  icon: 'bill-line',
+  color: '#0ea5e9', // sky-500
+  bgColor: '#e0f2fe', // sky-100
+  path: FUND_BALANCE_HISTORY_PATH,
 }
 
 // 首页功能按钮配置
 export const MENU_LIST = [
-  MENU_PROFILE,
-  MENU_CHILDREN_DETAIL,
-  MENU_STUDENT_BIND,
+  MENU_ACCOUNT_INFO,
+
   MENU_REFUND_APPLY_PATH,
 
   MENU_CONSUMPTION_RECORD,
-  MENU_RECHARGE,
-  MENU_BALANCE,
+  MENU_BALANCE_DETAILS,
+  MENU_PACKAGE,
 
   MENU_FACE_COLLECTION,
   MENU_FAMILY_NUMBER,
   MENU_DEVICE_SUBSCRIBE,
+  MENU_MESSAGE,
+
+  MENU_STUDENT_BIND,
+  MENU_PROFILE,
+  MENU_CHILDREN_DETAIL,
 
   // MENU_FEEDBACK,
   // MENU_ABOUT,

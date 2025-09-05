@@ -9,10 +9,14 @@
 </route>
 
 <script lang="ts" setup>
-import type { ChildBalanceInfo, RefundApplicationForm, RefundReason } from './data'
-
-import { computed, onMounted, ref } from 'vue'
+// #region 导入
+import type { Refund } from '@/api/interface/modules/refund'
+import { storeToRefs } from 'pinia'
+import { computed, onUnmounted, ref, unref } from 'vue'
+import { useMessage } from 'wot-design-uni'
+import { getPendingRefundApi, postApplyRefundApi } from '@/api/modules/refund'
 import TButton from '@/components/common/button/index.vue'
+import Notice from '@/components/common/notice/index.vue'
 import Page from '@/components/common/page/index.vue'
 import RoleAvatar from '@/components/common/role-avatar/index.vue'
 import WhiteCard from '@/components/common/white-card/index.vue'
@@ -21,140 +25,186 @@ import Form from '@/components/form/index/index.vue'
 import Radio from '@/components/form/radio/index.vue'
 import Icon from '@/components/icon/index.vue'
 import BottomPopup from '@/components/popup/bottom-popup/index.vue'
-
 import { NAVIGATION_SUFFIX_COLOR, NAVIGATION_SUFFIX_SIZE } from '@/constant/modules/navigation'
-import { REFUND_HISTORY_PATH } from '@/constant/router'
-
+import { REFUND_TYPE, REFUND_TYPE_OPTIONS } from '@/constant/modules/refund/index'
+import { REFUND_HISTORY_PATH, REFUND_RESULT_PATH } from '@/constant/router'
+import { useBalance } from '@/hooks/useBalance'
 import { useForm } from '@/hooks/useForm'
 import { usePage } from '@/hooks/usePage'
+import { useParentStore } from '@/store/parent'
+import { useUserStore } from '@/store/user'
+import { useRefundEmitter } from '@/utils/emit/refund'
+import { toast } from '@/utils/toast'
+import { refundNotices, refundProcessSteps, refundRules } from './data'
+// #endregion
 
-import {
-  getChildBalanceInfo,
-  getRefundReasonOptions,
-  refundNotices,
-  refundProcessSteps,
-  refundRules,
-  submitRefundApplication,
-} from './data'
-
+// #region 组件选项配置
 defineOptions({
   options: {
     styleIsolation: 'apply-shared',
   },
 })
+// #endregion
 
-const { pageLoading, pageError, onLoginSuccess, onLoginFail, getContentHeight } = usePage()
+// #region 使用 Hooks
+const { pageLoading, pageError, pageLoaded, batchRequestHandler, onLoginFail, getContentHeight }
+  = usePage()
 const { formRef, validate, submitLoading, scrollToFirstError, scrollIntoView }
   = useForm('.apply-scroll')
+const message = useMessage()
+const { axiosGetUserBalanceApi } = useBalance()
+const { onRefundSuccess } = useRefundEmitter()
+// #endregion
 
-// 直接获取学生信息，不再需要列表选择
-const studentInfo = ref<ChildBalanceInfo>(getChildBalanceInfo('xiaoming')!)
-// 退费原因选项
-const refundReasons = ref<RefundReason[]>(getRefundReasonOptions())
+// #region 使用 Store
+const userStore = useUserStore()
+const parentStore = useParentStore()
+const { currentStudent } = storeToRefs(userStore)
+const { balanceInfo } = storeToRefs(parentStore)
+// #endregion
 
-const refundReasonOptions = computed(() =>
-  refundReasons.value.map(reason => ({
-    value: reason.value,
-    label: reason.label,
-  })),
-)
-
-// 新增：创建只有一个“全额退款”选项的 Radio
-const refundTypeOptions = computed(() => [
-  {
-    value: 'all',
-    label: '全额退款',
-    suffix: studentInfo.value.balanceText,
-  },
-])
-
-// 退费说明弹框显示状态
+// #region 定义响应式数据
+// 待审核的退款申请信息
+const pendingRefundInfo = ref<Refund.Application.ResGetPendingApi | null>(null)
+// 退费说明弹框
 const showRefundInfoPopup = ref(false)
-
-// 表单数据，移除 childId，固定 refundType 为 'all'
-const formData = ref<Partial<RefundApplicationForm>>({
-  reason: 'graduate',
-  contactName: '',
-  contactPhone: '',
-  refundType: 'all',
+// 表单数据
+const formData = ref({
+  refundType: REFUND_TYPE.FULL,
+  reason: '',
 })
+// #endregion
 
+// #region 定义计算属性
+// 当前可用余额
+const availableBalance = computed(() => +balanceInfo.value?.availableBalance || 0)
+const availableBalanceText = computed(() => `¥${Number(availableBalance.value).toFixed(2)}`)
+const refundTypeOptions = computed(() => {
+  return REFUND_TYPE_OPTIONS.map(option => ({
+    ...option,
+    suffix: availableBalanceText.value,
+  }))
+})
+// 是否存在待处理的退款申请
+const hasPendingRefund = computed(() => !!pendingRefundInfo.value?.hasPending)
+
+// 是否余额不足
+const hasInsufficientBalance = computed(() => Number(availableBalance.value) <= 0)
+
+// 是否可以提交申请
+const cannotSubmit = computed(
+  () =>
+    hasPendingRefund.value
+    || hasInsufficientBalance.value
+    || !formData.value.refundType
+    || !formData.value.reason,
+)
 const contentHeight = computed(() => {
   return getContentHeight('164rpx')
 })
+// #endregion
 
-// 更新验证规则，移除 childId 和 partialAmount
+// #region 定义验证规则
 const rules = {
-  reason: [{ required: true, message: '请选择退费原因' }],
-  otherReason: [{ required: true, message: '请输入其他退费原因' }],
-  contactName: [
-    { required: true, message: '请输入联系人姓名' },
-    { required: true, min: 2, message: '联系人姓名至少2个字符' },
-  ],
-  contactPhone: [
-    { required: true, message: '请输入联系电话' },
-    {
-      required: true,
-      pattern: /^1[3-9]\d{9}$/,
-      message: '请输入正确的手机号码',
-    },
+  refundType: [{ required: true, message: '请选择退费金额' }],
+  reason: [
+    { required: true, message: '请输入退费原因', trigger: 'blur' },
+    { min: 5, max: 200, message: '退费原因应为5-200个字符', trigger: 'blur' },
   ],
 }
+// #endregion
 
-// 退费原因选择变化处理
-function onRefundReasonChange(value: string | number) {
-  formData.value.reason = value as 'graduate' | 'unused' | 'other'
-  // 如果不是其他原因，清空其他原因文本
-  if (value !== 'other') {
-    formData.value.otherReason = undefined
+// #region 接口请求函数
+async function axiosGetPendingRefundApi() {
+  try {
+    const result = await getPendingRefundApi()
+    if (result.code === 0) {
+      pendingRefundInfo.value = result.data
+    }
+    return result
+  }
+  catch (error) {
+    console.error('获取待处理退款信息失败:', error)
+    return { code: -1 }
+  }
+  finally {
+    pageLoading.value = false
   }
 }
+// #endregion
 
-// 显示退费说明
+// #region 方法定义
+async function refresh() {
+  console.log('expose: 退款历史页面刷新方法')
+  batchRequestHandler([axiosGetPendingRefundApi()])
+}
+// #endregion
+
+// #region 事件处理函数
+// 显示退费说明弹框
 function showRefundInfo() {
   showRefundInfoPopup.value = true
 }
-
-// 跳转到退费记录
+// 跳转到退费记录页面
 function goToRefundHistory() {
   uni.navigateTo({
     url: REFUND_HISTORY_PATH,
   })
 }
 
-// 简化提交逻辑
+// 取消待处理的退款申请
+function handleCancelPendingRefund() {
+  if (!pendingRefundInfo.value?.applicationId) {
+    toast.show('未找到待处理的退款申请')
+    return
+  }
+  uni.navigateTo({
+    url: `${REFUND_RESULT_PATH}?id=${pendingRefundInfo.value.applicationId}`,
+  })
+}
+
+// 提交退费申请
 async function handleSubmitRefund() {
   try {
-    const fieldsToValidate = ['reason', 'contactName', 'contactPhone']
-
-    if (formData.value.reason === 'other') {
-      fieldsToValidate.push('otherReason')
-    }
-
-    const { valid } = await validate(fieldsToValidate)
+    const { valid } = await validate(['refundType', 'reason'])
     if (!valid) {
       scrollToFirstError()
       return
     }
-
     submitLoading.value = true
-
+    const { reason, refundType } = unref(formData)
+    // 构建提交数据，匹配API接口要求
     const submissionData = {
-      ...formData.value,
-      childId: studentInfo.value.id, // 提交时附带学生ID
+      refundType,
+      applyReason: reason,
     }
+    const result = await postApplyRefundApi(submissionData)
+    if (result.code === 0) {
+      formData.value.reason = ''
+      const refundResult = result.data
 
-    const result = await submitRefundApplication(submissionData as RefundApplicationForm)
+      const pendingResult = await axiosGetPendingRefundApi()
+      await axiosGetUserBalanceApi()
+      submitLoading.value = false
 
-    uni.showToast({
-      title: `退费申请已提交！\n退费金额：¥${result.refundAmount.toFixed(2)}\n我们将在3-5个工作日内处理您的申请。`,
-      icon: 'success',
-      duration: 3000,
-    })
+      await message.alert({
+        title: '退费申请已提交',
+        msg: `申请金额：¥${refundResult.applyAmount}\n我们将在3-5个工作日内处理您的申请。`,
+        confirmButtonText: '查看详情',
+        closeOnClickModal: false,
+      })
 
-    setTimeout(() => {
-      uni.navigateBack()
-    }, 3000)
+      // 跳转到结果页
+      if (
+        pendingResult.code === 0
+        && 'data' in pendingResult
+        && pendingResult?.data?.applicationId
+      ) {
+        uni.navigateTo({
+          url: `${REFUND_RESULT_PATH}?id=${pendingResult.data.applicationId}`,
+        })
+      }
+    }
   }
   catch (error) {
     console.error('提交退费申请失败:', error)
@@ -167,10 +217,35 @@ async function handleSubmitRefund() {
     submitLoading.value = false
   }
 }
+// #endregion
 
-onMounted(() => {
-  pageLoading.value = false
+// #region 生命周期钩子
+async function onLoginSuccess() {
+  batchRequestHandler([axiosGetPendingRefundApi()])
+}
+
+// 监听退款成功事件
+const unsubscribeRefund = onRefundSuccess((data) => {
+  console.log('监听到退款成功事件:', data)
+  // 刷新余额和退款状态
+  batchRequestHandler([axiosGetPendingRefundApi(), axiosGetUserBalanceApi()])
 })
+
+// 组件卸载时取消监听
+onUnmounted(() => {
+  unsubscribeRefund()
+})
+
+onShow(() => {
+  if (unref(pageLoaded)) {
+    batchRequestHandler([axiosGetPendingRefundApi(), axiosGetUserBalanceApi()])
+  }
+})
+
+defineExpose({
+  refresh,
+})
+// #endregion
 </script>
 
 <template>
@@ -209,25 +284,46 @@ onMounted(() => {
       :scroll-into-view="scrollIntoView"
       :style="contentHeight"
     >
-      <view box-border p="x-4 t-2 b-4">
+      <view flex="~ col" gap="4" box-border p="x-4 t-2 b-4">
+        <template v-if="hasInsufficientBalance || hasPendingRefund">
+          <!-- 待处理退款申请公告 -->
+          <Notice
+            v-if="hasPendingRefund"
+            title="您当前存在正在处理中的退款申请，暂时无法发起新的退款操作，点击可取消申请。"
+            type="warning"
+            :show-popup="false"
+            @click="handleCancelPendingRefund"
+          />
+          <!-- 余额不足公告 -->
+          <Notice
+            v-else-if="hasInsufficientBalance"
+            :title="`您的账户余额为¥${availableBalance.toFixed(2)}，暂时无法发起退款申请。`"
+            type="warning"
+            :clickable="false"
+            :show-popup="false"
+          />
+        </template>
+
         <!-- 学生信息卡片 -->
-        <WhiteCard flex="~ row" m="b-4">
-          <RoleAvatar custom-class="mr-3" size="small" />
-          <view flex="1 col" gap-1>
-            <view flex="~ items-center justify-between">
-              <view text="sm text-primary" font="medium">
-                {{ studentInfo.name }}
+        <WhiteCard>
+          <view flex="~ row">
+            <RoleAvatar custom-class="mr-3" size="small" />
+            <view flex="1 col" gap-1>
+              <view flex="~ items-center justify-between">
+                <view text="sm text-primary" font="medium">
+                  {{ currentStudent?.studentName || '未选择学生' }}
+                </view>
+                <view text="xs text-secondary">
+                  当前余额
+                </view>
               </view>
-              <view text="xs text-secondary">
-                当前余额
-              </view>
-            </view>
-            <view flex="~ items-center justify-between">
-              <view text="xs text-secondary">
-                {{ studentInfo.school }} · {{ studentInfo.grade }}
-              </view>
-              <view text="sm primary" font="medium">
-                {{ studentInfo.balanceText }}
+              <view flex="~ items-center justify-between">
+                <view text="xs text-secondary">
+                  {{ currentStudent?.fullClassName }}
+                </view>
+                <view text="sm primary" font="medium">
+                  {{ availableBalanceText }}
+                </view>
               </view>
             </view>
           </view>
@@ -238,38 +334,17 @@ onMounted(() => {
           <Form ref="formRef" :model="formData" :rules="rules">
             <view flex="~ col" gap="2.5">
               <!-- 退费金额 -->
-              <Cell required label="退费金额" prop="refundType">
+              <Cell id="refundType" required label="退费金额" prop="refundType">
                 <Radio v-model="formData.refundType" :options="refundTypeOptions" />
               </Cell>
 
               <!-- 退费原因 -->
               <Cell id="reason" required label="退费原因" prop="reason">
-                <Radio
+                <wd-textarea
                   v-model="formData.reason"
-                  :options="refundReasonOptions"
-                  :columns="2"
-                  @change="onRefundReasonChange"
+                  placeholder="请输入退费原因"
+                  :maxlength="200"
                 />
-
-                <!-- 其他原因输入 -->
-                <view v-if="formData.reason === 'other'" m="t-3">
-                  <wd-textarea
-                    v-model="formData.otherReason"
-                    prop="otherReason"
-                    placeholder="请详细说明退费原因"
-                    :maxlength="200"
-                  />
-                </view>
-              </Cell>
-
-              <!-- 联系人姓名 -->
-              <Cell id="contactName" required label="联系人姓名" prop="contactName">
-                <wd-input v-model="formData.contactName" placeholder="请输入联系人姓名" />
-              </Cell>
-
-              <!-- 联系电话 -->
-              <Cell id="contactPhone" required label="联系电话" prop="contactPhone">
-                <wd-input v-model="formData.contactPhone" type="tel" placeholder="请输入联系电话" />
               </Cell>
             </view>
           </Form>
@@ -282,7 +357,8 @@ onMounted(() => {
       <TButton
         type="primary"
         size="large"
-        block
+        full
+        :disabled="cannotSubmit"
         :loading="submitLoading"
         @click="handleSubmitRefund"
       >

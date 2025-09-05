@@ -33,6 +33,11 @@ export interface RefundApplicationForm {
   contactPhone: string
 }
 
+// 简化的退费申请表单（用于UI）
+export interface SimpleRefundForm {
+  reason: string
+}
+
 // 模拟孩子列表数据
 const childrenBalanceList: ChildBalanceInfo[] = [
   {

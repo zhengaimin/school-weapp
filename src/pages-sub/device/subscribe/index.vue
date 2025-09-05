@@ -3,133 +3,142 @@
   "layout": "default",
   "style": {
     "navigationStyle": "custom",
-    "navigationBarTitleText": "设备订阅"
+    "navigationBarTitleText": "我的订阅"
   }
 }
 </route>
 
 <script lang="ts" setup>
-import { computed, ref } from 'vue'
+// #region 导入
+import type { Devices } from '@/api/interface/modules/devices'
+import { storeToRefs } from 'pinia'
+import { computed, ref, unref } from 'vue'
+import { getDeviceSubscriptionsApi } from '@/api/modules/devices/groups'
 import TButton from '@/components/common/button/index.vue'
 import Page from '@/components/common/page/index.vue'
 import RefreshList from '@/components/common/refresh-list/index.vue'
-import WhiteCard from '@/components/common/white-card/index.vue'
-import Icon from '@/components/icon/index.vue'
+import { DEP_UUID, VOIP_BIND_PATH, WX_APP_ID } from '@/constant/modules/system'
 import { usePage } from '@/hooks/usePage'
 import { useRefresh } from '@/hooks/useRefresh'
-import { useMessage, useToast } from '@/uni_modules/wot-design-uni'
-import { mockDevices, type Device } from './data'
+import { useParentStore } from '@/store/parent'
+import { useUserStore } from '@/store/user'
+import { isMpWeixin } from '@/utils/platform'
+import { toast } from '@/utils/toast'
+import SubscriptionItem from './components/SubscriptionItem.vue'
+// #endregion
 
+// #region 组件选项配置
 defineOptions({
   options: {
-    styleIsolation: 'apply-shared'
-  }
+    styleIsolation: 'apply-shared',
+  },
 })
+// #endregion
 
-const toast = useToast()
-const message = useMessage()
-const { pageLoading, pageError, onLoginSuccess, onLoginFail, getContentHeight } = usePage()
-
-// 搜索关键词
-const searchKeyword = ref('')
-
-// 模拟 API 请求
-async function getDeviceList() {
-  // 模拟网络延迟
-  await new Promise(resolve => setTimeout(resolve, 800))
-
-  let deviceList = [...mockDevices]
-
-  // 根据关键词过滤
-  if (searchKeyword.value) {
-    const keyword = searchKeyword.value.toLowerCase().trim()
-    deviceList = deviceList.filter(device => device.name.toLowerCase().includes(keyword))
-  }
-
-  return {
-    code: 0,
-    msg: 'success',
-    data: {
-      list: deviceList,
-      total: deviceList.length
-    }
-  }
-}
-
-const { loading, refreshLoading, loaded, empty, list, onRefreshList, onLoadMore } =
-  useRefresh<Device>({
-    get: getDeviceList,
-    immediate: true
+// #region 使用 Hooks
+const { pageLoading, pageError, pageLoaded, onLoginFail, getContentHeight, batchRequestHandler }
+  = usePage()
+const { loading, refreshLoading, loaded, empty, list, onRefreshList, onLoadMore }
+  = useRefresh<Devices.Subscription.MySubscription>({
+    get: getDeviceSubscriptionsApi,
+    listField: 'subscribed',
+    immediate: false,
   })
+// #endregion
 
-// 设备统计信息
-const deviceStats = computed(() => {
-  const total = list.value.length
-  const subscribed = list.value.filter(d => d.subscribed).length
-  return { total, subscribed }
-})
+// #region 使用 Store
+const userStore = useUserStore()
+const parentStore = useParentStore()
+const { userInfo } = storeToRefs(userStore)
+const { contactInfo } = storeToRefs(parentStore)
+// #endregion
 
-// 刷新列表高度
+// #region 定义响应式数据
+const subscribingId = ref<number | null>(null)
+// #endregion
+
+// #region 定义计算属性
+// 刷新列表高度 - 底部按钮164rpx
 const contentHeight = computed(() => {
-  return getContentHeight('148rpx')
+  return getContentHeight('164rpx')
 })
+// #endregion
 
-// 搜索
-function handleSearch() {
-  onRefreshList()
+// #region 方法定义
+// 拼接 URL 参数，不对任何参数进行编码
+function buildQueryString(params: Record<string, unknown>) {
+  return Object.entries(params)
+    .filter(([, v]) => v !== undefined && v !== null)
+    .map(([k, v]) => `${k}=${String(v)}`)
+    .join('&')
 }
+// 获取跳转设备订阅链接
+function getSubscribeUrl() {
+  const { schoolId, schoolName, wechatInfo } = unref(userInfo) || {}
+  const { id: userContactUuid } = unref(contactInfo) || {}
 
-// 切换订阅状态
-function toggleSubscription(deviceId: number) {
-  const device = list.value.find(d => d.id === deviceId)
-  if (device) {
-    message
-      .confirm({
-        title: '提示',
-        msg: device.subscribed ? '确定要取消订阅该设备吗？' : '确定要订阅该设备吗？'
-      })
-      .then(() => {
-        device.subscribed = !device.subscribed
-        // 显示提示
-        toast.show(device.subscribed ? '订阅成功' : '取消订阅成功')
-      })
+  const basePath = VOIP_BIND_PATH
+  const params = {
+    serverUrl: import.meta.env.VITE_SERVER_BASEURL,
+    bindingFlag: 'Y',
+    openId: wechatInfo?.MiniOpenID || wechatInfo?.miniOpenID,
+    depUuid: DEP_UUID,
+    schoolUuid: schoolId,
+    schoolName,
+    userContactUuid,
+    envVersion: 'release',
+  }
+
+  return `${basePath}?${buildQueryString(params)}`
+}
+// #endregion
+
+// #region 事件处理函数
+// 跳转到订阅设备页面
+function handleGoToSubscribe() {
+  console.log(getSubscribeUrl())
+
+  if (isMpWeixin) {
+    uni.navigateToMiniProgram({
+      appId: WX_APP_ID,
+      path: getSubscribeUrl(),
+      success(res) {
+        console.log('跳转成功', res)
+      },
+      fail(err) {
+        console.error('跳转失败', err)
+        toast.show('跳转失败，请稍后重试')
+      },
+    })
+  }
+  else {
+    toast.show('该平台暂不支持小程序订阅')
   }
 }
+// #endregion
+
+// #region 生命周期钩子
+// 登录成功后
+async function onLoginSuccess() {
+  await batchRequestHandler([onRefreshList()])
+}
+
+onShow(() => {
+  if (unref(pageLoaded)) {
+    onRefreshList()
+  }
+})
+// #endregion
 </script>
 
 <template>
   <Page
-    title="设备订阅"
+    title="我的订阅"
     :loading="pageLoading"
     :error="pageError"
     @login:success="onLoginSuccess"
     @login:fail="onLoginFail"
   >
-    <view p="4 t-2!">
-      <view
-        flex="~ items-center"
-        bg="gray-50"
-        border="~ gray-300 solid rounded-xl"
-        p="x-3 y-3"
-        focus-within="bg-white border-primary"
-        transition="colors"
-      >
-        <Icon name="search-line" icon-color="#9ca3af" icon-size="32rpx" />
-        <input
-          v-model="searchKeyword"
-          placeholder="搜索设备名称"
-          bg="transparent"
-          border="none"
-          outline="none"
-          flex="1"
-          text="sm"
-          p="l-2"
-          h="6"
-          @confirm="handleSearch"
-        />
-      </view>
-    </view>
-
     <!-- 设备列表区域 -->
     <RefreshList
       :custom-style="contentHeight"
@@ -140,39 +149,31 @@ function toggleSubscription(deviceId: number) {
       @refresh="onRefreshList"
       @loadmore="onLoadMore"
     >
-      <view p="x-4">
+      <view p="x-4 t-2">
         <!-- 列表标题和统计 -->
-        <view flex="~ items-center justify-between" m="b-4">
-          <view text="lg gray-900" font="semibold">可订阅设备</view>
-          <view text="sm gray-500">
-            共 {{ deviceStats.total }} 台设备，已订阅 {{ deviceStats.subscribed }} 台
+        <view v-if="list.length" flex="~ items-center justify-between" m="b-4">
+          <view text="lg gray-900" font="semibold">
+            已订阅设备
           </view>
         </view>
 
         <!-- 设备列表 -->
         <view flex="~ col" gap="3">
-          <WhiteCard v-for="device in list" :key="device.id">
-            <view flex="~ items-center justify-between">
-              <view flex="1" min-w="0" m="r-3">
-                <view text="sm gray-900" font="medium">{{ device.name }}</view>
-              </view>
-              <view flex="shrink-0">
-                <TButton
-                  v-if="device.subscribed"
-                  type="default"
-                  size="small"
-                  @click="toggleSubscription(device.id)"
-                >
-                  取消
-                </TButton>
-                <TButton v-else type="primary" size="small" @click="toggleSubscription(device.id)">
-                  订阅
-                </TButton>
-              </view>
-            </view>
-          </WhiteCard>
+          <SubscriptionItem
+            v-for="item in list"
+            :key="item.id"
+            :device="item"
+            :subscribing="subscribingId === item.id"
+          />
         </view>
       </view>
     </RefreshList>
+
+    <!-- 底部订阅按钮 -->
+    <view p="4">
+      <TButton type="primary" size="large" full @click="handleGoToSubscribe">
+        订阅/取消设备组
+      </TButton>
+    </view>
   </Page>
 </template>

@@ -1,0 +1,1 @@
+import{request}from"./util.js";const wxLogin=e=>{console.log("wxLogin"),wx.login({success(o){console.log("login",o.code),o.code?request({url:"/api/auth/saveOpenId?BizToken="+e,data:{code:o.code}},o=>{console.log("saveOpenId",o)}):console.log("登录失败！"+o.errMsg)},fail(o){console.log("登录失败！",res)}})};export{wxLogin};

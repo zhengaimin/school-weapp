@@ -1,0 +1,1 @@
+<block wx:if="{{message}}"><view class="notify-view {{type}} {{show ? 'active' : ''}}"><view class="notify-content-view">{{ message }}</view></view></block>

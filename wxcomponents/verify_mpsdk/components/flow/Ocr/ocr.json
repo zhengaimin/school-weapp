@@ -1,0 +1,1 @@
+{"component":true,"usingComponents":{"dialog":"../../common/dialog/dialog","verify-nfc":"./verifyNfc/verifyNfc"},"componentPlaceholder":{"dialog":"view","verify-nfc":"view"}}

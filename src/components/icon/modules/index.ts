@@ -1,5 +1,6 @@
 // https://remixicon.com
 export * from './arrows'
+export * from './buildings'
 export * from './communication'
 export * from './design'
 export * from './device'

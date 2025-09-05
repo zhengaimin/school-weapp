@@ -1,0 +1,13 @@
+{
+  "disableScroll": true,
+  "usingComponents": { "verify-mp": "../indexCom" },
+  "navigationStyle": "default",
+  "componentPlaceholder": {
+    "intention-verify": "view",
+    "intention-interactive": "view",
+    "dialog": "view",
+    "rt-live": "view",
+    "result": "view",
+    "flow-intention-voic": "view"
+  }
+}

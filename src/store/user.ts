@@ -1,23 +1,22 @@
 import type { ResultData } from '@/api/interface/index'
-import type { Common } from '@/api/interface/modules/user'
+import type { User } from '@/api/interface/modules/user'
 
-import dayjs from 'dayjs'
 import { defineStore } from 'pinia'
-import { computed, ref, unref } from 'vue'
+import { ref } from 'vue'
 
 import { getUserInfoApi, getWxCode, postWxLoginApi } from '@/api/modules/user'
 
-import { tokenManager } from '@/http/tokenManager'
+import { useParentStore } from './parent'
 
 export const useUserStore = defineStore(
   'user',
   () => {
+    const parentStore = useParentStore()
     const token = ref<string | null>(null)
     const role = ref<number | null>(null)
-    // 是否需要绑定学生
-    const needBind = ref<boolean>(true)
+
     // 定义用户信息
-    const userInfo = ref<Common.IUserInfoVo>(null)
+    const userInfo = ref<User.Common.IUserInfoVo>(null)
     // 用户点击登录才会获取手机号
     const phone = ref<string>('')
 
@@ -33,100 +32,98 @@ export const useUserStore = defineStore(
     const setPhone = (val: string) => {
       phone.value = val
     }
-    const setNeedBind = (val: boolean) => {
-      needBind.value = val
-    }
+
+    const currentStudent = computed(() => {
+      const { roleInfo, schoolName, schoolId } = unref(userInfo) || {}
+
+      if (!roleInfo)
+        return null
+
+      const student = {
+        ...((roleInfo as User.Common.ParentRoleInfo)?.currentChild || {}),
+        schoolName,
+        schoolId,
+      }
+
+      const list = []
+
+      if (student.schoolName) {
+        list.push(student.schoolName)
+      }
+      if (student.departmentName) {
+        list.push(student.departmentName)
+      }
+      if (student.grade) {
+        list.push(student.grade)
+      }
+      if (student.className) {
+        list.push(student.className)
+      }
+
+      return {
+        ...student,
+        fullClassName: list.join(' · '),
+      }
+    })
 
     /**
      * 获取用户信息
      */
     const getUserInfo = async () => {
-      try {
-        const res: any = await getUserInfoApi()
+      const res: any = await getUserInfoApi()
 
-        if (res.code !== 0) {
-          return { code: -1, msg: res.msg || '获取用户信息失败' }
-        }
+      if (res.code !== 0) {
+        return { code: -1, msg: res.msg || '获取用户信息失败' }
+      }
 
-        // 保存用户信息
-        userInfo.value = res.data
-        return { code: 0, msg: '获取用户信息成功', data: res.data }
+      const data = res.data
+      // 保存用户信息
+      userInfo.value = data
+      if (data.phone) {
+        setPhone(data.phone)
       }
-      catch (error) {
-        console.error('获取用户信息失败:', error)
-        return { code: -1, msg: '获取用户信息时发生错误' }
-      }
+
+      return { code: 0, msg: '获取用户信息成功', data: res.data }
     }
     /**
      * 微信登录
      */
-    const wxLogin = async (): Promise<ResultData<Common.ResWxLoginApi>> => {
-      try {
-        // 获取微信小程序登录的code
-        const { code, errMsg } = await getWxCode()
+    const wxLogin = async (): Promise<ResultData<User.Common.ResWxLoginApi>> => {
+      // 获取微信小程序登录的code
+      const { code, errMsg } = await getWxCode()
 
-        if (errMsg !== 'login:ok') {
-          return { code: -1, msg: '获取微信登录凭证失败', data: null }
-        }
+      if (errMsg !== 'login:ok') {
+        return { code: -1, msg: '获取微信登录凭证失败', data: null }
+      }
 
-        // 调用登录接口
-        return await postWxLoginApi({ code })
+      // 调用登录接口
+      const result = await postWxLoginApi({ code })
+      if (result.code === 0 && result.data.token) {
+        setToken(result.data.token)
       }
-      catch (error) {
-        console.error('登录过程中发生错误', error)
-        return { code: -1, msg: '登录过程中发生错误', data: null }
-      }
+      return result
     }
     const logout = () => {
       token.value = null
       userInfo.value = null
-      // 清除token管理器的刷新状态
-      tokenManager.clearRefreshState()
     }
-
-    /** token过期 */
-    const tokenExpires = computed(() => {
-      const { expires_in } = unref(token) || {}
-      const unix = dayjs().unix()
-
-      console.log(expires_in, unix, expires_in && expires_in <= unix)
-      return expires_in ? expires_in <= unix : true
-    })
-
-    /** refresh token过期 */
-    const refreshTokenExpires = computed(() => {
-      const { r_expires_in } = unref(token) || {}
-      const unix = dayjs().unix()
-
-      return r_expires_in ? r_expires_in <= unix : true
-    })
-
-    /** 判断是否登录 -> token 没过期 & 用户点击了获取手机号 */
-    const isLogin = computed(() => {
-      return !unref(tokenExpires) && unref(phone)
-    })
 
     return {
       token,
       setToken,
-      tokenExpires,
-      refreshTokenExpires,
 
       userInfo,
       setUserInfo,
       getUserInfo,
+      currentStudent,
 
       role,
       setRole,
 
       wxLogin,
-      isLogin,
 
       phone,
       setPhone,
-
-      needBind,
-      setNeedBind,
 
       logout,
     }

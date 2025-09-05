@@ -133,7 +133,7 @@ const contentHeight = computed(() => {
 
     <!-- 底部绑定按钮 -->
     <view p="4" h="164rpx" box-border>
-      <TButton type="primary" size="large" block @click="addChild">
+      <TButton type="primary" size="large" full @click="addChild">
         绑定学生
       </TButton>
     </view>

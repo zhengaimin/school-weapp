@@ -9,17 +9,14 @@
 </route>
 
 <script lang="ts" setup>
-import type { ChildDetailInfo } from './data'
-import { onMounted, ref } from 'vue'
-
+import { storeToRefs } from 'pinia'
+import { computed, unref } from 'vue'
 import Page from '@/components/common/page/index.vue'
 import RoleAvatar from '@/components/common/role-avatar/index.vue'
 import WhiteCard from '@/components/common/white-card/index.vue'
 import Icon from '@/components/icon/index.vue'
-
 import { usePage } from '@/hooks/usePage'
-
-import { getChildDetailInfo } from './data'
+import { useUserStore } from '@/store/user'
 
 defineOptions({
   options: {
@@ -27,13 +24,17 @@ defineOptions({
   },
 })
 
-const { pageLoading, pageError, onLoginSuccess, onLoginFail } = usePage()
+const { pageLoading, pageError, onLoginFail } = usePage()
 
-// 页面参数
-const childId = ref('')
-// 孩子详情信息
-const childInfo = ref<ChildDetailInfo | null>(null)
+// 使用 parent store
+const userStore = useUserStore()
+const { currentStudent } = storeToRefs(userStore)
 
+const faceStatusText = computed(() => {
+  if (!currentStudent.value)
+    return ''
+  return currentStudent.value.faceStatus === 1 ? '已录入' : '未录入'
+})
 // 复制文本到剪贴板
 function copyToClipboard(text: string, label: string) {
   uni.setClipboardData({
@@ -53,29 +54,16 @@ function copyToClipboard(text: string, label: string) {
   })
 }
 
-// 初始化页面数据
-function initPageData() {
-  // 获取页面参数
-  const pages = getCurrentPages()
-  const currentPage: any = pages[pages.length - 1]
-  const options = currentPage.options as any
-
-  childId.value = options.id || 'xiaoming'
-
-  // 加载孩子详情
-  const detail = getChildDetailInfo(childId.value)
-  if (detail) {
-    childInfo.value = detail
+function onLoginSuccess() {
+  if (unref(currentStudent)) {
+    pageLoading.value = false
+    pageError.value = ''
   }
   else {
-    pageError.value = '未找到孩子信息'
+    pageLoading.value = false
+    pageError.value = '网络异常，请稍后重试'
   }
 }
-
-onMounted(() => {
-  initPageData()
-  pageLoading.value = false
-})
 </script>
 
 <template>
@@ -86,17 +74,17 @@ onMounted(() => {
     @login:success="onLoginSuccess"
     @login:fail="onLoginFail"
   >
-    <view v-if="childInfo" flex="~ col" gap="4" p="4 t-2!">
+    <view v-if="currentStudent" flex="~ col" gap="4" p="4 t-2!">
       <!-- 学生头像和基本信息 -->
       <WhiteCard>
         <view flex="~ items-center" gap="6">
           <RoleAvatar type="student" size="large" />
           <view flex="1" space="y-2">
             <view text="xl gray-900" font="bold">
-              {{ childInfo.name }}
+              {{ currentStudent.studentName }}
             </view>
             <view text="sm gray-500">
-              {{ childInfo.school }}·{{ childInfo.class }}
+              {{ currentStudent.grade }}·{{ currentStudent.className }}
             </view>
           </view>
         </view>
@@ -104,13 +92,43 @@ onMounted(() => {
 
       <!-- 学生详细信息 -->
       <WhiteCard custom-class="p-0!">
-        <!-- 性别 -->
+        <!-- 学校 -->
         <view flex="~ items-center justify-between" p="4" border-b="1 gray-100 solid">
           <text text="sm gray-600">
-            性别
+            学校
           </text>
           <text text="sm gray-900" font="medium">
-            {{ childInfo.gender }}
+            {{ currentStudent.schoolName }}
+          </text>
+        </view>
+
+        <!-- 部门 -->
+        <view flex="~ items-center justify-between" p="4" border-b="1 gray-100 solid">
+          <text text="sm gray-600">
+            级部
+          </text>
+          <text text="sm gray-900" font="medium">
+            {{ currentStudent.departmentName }}
+          </text>
+        </view>
+
+        <!-- 年级 -->
+        <view flex="~ items-center justify-between" p="4" border-b="1 gray-100 solid">
+          <text text="sm gray-600">
+            年级
+          </text>
+          <text text="sm gray-900" font="medium">
+            {{ currentStudent.grade }}
+          </text>
+        </view>
+
+        <!-- 班级 -->
+        <view flex="~ items-center justify-between" p="4" border-b="1 gray-100 solid">
+          <text text="sm gray-600">
+            班级
+          </text>
+          <text text="sm gray-900" font="medium">
+            {{ currentStudent.className }}
           </text>
         </view>
 
@@ -119,70 +137,80 @@ onMounted(() => {
           flex="~ items-center justify-between"
           p="4"
           border-b="1 gray-100 solid"
-          @click="copyToClipboard(childInfo.studentId, '学号')"
+          @click="copyToClipboard(currentStudent.studentCode, '学号')"
         >
           <text text="sm gray-600">
             学号
           </text>
           <view flex="~ items-center" gap="2">
             <text text="sm gray-900" font="medium">
-              {{ childInfo.studentId }}
+              {{ currentStudent.studentCode }}
             </text>
             <Icon name="file-copy-line" icon-color="#9ca3af" icon-size="28rpx" />
           </view>
         </view>
 
-        <!-- 唯一号 -->
+        <!-- 卡号 -->
         <view
+          v-if="currentStudent.cardNumber"
           flex="~ items-center justify-between"
           p="4"
           border-b="1 gray-100 solid"
-          @click="copyToClipboard(childInfo.uniqueId, '唯一号')"
+          @click="copyToClipboard(currentStudent.cardNumber, '卡号')"
         >
           <text text="sm gray-600">
-            唯一号
+            卡号
           </text>
           <view flex="~ items-center" gap="2">
             <text text="sm gray-900" font="medium">
-              {{ childInfo.uniqueId }}
+              {{ currentStudent.cardNumber }}
             </text>
             <Icon name="file-copy-line" icon-color="#9ca3af" icon-size="28rpx" />
           </view>
         </view>
 
-        <!-- 消费账号 -->
+        <!-- 身份证 -->
         <view
+          v-if="currentStudent.idCard"
           flex="~ items-center justify-between"
           p="4"
           border-b="1 gray-100 solid"
-          @click="copyToClipboard(childInfo.consumptionAccount, '消费账号')"
+          @click="copyToClipboard(currentStudent.idCard, '身份证')"
         >
           <text text="sm gray-600">
-            消费账号
+            身份证
           </text>
           <view flex="~ items-center" gap="2">
             <text text="sm gray-900" font="medium">
-              {{ childInfo.consumptionAccount }}
+              {{ currentStudent.idCard }}
             </text>
             <Icon name="file-copy-line" icon-color="#9ca3af" icon-size="28rpx" />
           </view>
         </view>
 
-        <!-- 物理卡号 -->
+        <!-- 性别 -->
         <view
+          v-if="currentStudent.gender"
           flex="~ items-center justify-between"
           p="4"
-          @click="copyToClipboard(childInfo.physicalCardNumber, '物理卡号')"
+          border-b="1 gray-100 solid"
         >
           <text text="sm gray-600">
-            物理卡号
+            性别
           </text>
-          <view flex="~ items-center" gap="2">
-            <text text="sm gray-900" font="medium">
-              {{ childInfo.physicalCardNumber }}
-            </text>
-            <Icon name="file-copy-line" icon-color="#9ca3af" icon-size="28rpx" />
-          </view>
+          <text text="sm gray-900" font="medium">
+            {{ currentStudent.gender }}
+          </text>
+        </view>
+
+        <!-- 人脸状态 -->
+        <view flex="~ items-center justify-between" p="4" border-b="1 gray-100 solid">
+          <text text="sm gray-600">
+            人脸状态
+          </text>
+          <text text="sm gray-900" font="medium">
+            {{ faceStatusText }}
+          </text>
         </view>
       </WhiteCard>
     </view>

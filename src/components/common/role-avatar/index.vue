@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import type { AvatarProps, AvatarSize, AvatarType } from './types'
+import { storeToRefs } from 'pinia'
 import { computed } from 'vue'
 import Icon from '@/components/icon/index.vue'
+import { useUserStore } from '@/store/user'
 
 // 组件属性
 const props = withDefaults(defineProps<AvatarProps>(), {
@@ -10,6 +12,8 @@ const props = withDefaults(defineProps<AvatarProps>(), {
   customStyle: '',
   customClass: '',
 })
+const userStore = useUserStore()
+const { currentStudent } = storeToRefs(userStore)
 
 // 默认头像配置
 const defaultAvatars: Record<AvatarType, { icon: string, bgColor: string, iconColor: string }> = {
@@ -20,13 +24,13 @@ const defaultAvatars: Record<AvatarType, { icon: string, bgColor: string, iconCo
   },
   teacher: {
     icon: 'user-line',
-    bgColor: 'bg-blue-100',
-    iconColor: '#3b82f6',
+    bgColor: 'bg-green-100',
+    iconColor: '#22c55e',
   },
   student: {
     icon: 'user-5-line',
-    bgColor: 'bg-green-100',
-    iconColor: '#22c55e',
+    bgColor: 'bg-blue-100',
+    iconColor: '#3b82f6',
   },
 }
 
@@ -68,8 +72,8 @@ const defaultAvatar = computed(() => {
 <template>
   <view :class="containerClass" :style="customStyle">
     <image
-      v-if="src"
-      :src="src"
+      v-if="type === 'student'"
+      :src="currentStudent.faceImageUrl"
       class="h-full w-full"
       mode="aspectFill"
     />

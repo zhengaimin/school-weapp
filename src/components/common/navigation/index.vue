@@ -1,15 +1,18 @@
 <script lang="ts" setup>
+// #region 导入
 import { storeToRefs } from 'pinia'
 import { computed, unref } from 'vue'
 import { bool, object, string } from 'vue-types'
 
 import Icon from '@/components/icon/index.vue'
 
-import { TABBAR_HOME_PATH } from '@/constant/router'
+import { LAUNCH_PATH, TABBAR_HOME_PATH } from '@/constant/router'
 
 import { useAppStore } from '@/store/app'
 import { isMpWeixin } from '@/utils/platform'
+// #endregion
 
+// #region 属性定义
 const props = defineProps({
   title: string().def(''),
   // 是否显示导航栏（默认显示）
@@ -20,8 +23,22 @@ const props = defineProps({
   customStyle: object().def(() => ({})),
   customClass: object().def(() => ({})),
 })
+// #endregion
 
+// #region 使用 Store
 const { navBarInfo } = storeToRefs(useAppStore())
+// #endregion
+
+// #region 定义计算属性
+const showHomeButton = computed(() => {
+  const pages = getCurrentPages()
+  if (pages.length > 1) {
+    return false
+  }
+
+  const currentPage = pages[0] as { fullPath: string }
+  return currentPage.fullPath !== LAUNCH_PATH
+})
 
 // 计算导航栏样式
 const navStyle = computed(() => {
@@ -96,9 +113,16 @@ const rightStyle = computed(() => {
 
   return result
 })
+// #endregion
 
+// #region 事件处理函数
 // 返回上一页
 function handleBack() {
+  if (showHomeButton.value) {
+    uni.reLaunch({ url: isMpWeixin ? LAUNCH_PATH : TABBAR_HOME_PATH })
+    return
+  }
+
   uni.navigateBack({
     fail() {
       uni.switchTab({
@@ -107,6 +131,7 @@ function handleBack() {
     },
   })
 }
+// #endregion
 </script>
 
 <template>
@@ -120,7 +145,13 @@ function handleBack() {
       <slot name="pre-icon">
         <!-- 默认返回按钮 -->
         <view v-if="showBack" class="flex items-center" @click="handleBack">
-          <Icon name="arrow-left-line" icon-color="currentColor" icon-size="40rpx" />
+          <Icon
+            v-if="showHomeButton"
+            name="home-3-line"
+            icon-color="currentColor"
+            icon-size="40rpx"
+          />
+          <Icon v-else name="arrow-left-line" icon-color="currentColor" icon-size="40rpx" />
         </view>
       </slot>
     </view>

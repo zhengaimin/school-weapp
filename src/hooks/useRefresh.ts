@@ -1,27 +1,38 @@
 import type { ResultData } from '@/api/interface'
 import { computed, nextTick, onMounted, ref, unref } from 'vue'
+import { isNumber } from '@/utils/is'
 
 interface IResponse extends ResultData {
+  [property: string]: any
   list: any[]
   total: number
 }
 interface IRefresh {
-  get?: (query: any) => Promise<IResData<any>>
+  get?: (query: IQuery) => Promise<IResData<any>>
   formatItem?: (item: any) => any
   immediate?: boolean
+  listField?: string
+}
+interface IQuery {
+  page: number
+  pageSize: number
+
+  [property: string]: any
 }
 
-export function useRefresh<T>({ get, formatItem, immediate = true }: IRefresh) {
+export function useRefresh<T>({ get, formatItem, immediate = true, listField = 'list' }: IRefresh) {
   const loading = ref(false)
   const refreshLoading = ref(false)
   const loaded = ref(false)
   const list = ref<T[]>([])
-  const query = ref<any>({
+  const query = ref<IQuery>({
     page: 1,
-    page_size: 10,
+    pageSize: 10,
   })
 
-  const empty = computed(() => list.value.length === 0 && !loading.value && !refreshLoading.value)
+  const empty = computed(
+    () => !list.value || (list.value?.length === 0 && !loading.value && !refreshLoading.value),
+  )
 
   const loadData = async (isRefresh = false) => {
     if (!get) {
@@ -41,16 +52,22 @@ export function useRefresh<T>({ get, formatItem, immediate = true }: IRefresh) {
       const result: ResultData<IResponse> = await get(unref(query))
 
       if (result.code === 0) {
-        const { list: data, total } = result.data
+        const { [listField]: data, total } = result.data
 
-        const _list = formatItem ? data.map(item => formatItem(item)) : data
+        const listData = data || []
+        const _list = formatItem ? listData.map(item => formatItem(item)) : listData
 
         list.value = isRefresh ? _list : [...list.value, ..._list]
-        loaded.value = unref(list).length >= total
+        loaded.value = isNumber(total) ? unref(list)?.length >= total : true
       }
+
+      return result
     }
     catch (error) {
+      loaded.value = true
       console.error('加载数据失败:', error)
+
+      return { code: -1, message: '加载数据失败' }
     }
     finally {
       loading.value = false
@@ -60,7 +77,7 @@ export function useRefresh<T>({ get, formatItem, immediate = true }: IRefresh) {
   const onRefreshList = async () => {
     loaded.value = false
     query.value.page = 1 // 重置页码
-    await loadData(true)
+    return await loadData(true)
   }
   const onLoadMore = async () => {
     if (!loaded.value && !loading.value && !refreshLoading.value) {
@@ -78,6 +95,7 @@ export function useRefresh<T>({ get, formatItem, immediate = true }: IRefresh) {
   })
 
   return {
+    query,
     loading,
     refreshLoading,
     loaded,

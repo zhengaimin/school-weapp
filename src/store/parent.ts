@@ -1,60 +1,116 @@
+import type { Family } from '@/api/interface/modules/family'
 import type { Students } from '@/api/interface/modules/students'
-import { defineStore } from 'pinia'
+import type { User } from '@/api/interface/modules/user'
+import dayjs from 'dayjs'
 
+import { defineStore, storeToRefs } from 'pinia'
+import { getFamilyContactsApi } from '@/api/modules/family/contacts'
 import { getStudentListByParentApi } from '@/api/modules/students'
+import { useUserStore } from './user'
+
+type IBalanceInfo = User.Common.IStudentBalanceVo & {
+  availableBalanceFormatted: string
+  lastUpdateTime: string
+}
 
 export const useParentStore = defineStore(
   'parent',
   () => {
+    const userStore = useUserStore()
+    const { userInfo } = storeToRefs(userStore)
+
     const students = ref<Students.IStudentVo[]>([])
-    // 当前选择的学生 id
-    const studentId = ref<number>(0)
+
+    // 是否需要绑定学生
+    const needBind = ref<boolean>(true)
+    // 余额信息
+    const balanceInfo = ref<IBalanceInfo | null>(null)
+    // 亲情号信息
+    const contactInfo = ref<Family.Contact.SelfContactInfo | null>(null)
+    // 亲情号列表缓存
+    const familyContacts = ref<Family.Contact.ResGetFamilyContactsApi[]>([])
 
     const setStudents = (list: Students.IStudentVo[]) => {
       students.value = list
     }
-    const setStudentId = (id: number) => {
-      studentId.value = id
+    const setNeedBind = (val: boolean) => {
+      needBind.value = val
+    }
+    const setBalanceInfo = (info: User.Common.IStudentBalanceVo) => {
+      balanceInfo.value = {
+        ...info,
+        availableBalanceFormatted: Number(info.availableBalance).toFixed(2),
+        lastUpdateTime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
+      }
+    }
+    const setContactInfo = (info: Family.Contact.SelfContactInfo | null) => {
+      contactInfo.value = info
+    }
+    const setFamilyContacts = (contacts: Family.Contact.ResGetFamilyContactsApi[]) => {
+      familyContacts.value = contacts
     }
 
-    const currentStudent = computed(() => {
-      return students.value.find(item => item.id === studentId.value)
+    const studentsIdMap = computed(() => {
+      const map: Record<number, Students.IStudentVo> = {}
+      students.value.forEach((student) => {
+        map[student.id] = student
+      })
+      return map
+    })
+    // 亲情号关系 map：根据 relationship 字段创建 map 结构
+    const familyContactsRelationshipMap = computed(() => {
+      const map: Record<number, Family.Contact.ResGetFamilyContactsApi> = {}
+      familyContacts.value.forEach((contact) => {
+        if (contact.relationship) {
+          map[contact.relationship] = contact
+        }
+      })
+      return map
     })
 
     const axiosGetStudentListByParentApi = async () => {
-      try {
-        const result = await getStudentListByParentApi()
+      const result = await getStudentListByParentApi()
 
-        if (result.code === 0 && result.data.students?.length) {
-          const list = result.data.students
-          setStudents(list)
+      if (result.code === 0 && result.data.students?.length) {
+        const list = result.data.students
+        setStudents(list)
 
-          await nextTick()
-          // 如果当前学生不存在，则设置第一个学生为当前学生
-          !currentStudent.value && setStudentId(list[0].id)
-
-          console.log(students, studentId)
-        }
-
-        return result
-      } catch (error) {
-        console.log(error)
-
-        return { code: -1 }
+        await nextTick()
       }
+
+      return result
+    }
+
+    const axiosGetFamilyContactsApi = async () => {
+      const result = await getFamilyContactsApi({})
+
+      if (result.code === 0 && Array.isArray(result.data)) {
+        setFamilyContacts(result.data)
+      }
+
+      return result
     }
 
     return {
+      needBind,
       students,
-      studentId,
+      balanceInfo,
+      contactInfo,
+      familyContacts,
       setStudents,
-      setStudentId,
-      currentStudent,
+      setNeedBind,
+      setBalanceInfo,
+      setContactInfo,
+      setFamilyContacts,
 
-      axiosGetStudentListByParentApi
+      studentsIdMap,
+      familyContactsRelationshipMap,
+
+      axiosGetStudentListByParentApi,
+      axiosGetFamilyContactsApi,
     }
   },
   {
-    persist: true
-  }
+    persist: true,
+  },
 )

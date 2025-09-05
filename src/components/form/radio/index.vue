@@ -55,10 +55,22 @@ function selectOption(option: RadioOption) {
 function isSelected(option: RadioOption): boolean {
   return modelValue.value === option.value
 }
+
+// 计算选项的样式
+const optionFlexBasis = computed(() => {
+  if (props.columns > 0) {
+    return `calc(${(1 / props.columns) * 100}% - ${((props.columns - 1) / props.columns) * 0.75}rem)`
+  }
+  return '100%'
+})
 </script>
 
 <template>
-  <view :class="props.columns > 0 ? `grid grid-cols-${props.columns} gap-3` : 'space-y-3'">
+  <view
+    class="t-radio"
+    flex="~ wrap"
+    :class="[props.columns > 0 ? 'gap-3' : 'flex-col gap-y-3']"
+  >
     <view
       v-for="option in options"
       :key="option.value"
@@ -66,11 +78,11 @@ function isSelected(option: RadioOption): boolean {
       p="3"
       border="~ gray-200 solid rounded-md"
       transition="colors"
-      cursor="pointer"
-      :class="[
-        isSelected(option) ? 'border-primary bg-primary bg-opacity-5' : '',
-        props.disabled || option.disabled ? 'opacity-50 cursor-not-allowed' : '',
-      ]"
+      :style="{ flexBasis: optionFlexBasis }"
+      :class="{
+        '!border-primary !bg-primary !bg-opacity-5': isSelected(option),
+        'opacity-50 cursor-not-allowed': props.disabled || option.disabled,
+      }"
       @click="selectOption(option)"
     >
       <!-- 左侧内容区域 -->
@@ -84,7 +96,7 @@ function isSelected(option: RadioOption): boolean {
           flex="~ items-center justify-center"
           :class="isSelected(option) ? 'border-primary bg-primary' : 'border-gray-300'"
         >
-          <view v-if="isSelected(option)" w="2" h="2" bg="white" border="rounded-full" />
+          <view v-if="isSelected(option)" w="2" h="2" bg="white" rounded="full" />
         </view>
 
         <!-- 选项内容 -->

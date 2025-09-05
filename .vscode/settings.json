@@ -89,6 +89,8 @@
     "Attributify",
     "climblee",
     "commitlint",
+    "daterange",
+    "datetimerange",
     "dcloudio",
     "eslintcache",
     "getphonenumber",
@@ -116,5 +118,21 @@
     "WechatMiniprogram",
     "Weixin"
   ],
-  "liveServer.settings.port": 5501
+  "liveServer.settings.port": 5501,
+
+  // 解决代码库索引初始化失败的配置
+  "files.exclude": {
+    "**/node_modules/**": true,
+    "**/.git/**": true,
+    "**/dist/**": true,
+    "**/build/**": true
+  },
+  "search.exclude": {
+    "**/src/uni_modules/**": true,
+    "**/node_modules/**": true,
+    "**/dist/**": true,
+    "**/build/**": true
+  },
+  "typescript.workspaceSymbols.refreshOnFileChange": false,
+  "typescript.workspaceSymbols.maxFilesForNonInteractiveSearch": 1000
 }

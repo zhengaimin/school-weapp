@@ -1,6 +1,7 @@
 import type { CustomRequestOptions } from '@/http/interceptor'
 import { TOKEN_WHITE_LIST } from '@/constant/modules/http'
 import { useUserStore } from '@/store/user'
+import { toast } from '@/utils/toast'
 // import { tokenManager } from './tokenManager'
 
 // 原始的http请求函数（不带token检查）
@@ -14,10 +15,17 @@ function httpRequest<T>(options: CustomRequestOptions) {
       // #endif
       // 响应成功
       success(res) {
+        const data = res.data as IResData<T>
+
         // 状态码 2xx，参考 axios 的设计
         if (res.statusCode >= 200 && res.statusCode < 300) {
+          // 2.0 轻提示错误信息
+          if (!options.hideErrorToast && data.code !== 0) {
+            toast.info(data.msg || '网络错误，请稍后重试')
+          }
+
           // 2.1 提取核心数据 res.data
-          resolve(res.data as IResData<T>)
+          resolve(data)
         }
         else if (res.statusCode === 401) {
           // 401错误  -> 清理用户信息，跳转到登录页
@@ -27,11 +35,7 @@ function httpRequest<T>(options: CustomRequestOptions) {
         }
         else {
           // 其他错误 -> 根据后端错误信息轻提示
-          !options.hideErrorToast
-          && uni.showToast({
-            icon: 'none',
-            title: (res.data as IResData<T>).msg || '请求错误',
-          })
+          !options.hideErrorToast && toast.info(data.msg || '网络错误，请稍后重试')
           reject(res)
         }
       },

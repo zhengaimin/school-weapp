@@ -1,21 +1,30 @@
 <script lang="ts" setup>
-//
+import { computed } from 'vue'
+import { array } from 'vue-types'
+
+const props = defineProps({
+  /**
+   * 气泡颜色
+   */
+  colors: array<string>().def(['bg-green-200', 'bg-blue-200', 'bg-cyan-100']),
+})
+
+const bubbleClass = computed(() => {
+  const bubbles = [
+    'absolute right--10 top-10 h-32 w-32 rounded-full opacity-20 blur-30px',
+    'absolute top-[50%] transform-translate-y-[-50%] left--12 h-40 w-40 rounded-full opacity-15 blur-40px',
+    'absolute top-[75%] transform-translate-y-[-50%] right--20 h-28 w-28 rounded-full opacity-25 blur-25px',
+  ]
+
+  return bubbles.map((bubble, index) => {
+    return `${bubble} ${props.colors[index] || ''}`
+  })
+})
 </script>
 
 <template>
-  <view class="fixed left-0 top-0 h-600rpx w-600rpx -z-10 -translate-x-1/2">
-    <image class="h-full w-full" src="./images/orange.svg" alt="orange" />
-  </view>
-
-  <view class="fixed right-0 top-200rpx h-600rpx w-600rpx translate-x-1/2 -z-10">
-    <image class="h-full w-full" src="./images/pink.svg" alt="pink" />
-  </view>
-
-  <view class="fixed bottom-100rpx left-0 h-600rpx w-600rpx -z-10 -translate-x-1/2">
-    <image class="h-full w-full" src="./images/green.svg" alt="green" />
-  </view>
+  <!-- 模糊气泡背景 -->
+  <view v-for="(bubble, index) in bubbleClass" :key="index" :class="bubble" />
 </template>
 
-<style lang="scss" scoped>
-//
-</style>
+<style lang="scss" scoped></style>

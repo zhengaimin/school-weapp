@@ -1,0 +1,1 @@
+Component({properties:{theme:{type:String,value:"theme-blue"},size:{type:String,value:"m"}},data:{canvas:null},lifetimes:{ready(){}},methods:{}});

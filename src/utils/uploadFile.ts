@@ -22,6 +22,7 @@ import { toast } from './toast'
 export const uploadFileUrl = {
   /** 用户头像上传地址 */
   USER_AVATAR: `${import.meta.env.VITE_SERVER_BASEURL}/user/avatar`,
+  UPLOAD: `${import.meta.env.VITE_SERVER_BASEURL}/common/files/upload`,
 }
 
 /**

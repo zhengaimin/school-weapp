@@ -9,46 +9,83 @@
 </route>
 
 <script lang="ts" setup>
-import type { FamilyContact, FamilyContactForm } from '../manage/types'
-
-import { onLoad } from '@dcloudio/uni-app'
-import { computed, onMounted, ref } from 'vue'
-
+// #region 导入
+import type { Family } from '@/api/interface/modules/family'
+import type { TBatchRequestList } from '@/hooks/usePage'
+import { storeToRefs } from 'pinia'
+import { computed, ref } from 'vue'
+import {
+  getFamilyContactDetailApi,
+  postFamilyContactApi,
+  putFamilyContactApi,
+} from '@/api/modules/family/contacts'
 import TButton from '@/components/common/button/index.vue'
 import Page from '@/components/common/page/index.vue'
 import WhiteCard from '@/components/common/white-card/index.vue'
 import Cell from '@/components/form/cell/index.vue'
+import Form from '@/components/form/index/index.vue'
 import Picker from '@/components/form/picker/index.vue'
-
 import { useForm } from '@/hooks/useForm'
 import { usePage } from '@/hooks/usePage'
+import { useConfigStore } from '@/store/config'
+import { useParentStore } from '@/store/parent'
+import { currRoute } from '@/utils'
+import { useFamily } from '@/utils/emit/family'
+// #endregion
 
-import { addFamilyContact, getRelationshipOptions, updateFamilyContact } from '../manage/data'
-
+// #region 组件选项配置
 defineOptions({
   options: {
     styleIsolation: 'apply-shared',
   },
 })
+// #endregion
 
-const { pageLoading, pageError, onLoginSuccess, onLoginFail, getContentHeight } = usePage()
+// #region 使用 Store
+const configStore = useConfigStore()
+const parentStore = useParentStore()
+const { relationshipOptions } = storeToRefs(configStore)
+const { familyContactsRelationshipMap } = storeToRefs(parentStore)
+// #endregion
+
+// #region 使用 Hooks
+const { pageLoading, pageError, batchRequestHandler, onLoginFail, getContentHeight } = usePage()
 const { formRef, validate, submitLoading, scrollToFirstError } = useForm('.contact-scroll')
+const { emitRefreshFamilyList } = useFamily()
+// #endregion
 
-const currentEditContact = ref<FamilyContact | null>(null)
+// #region 定义响应式数据
+const currentEditContact = ref<Family.Contact.ResGetFamilyContactsApi | null>(null)
 
-// 表单数据
-const formData = ref<FamilyContactForm>({
-  relationship: '',
-  phoneNumber: '',
+const formData = ref<Family.Contact.ReqPostFamilyContactApi>({
+  relationship: 0,
+  phone: '',
+})
+// #endregion
+
+// #region 定义计算属性
+const contentHeight = computed(() => {
+  return getContentHeight('164rpx')
 })
 
-// 关系选项
-const relationshipOptions = getRelationshipOptions()
+// 处理关系选项，禁用已存在的关系（编辑时排除当前关系）
+const processedRelationshipOptions = computed(() => {
+  return relationshipOptions.value.map((option) => {
+    const isCurrentRelationship = currentEditContact.value?.relationship === option.value
+    const isExistingRelationship = familyContactsRelationshipMap.value[option.value]
 
-// 表单验证规则
+    return {
+      ...option,
+      disabled: !isCurrentRelationship && !!isExistingRelationship,
+    }
+  })
+})
+// #endregion
+
+// #region 定义验证规则
 const rules = {
   relationship: [{ required: true, message: '请选择关系' }],
-  phoneNumber: [
+  phone: [
     { required: true, message: '请输入手机号' },
     {
       required: true,
@@ -57,66 +94,84 @@ const rules = {
     },
   ],
 }
+// #endregion
 
-const contentHeight = computed(() => {
-  return getContentHeight('164rpx')
-})
+// #region 接口请求函数
+async function axiosGetFamilyContactDetailApi(id: number) {
+  try {
+    const result = await getFamilyContactDetailApi(id)
 
-// 提交表单
+    // 获取到当前亲情号的信息，回显到 form 中
+    if (result.code === 0) {
+      currentEditContact.value = result.data
+      formData.value.relationship = result.data.relationship || 0
+      formData.value.phone = result.data.phone || ''
+    }
+
+    return result
+  }
+  catch (error) {
+    console.log('获取亲情号详情失败', error)
+    return { code: -1, message: '获取信息失败', data: null }
+  }
+}
+// #endregion
+
+// #region 事件处理函数
 async function handleSubmit() {
   try {
-    const { valid } = await validate(['relationship', 'phoneNumber'])
+    console.log(formData.value)
+    const { valid } = await validate(['relationship', 'phone'])
     if (!valid) {
       scrollToFirstError()
       return
     }
 
     submitLoading.value = true
+    const isEdit = !!currentEditContact.value
 
-    if (currentEditContact.value) {
-      // 编辑模式
-      await updateFamilyContact(currentEditContact.value.id, formData.value)
+    const result = await (isEdit
+      ? putFamilyContactApi(currentEditContact.value!.id!, formData.value)
+      : postFamilyContactApi(formData.value))
+
+    if (result.code === 0) {
       uni.showToast({
-        title: '修改成功',
-        icon: 'success',
+        title: isEdit ? '修改成功' : '添加成功',
+        icon: 'none',
       })
     }
-    else {
-      // 添加模式
-      await addFamilyContact(formData.value)
-      uni.showToast({
-        title: '添加成功',
-        icon: 'success',
-      })
-    }
+
+    emitRefreshFamilyList()
     uni.navigateBack()
   }
   catch (error) {
     console.error('操作失败:', error)
-    uni.showToast({
-      title: '操作失败，请重试',
-      icon: 'none',
-    })
   }
   finally {
     submitLoading.value = false
   }
 }
+// #endregion
 
-onLoad((options) => {
-  if (options?.item) {
-    const item = JSON.parse(options.item)
-    currentEditContact.value = item
-    formData.value = {
-      relationship: item.relationship,
-      phoneNumber: item.phoneNumber,
-    }
+// #region 生命周期钩子
+function onLoginSuccess() {
+  const { query } = currRoute()
+
+  // 构建请求列表，只包含统一类型的请求
+  const reqList: TBatchRequestList = [
+    configStore.axiosGetRelationshipOptionsApi(),
+    // 获取亲情号列表用于关系禁用逻辑
+    parentStore.axiosGetFamilyContactsApi(),
+  ]
+
+  if (query.id) {
+    reqList.push(axiosGetFamilyContactDetailApi(+query.id))
   }
-})
 
-onMounted(() => {
-  pageLoading.value = false
-})
+  // 使用 batchRequestHandler 处理统一类型的请求
+  batchRequestHandler(reqList)
+}
+// #endregion
 </script>
 
 <template>
@@ -130,36 +185,30 @@ onMounted(() => {
   >
     <view p="4 t-2" :style="contentHeight">
       <WhiteCard>
-        <wd-form ref="formRef" :model="formData" :rules="rules">
-          <view space="y-4">
+        <Form ref="formRef" :model="formData" :rules="rules">
+          <view flex="~ col" gap="2.5">
             <!-- 关系选择 -->
-            <Cell id="relationship" required label="关系" label-position="top">
+            <Cell id="relationship" required label="关系" prop="relationship">
               <Picker
-                v-model="formData.relationship"
+                v-model.number="formData.relationship"
                 placeholder="请选择关系"
                 title="选择关系"
-                :options="relationshipOptions"
+                :options="processedRelationshipOptions"
               />
             </Cell>
 
             <!-- 手机号输入 -->
-            <Cell id="phoneNumber" required label="手机号" label-position="top">
-              <wd-input
-                v-model="formData.phoneNumber"
-                prop="phoneNumber"
-                type="tel"
-                placeholder="请输入手机号"
-                :rules="rules.phoneNumber"
-              />
+            <Cell id="phone" required label="手机号" prop="phone">
+              <wd-input v-model="formData.phone" type="tel" placeholder="请输入手机号" />
             </Cell>
           </view>
-        </wd-form>
+        </Form>
       </WhiteCard>
     </view>
 
     <!-- 底部添加按钮 -->
     <view p="4">
-      <TButton type="primary" block size="large" :loading="submitLoading" @click="handleSubmit">
+      <TButton type="primary" full size="large" :loading="submitLoading" @click="handleSubmit">
         确定
       </TButton>
     </view>

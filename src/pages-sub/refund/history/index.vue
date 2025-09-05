@@ -9,82 +9,41 @@
 </route>
 
 <script lang="ts" setup>
-import type { RefundRecord, TimeFilterType } from './data'
-
-import { computed, onMounted, ref } from 'vue'
+// #region 导入
+import type { Refund } from '@/api/interface/modules/refund'
+import type { FilterConfig } from '@/components/common/filter-group/index.vue'
+import dayjs from 'dayjs'
+import { computed, onUnmounted, ref } from 'vue'
+import { useMessage } from 'wot-design-uni'
+import { getRefundApplicationsApi, postCancelRefundApplicationApi } from '@/api/modules/refund'
 import FilterGroup from '@/components/common/filter-group/index.vue'
 import Page from '@/components/common/page/index.vue'
 import RefreshList from '@/components/common/refresh-list/index.vue'
-import WhiteCard from '@/components/common/white-card/index.vue'
-import Icon from '@/components/icon/index.vue'
-
+import { ALL } from '@/constant/modules/common'
+import { REFUND_STATUS, REFUND_STATUS_I18N, REFUND_STATUS_OPTIONS } from '@/constant/modules/refund'
+import { REFUND_RESULT_PATH } from '@/constant/router'
 import { usePage } from '@/hooks/usePage'
 import { useRefresh } from '@/hooks/useRefresh'
+import { useRefundEmitter } from '@/utils/emit/refund'
+import { toast } from '@/utils/toast'
+import RefundRecordItem from './components/RefundRecordItem.vue'
+// #endregion
 
-import {
-  filterRefundRecords,
-  getRefundRecords,
-  getStatusConfig,
-  getStatusFilterOptions,
-  getTimeFilterOptions,
-} from './data'
-
+// #region 组件选项配置
 defineOptions({
   options: {
     styleIsolation: 'apply-shared',
   },
 })
+// #endregion
 
-const { pageLoading, pageError, getContentHeight, onLoginSuccess, onLoginFail } = usePage()
-
-// 页面参数
-const studentId = ref('')
-// 筛选条件
-const filters = ref({
-  time: 'all' as TimeFilterType,
-  status: 'all',
-})
-
-// 筛选器配置
-const filterConfigs = computed(() => [
-  {
-    key: 'time',
-    title: '选择时间范围',
-    options: getTimeFilterOptions(),
-  },
-  {
-    key: 'status',
-    title: '选择退款状态',
-    options: getStatusFilterOptions(),
-  },
-])
-
-// 模拟 API 请求函数
-async function fetchRefundRecords(query: any) {
-  // 模拟 API 调用
-  await new Promise(resolve => setTimeout(resolve, 1000))
-
-  const allRecords = getRefundRecords(studentId.value)
-  const filteredData = filterRefundRecords(allRecords, filters.value.time, filters.value.status)
-
-  // 模拟分页
-  const { page = 1, page_size = 10 } = query
-  const start = (page - 1) * page_size
-  const end = start + page_size
-  const list = filteredData.slice(start, end)
-
-  return {
-    code: 0,
-    msg: 'success',
-    data: {
-      list,
-      total: filteredData.length,
-    },
-  }
-}
-
+// #region 使用 Hooks
+const { pageLoading, pageError, getContentHeight, batchRequestHandler, onLoginFail } = usePage()
+const message = useMessage()
+const { onRefundSuccess, emitRefundSuccess } = useRefundEmitter()
 // 使用 useRefresh hook
 const {
+  query,
   loading,
   refreshLoading,
   loaded,
@@ -92,47 +51,146 @@ const {
   list: recordsList,
   onRefreshList,
   onLoadMore,
-} = useRefresh<RefundRecord>({
-  get: fetchRefundRecords,
+} = useRefresh<Refund.IRefundApplicationVo>({
+  get: getRefundApplicationsApi as any,
+  listField: 'list',
   immediate: false,
 })
+// #endregion
+
+// #region 定义响应式数据
+// 筛选条件
+const filters = ref<(string | number | [number, number])[]>([
+  [dayjs().subtract(1, 'year').valueOf(), dayjs().valueOf()],
+  ALL,
+])
+// #endregion
+
+// #region 定义计算属性
+// 筛选器配置
+const filterConfigs = computed<FilterConfig[]>(() => [
+  {
+    key: 'daterange',
+    title: '选择时间范围',
+    type: 'daterange',
+    concise: true,
+    options: [],
+  },
+  {
+    key: 'status',
+    title: '选择退款状态',
+    options: REFUND_STATUS_OPTIONS,
+  },
+])
 
 const contentStyle = computed(() => {
   return getContentHeight('140rpx')
 })
+// #endregion
 
+// #region 方法定义
+function changeHistoryStatusCancelled(id: number) {
+  const item = recordsList.value.find(i => i.id === id)
+  if (item) {
+    item.status = REFUND_STATUS.CANCELLED
+    item.statusText = REFUND_STATUS_I18N[REFUND_STATUS.CANCELLED]
+  }
+}
+// #endregion
+
+// #region 事件处理函数
 // 筛选变化处理
-function onFilterChange(key: string, value: string | number) {
-  // 重新加载数据
+function onFilterChange(key: string, value: string | number | [number, number]) {
+  if (key === 'daterange') {
+    const [startTime, endTime] = value as [number, number]
+
+    query.value.startDate = dayjs(startTime).format('YYYY-MM-DD')
+    query.value.endDate = dayjs(endTime).format('YYYY-MM-DD')
+  }
+  else if (key === 'status') {
+    if (value !== ALL) {
+      query.value.status = value
+    }
+    else {
+      delete query.value.status
+    }
+  }
+
   onRefreshList()
 }
 
 // 跳转到退款记录详情
-function goToRefundDetail(record: RefundRecord) {
-  // 这里可以跳转到退款详情页面
-  uni.showToast({
-    title: `查看${record.orderNo}详情`,
-    icon: 'none',
+function goToRefundDetail(record: Refund.IRefundApplicationVo) {
+  uni.navigateTo({
+    url: `${REFUND_RESULT_PATH}?id=${record.id}`,
   })
 }
 
-// 初始化页面数据
-function initPageData() {
-  // 获取页面参数
-  const pages = getCurrentPages()
-  const currentPage: any = pages[pages.length - 1]
-  const options = currentPage.options as any
+// 处理取消申请
+async function handleCancelApplication(record: Refund.IRefundApplicationVo) {
+  try {
+    // 弹出确认框
+    const confirm = await message.confirm({
+      title: '提示',
+      msg: '确定要取消该退款申请吗？',
+      confirmButtonText: '确定',
+      cancelButtonText: '再想想',
+    })
 
-  studentId.value = options.studentId || ''
+    if (confirm) {
+      // 显示加载中
+      uni.showLoading({ title: '正在取消...' })
+
+      // 调用取消API
+      const result = await postCancelRefundApplicationApi(record.id)
+      if (result.code === 0) {
+        changeHistoryStatusCancelled(record.id)
+
+        // 发送退款事件
+        emitRefundSuccess({
+          id: record.id.toString(),
+          status: 'cancelled',
+          amount: Number.parseFloat(record.applyAmount),
+        })
+      }
+
+      // 取消成功提示
+      toast.show('取消成功')
+    }
+  }
+  catch (error) {
+    console.error('取消退款申请失败:', error)
+    toast.show('取消失败，请重试')
+  }
+  finally {
+    // 隐藏加载中
+    uni.hideLoading()
+  }
+}
+// #endregion
+
+// #region 生命周期钩子
+async function onLoginSuccess() {
+  const daterange = filters.value[0] as [number, number]
+  const [startTime, endTime] = daterange
+  query.value.startDate = dayjs(startTime).format('YYYY-MM-DD')
+  query.value.endDate = dayjs(endTime).format('YYYY-MM-DD')
+
+  batchRequestHandler([onRefreshList()])
 }
 
-onMounted(async () => {
-  initPageData()
-  pageLoading.value = false
-
-  // 等待页面完全渲染后再加载数据
-  onRefreshList()
+// 监听退款成功事件
+const unsubscribeRefund = onRefundSuccess((data) => {
+  console.log('退款历史页监听到退款成功事件:', data)
+  // 根据传入的ID修改对应项目状态为取消
+  changeHistoryStatusCancelled(Number(data.id))
 })
+
+// 组件卸载时取消监听
+onUnmounted(() => {
+  unsubscribeRefund()
+})
+// #endregion
 </script>
 
 <template>
@@ -159,49 +217,14 @@ onMounted(async () => {
       @refresh="onRefreshList"
       @loadmore="onLoadMore"
     >
-      <view p="x-4" space="y-3">
-        <view
+      <view flex="~ col" p="x-4" gap="3">
+        <RefundRecordItem
           v-for="record in recordsList"
           :key="record.id"
-          relative
-          overflow="hidden"
+          :record="record"
           @click="goToRefundDetail(record)"
-        >
-          <WhiteCard relative>
-            <!-- 背景图标 -->
-            <view absolute style="left: -34px; top: 34px; transform: translateY(-50%)">
-              <Icon
-                :name="getStatusConfig(record.status).icon"
-                :icon-color="getStatusConfig(record.status).iconColor"
-                icon-size="256rpx"
-                custom-class="opacity-10"
-              />
-            </view>
-
-            <!-- 内容区域 -->
-            <view relative z="10">
-              <!-- 第一行：姓名和金额 -->
-              <view flex="~ justify-between items-center" m="b-1">
-                <view text="sm gray-900" font="medium">
-                  {{ record.studentName }}
-                </view>
-                <view text="lg gray-900" font="bold">
-                  ¥{{ record.amount.toFixed(2) }}
-                </view>
-              </view>
-
-              <!-- 第二行：状态和退款方式 -->
-              <view flex="~ justify-between items-center" m="b-2">
-                <view text="xs gray-600">
-                  {{ getStatusConfig(record.status).label }} · {{ record.refundMethod }}
-                </view>
-                <view text="xs gray-600">
-                  {{ record.time }}
-                </view>
-              </view>
-            </view>
-          </WhiteCard>
-        </view>
+          @cancel="handleCancelApplication"
+        />
       </view>
     </RefreshList>
   </Page>

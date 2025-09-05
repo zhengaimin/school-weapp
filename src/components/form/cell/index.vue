@@ -90,7 +90,7 @@ const containerClass = computed(() => {
       </view>
 
       <!-- 内容区域 -->
-      <view class="cell-content">
+      <view class="cell-content" w-full flex="~ col">
         <slot></slot>
         <view v-if="error && errorMessage" class="error-message">
           {{ errorMessage }}
@@ -130,7 +130,6 @@ const containerClass = computed(() => {
 .cell-container--top {
   --wot-input-inner-height: 72rpx;
   --wot-textarea-inner-height: 72rpx;
-
   flex-direction: column;
 
   .cell-label {
@@ -138,7 +137,6 @@ const containerClass = computed(() => {
   }
 
   .cell-content {
-    width: 100%;
   }
 
   // 去表底部边框

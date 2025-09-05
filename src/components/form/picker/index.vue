@@ -90,6 +90,7 @@ function handleClick() {
     v-model="showSelector"
     :title="title"
     :options="options"
+    :value="modelValue"
     @confirm="handleConfirm"
     @cancel="handleCancel"
   />

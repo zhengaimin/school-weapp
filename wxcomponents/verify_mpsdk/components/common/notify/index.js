@@ -1,0 +1,1 @@
+Component({options:{styleIsolation:"isolated"},properties:{type:{type:String,value:"warning"},message:{type:String,value:""},show:{type:Boolean,value:!1}},data:{windowWidth:0,windowHeight:0},ready:function(){var e=this;wx.getSystemInfo({success:function(t){e.setData({windowWidth:t.windowWidth,windowHeight:t.windowHeight})}})},methods:{}});

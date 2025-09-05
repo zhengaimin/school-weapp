@@ -17,6 +17,8 @@ interface Props {
   loaded?: boolean
   /** 是否启用下拉刷新 */
   isRefresh?: boolean
+  /** 加载更多指示器位置 */
+  loadmorePosition?: 'top' | 'bottom'
 }
 
 // 定义事件类型
@@ -34,6 +36,7 @@ const props = withDefaults(defineProps<Props>(), {
   refreshLoading: false,
   loaded: false,
   isRefresh: true,
+  loadmorePosition: 'bottom',
 })
 
 const emit = defineEmits<Emits>()
@@ -286,11 +289,18 @@ defineExpose({
         <view class="refresh-dot" />
       </view>
 
-      <!-- 主要内容 -->
-      <slot />
+      <!-- 顶部加载更多 -->
+      <view v-if="loading && loadmorePosition === 'top'" class="gap-text">
+        <view class="word">
+          加载中...
+        </view>
+      </view>
 
-      <!-- 加载中提示 -->
-      <view v-if="loading" class="gap-text">
+      <!-- 主要内容 -->
+      <slot v-if="!empty" />
+
+      <!-- 底部加载更多 -->
+      <view v-if="loading && loadmorePosition === 'bottom'" class="gap-text">
         <view class="word">
           加载中...
         </view>

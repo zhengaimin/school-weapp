@@ -1,0 +1,1 @@
+<view style="color:{{color}}" class="verify-mp-icon {{icon}} {{customClass}}"></view>

@@ -1,22 +1,31 @@
 <script lang="ts" setup>
+// #region 导入
 import type { Ref } from 'vue'
 import { storeToRefs } from 'pinia'
-import { inject, onMounted, ref } from 'vue'
-import { bool, string } from 'vue-types'
+import { computed, inject, onMounted, ref, unref } from 'vue'
+import { array, bool, string } from 'vue-types'
 
+import DefaultBg from '@/components/common/default-bg/index.vue'
 import Loading from '@/components/common/loading/index.vue'
-
 import Navigation from '@/components/common/navigation/index.vue'
 
 import { ROLE_TYPE } from '@/constant/modules/user'
 
-import { PARENT_STUDENT_BIND_PATH, TABBAR_HOME_PATH, WELCOME_PATH } from '@/constant/router'
-import { useUserStore } from '@/store/user'
+import {
+  LAUNCH_PATH,
+  PARENT_STUDENT_BIND_PATH,
+  TABBAR_HOME_PATH,
+  WELCOME_PATH,
+} from '@/constant/router'
+import { useBalance } from '@/hooks/useBalance'
 import { useParentStore } from '@/store/parent'
+import { useUserStore } from '@/store/user'
 
 import { currRoute } from '@/utils'
 import { isMpWeixin } from '@/utils/platform'
+// #endregion
 
+// #region 属性定义
 defineProps({
   // navigation 组件
   title: string().def(''),
@@ -26,21 +35,38 @@ defineProps({
   error: string().def(''),
 
   // scroll 组件
-  scrollY: bool().def(true)
+  scrollY: bool().def(true),
+
+  // 背景
+  showBg: bool().def(false),
+  bgColors: array<string>(),
 })
 
 const emit = defineEmits(['scroll', 'login:success', 'login:fail'])
+// #endregion
 
+// #region 依赖注入和双向绑定
 const isFirstLaunch = inject<Ref<boolean>>('isFirstLaunch', ref(true))
 
 const loading = defineModel<boolean>('loading', { default: false })
 const show = defineModel<boolean>('show', { default: true })
+// #endregion
 
+// #region 使用 Store
 const userStore = useUserStore()
 const parentStore = useParentStore()
-const { token, phone, role, userInfo, needBind } = storeToRefs(userStore)
-const { students } = storeToRefs(parentStore)
+const { axiosGetUserBalanceApi } = useBalance()
+const { token, phone, role, userInfo } = storeToRefs(userStore)
+const { students, needBind } = storeToRefs(parentStore)
+// #endregion
 
+// #region 定义计算属性
+const needsLogin = computed(() => {
+  return unref(needBind) || !unref(phone) || !unref(token) || unref(isFirstLaunch)
+})
+// #endregion
+
+// #region 方法定义
 function isCurrentPage(path) {
   const pages = getCurrentPages()
 
@@ -62,40 +88,55 @@ function handleScroll(e) {
 }
 
 async function initInfo() {
-  // 没有用户信息、或者是首次启动，则获取用户信息
-  if (unref(token) && (!unref(userInfo) || unref(isFirstLaunch))) {
-    if (!unref(userInfo) || unref(isFirstLaunch)) {
-      await userStore.getUserInfo()
-    }
-  }
-  // 获取家长下的学生列表
-  if (
-    unref(token) &&
-    unref(role) === ROLE_TYPE.PARENT &&
-    (!unref(students).length || unref(isFirstLaunch))
-  ) {
-    await parentStore.axiosGetStudentListByParentApi()
-  }
-}
+  // 没有 token，直接返回
+  if (!unref(token))
+    return
 
+  // 没有用户信息、或者是首次启动，则获取用户信息
+  if (!unref(userInfo) || unref(isFirstLaunch))
+    await userStore.getUserInfo()
+
+  // 获取家长下的学生列表
+  const isParent = unref(role) === ROLE_TYPE.PARENT
+  const noStudents = !unref(students).length
+  if (isParent && (noStudents || unref(isFirstLaunch)))
+    await parentStore.axiosGetStudentListByParentApi()
+}
+// #endregion
+
+// #region 登录处理
 // 处理登录成功后的导航逻辑
-async function loginSuccessNavigation(needBind: boolean) {
+async function loginSuccessNavigation(_needBind: boolean) {
   const _role = unref(role)
 
   // 用户没有身份，优先跳转身份选择页面
-  if (!_role && !isCurrentPage(WELCOME_PATH)) {
-    uni.navigateTo({ url: WELCOME_PATH })
+  const shouldGoToWelcome = !_role && !isCurrentPage(WELCOME_PATH)
+  if (shouldGoToWelcome) {
+    setTimeout(() => {
+      uni.redirectTo({ url: WELCOME_PATH })
+    }, 500)
     return
   }
 
   // 是家长，但是没有绑定学生，且当前页面不是绑定页面，则直接跳转到绑定页面
-  if (_role === ROLE_TYPE.PARENT && needBind && !isCurrentPage(PARENT_STUDENT_BIND_PATH)) {
-    uni.navigateTo({ url: PARENT_STUDENT_BIND_PATH })
+  const shouldGoToBind
+    = _role === ROLE_TYPE.PARENT && _needBind && !isCurrentPage(PARENT_STUDENT_BIND_PATH)
+  if (shouldGoToBind) {
+    setTimeout(() => {
+      uni.navigateTo({ url: PARENT_STUDENT_BIND_PATH })
+    }, 500)
     return
   }
 
-  if (!needBind && !isCurrentPage(TABBAR_HOME_PATH)) {
-    uni.navigateTo({ url: `${TABBAR_HOME_PATH}?role=${_role}` })
+  // 检查路由栈第一个页面是否为启动页
+  const pages = getCurrentPages()
+  const isFromLaunchPage = pages.length > 0 && `/${pages[0].route}` === LAUNCH_PATH
+
+  const shouldGoToHome = !_needBind && !isCurrentPage(TABBAR_HOME_PATH) && isFromLaunchPage
+  if (shouldGoToHome) {
+    setTimeout(() => {
+      uni.redirectTo({ url: `${TABBAR_HOME_PATH}?role=${_role}` })
+    }, 500)
   }
 }
 
@@ -104,19 +145,23 @@ async function mpWeixinLogin() {
     const wxResult = await userStore.wxLogin()
 
     if (wxResult.code === 0) {
-      const { token, needBind } = wxResult.data
+      const { token, needBind: _needBind } = wxResult.data
       // 有 token 说明之前绑定过
       token && userStore.setToken(token)
-      userStore.setNeedBind(needBind)
+      parentStore.setNeedBind(_needBind)
 
       await initInfo()
 
-      await loginSuccessNavigation(needBind)
+      await loginSuccessNavigation(_needBind)
       emit('login:success')
-    } else {
+    }
+    else {
       emit('login:fail')
     }
-  } catch (error) {
+
+    return null
+  }
+  catch (error) {
     console.error('page 组件', error)
     emit('login:fail')
   }
@@ -125,47 +170,60 @@ async function mpWeixinLogin() {
 // H5 等其他环境的登录逻辑
 async function otherEnvLogin() {
   try {
-    isFirstLaunch.value = false
+    parentStore.setNeedBind(false)
+    userStore.setRole(ROLE_TYPE.PARENT)
+    userStore.setPhone('15972227364')
+    userStore.setToken(
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ3ZWNoYXRBY2NvdW50SWQiOjE1LCJjdXJyZW50VXNlcklkIjoyNSwidXNlcm5hbWUiOiJ3ZWNoYXRfdXNlcl8xNSIsImlkZW50aXRpZXMiOnsiMjUiOnsidXNlcklkIjoxOCwicm9sZUlkIjo0LCJyb2xlQ29kZSI6InBhcmVudCIsInRlbmFudElkIjoyLCJ0ZW5hbnRDb2RlIjoidGVzdF90ZW5hbnRfMDAxIiwic2Nob29sSWQiOjEsInNjaG9vbENvZGUiOiJTQ0hPT0xfM18xNzU1NjE1NjYwIiwidXNlclR5cGUiOiJwYXJlbnQifX0sInVzZXJUeXBlIjoiVVNFUiIsImV4cCI6MTc1NzA2Mzk1OCwibmJmIjoxNzU2OTc3NTU4LCJpYXQiOjE3NTY5Nzc1NTh9.AAJMae3uoddqeuzWXwgbX_efLepIqb0cZxH4QIRvlN8',
+    )
 
-    // 在实际应用中，token 通常由请求拦截器自动处理
-    // 这里直接尝试获取用户信息
-    const result = await userStore.getUserInfo()
-    if (result.code === 0) {
-      emit('login:success')
-    } else {
-      emit('login:fail')
+    if (unref(isFirstLaunch)) {
+      isFirstLaunch.value = false
+      await userStore.getUserInfo()
+      await parentStore.axiosGetStudentListByParentApi()
     }
-  } catch (error) {
+
+    emit('login:success')
+  }
+  catch (error) {
     console.error('H5 login error:', error)
     emit('login:fail')
   }
 }
+// #endregion
 
+// #region 生命周期钩子
 onMounted(async () => {
-  if (isCurrentPage(TABBAR_HOME_PATH)) {
-    isFirstLaunch.value = false
+  try {
+    if (isCurrentPage(TABBAR_HOME_PATH) && isMpWeixin) {
+      isFirstLaunch.value = false
 
-    await nextTick()
-  }
+      await nextTick()
+    }
 
-  if (isMpWeixin) {
-    // 不需要绑定，有手机号，
-    if (unref(needBind) || !unref(phone) || !unref(token) || unref(isFirstLaunch)) {
+    !isFirstLaunch.value && (await axiosGetUserBalanceApi())
+    if (!isMpWeixin) {
+      otherEnvLogin()
+    }
+    else if (isMpWeixin && needsLogin.value) {
       await mpWeixinLogin()
-    } else {
+    }
+    else {
       emit('login:success')
     }
-  } else {
-    otherEnvLogin()
+  }
+  catch (error) {
+    console.error('page 组件', error)
   }
 })
+// #endregion
 </script>
 
 <template>
-  <view relative z-1 h-screen flex="~ col" bg-gray-50 pb-safe>
+  <view class="t-page" flex="~ col" relative z-1 box-border h-screen bg-gray-50 pb-safe>
     <!-- 导航 -->
     <Navigation v-if="show" :title="title" :show-back="showBack">
-      <template #right>
+      <template v-if="!loading" #right>
         <slot name="header-right" />
       </template>
     </Navigation>
@@ -181,10 +239,17 @@ onMounted(async () => {
       </view>
     </view>
 
-    <!-- 页面加载完毕且没有错误 -->
-    <template v-if="!loading && !error">
+    <!-- 内容区域 -->
+    <template v-if="!loading">
+      <!-- 错误区域 -->
+      <view v-if="error" flex="~ 1" overflow-hidden :class="{ 'bottom-line-exclude': showTabbar }">
+        <view flex="~ 1 items-center justify-center">
+          <wd-status-tip image="network" :tip="error" />
+        </view>
+      </view>
+      <!-- 页面加载完毕且没有错误 -->
       <scroll-view
-        v-if="!loading"
+        v-else
         enable-flex
         flex="~ 1 col"
         :class="{ 'bottom-line-exclude': showTabbar }"
@@ -194,17 +259,8 @@ onMounted(async () => {
         <slot />
       </scroll-view>
     </template>
-    <!-- 错误区域 -->
-    <view
-      v-else-if="!loading && error"
-      flex="~ 1"
-      overflow-hidden
-      :class="{ 'bottom-line-exclude': showTabbar }"
-    >
-      <view flex="~ 1 items-center justify-center">
-        <wd-status-tip image="network" :tip="error" />
-      </view>
-    </view>
+
+    <DefaultBg v-if="showBg" :colors="bgColors" />
   </view>
 </template>
 

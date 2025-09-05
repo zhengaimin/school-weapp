@@ -1,4 +1,4 @@
-import { useUserStore } from '@/store'
+import { useUserStore } from '@/store/user'
 import { getEnvBaseUrl } from '@/utils'
 import { platform } from '@/utils/platform'
 import { stringifyQuery } from './queryString'

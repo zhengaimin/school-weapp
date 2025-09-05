@@ -4,7 +4,7 @@
  * 可配置 duration, position 等参数
  */
 
-type ToastType = 'success' | 'error' | 'warning' | 'info'
+type ToastType = 'success' | 'error' | 'warning' | 'info' | 'none'
 
 interface ToastOptions {
   type?: ToastType
@@ -41,6 +41,7 @@ export function showToast(options: ToastOptions | string) {
     error: 'error',
     warning: 'fail',
     info: 'none',
+    none: 'none',
   }
 
   // 调用uni.showToast显示提示
@@ -62,4 +63,6 @@ export const toast = {
     showToast({ ...options, type: 'warning', message }),
   info: (message: string, options?: Omit<ToastOptions, 'type'>) =>
     showToast({ ...options, type: 'info', message }),
+  show: (message: string, options?: Omit<ToastOptions, 'type'>) =>
+    showToast({ ...options, type: 'none', message }),
 }

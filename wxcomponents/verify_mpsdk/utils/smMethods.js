@@ -1,0 +1,1 @@
+const smMethodsList=["/api/ocr/ocrinfo","/api/ocr/hk_mc_tw_ocrinfo","/api/ocr/updateidinfo","/api/common/upLoadWxAppFile","/api/common/sendSmsCode","/api/common/verifySmsCode","/api/ocr/nfcData"];export{smMethodsList};

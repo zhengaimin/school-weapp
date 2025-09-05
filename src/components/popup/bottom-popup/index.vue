@@ -1,14 +1,18 @@
 <script setup lang="ts">
-import type { BottomPopupEmits, BottomPopupProps } from './types'
+// #region 导入
+import type { BottomPopupProps } from './types'
 import { computed } from 'vue'
+// #endregion
 
+// #region 属性定义
 // 组件属性类型（使用导入的类型）
 type Props = BottomPopupProps
 
-// 事件定义类型（使用导入的类型）
-type Emits = BottomPopupEmits
+// #endregion
 
+// #region 组件选项
 defineOptions({
+  inheritAttrs: false,
   options: {
     styleIsolation: 'shared',
   },
@@ -29,14 +33,29 @@ const props = withDefaults(defineProps<Props>(), {
   contentStyle: '',
 })
 
-const emit = defineEmits<Emits>()
+const emit = defineEmits<{
+  (e: 'update:modelValue', value: boolean): void
+  (e: 'close'): void
+  (e: 'click-modal'): void
+  (e: 'before-enter'): void
+  (e: 'enter'): void
+  (e: 'after-enter'): void
+  (e: 'before-leave'): void
+  (e: 'leave'): void
+  (e: 'after-leave'): void
+}>()
+// #endregion
 
+// #region 响应式数据
 // 使用 defineModel 定义双向绑定
 const show = defineModel('modelValue', { default: false })
+// #endregion
 
+// #region 计算属性
 // 计算弹框样式
 const popupStyle = computed(() => {
   const style = 'border-radius: 32rpx 32rpx 0 0;'
+
   return `${style} ${props.customStyle}`
 })
 
@@ -44,26 +63,48 @@ const popupStyle = computed(() => {
 const computedHeaderStyle = computed(() => {
   return props.headerStyle
 })
+// #endregion
 
+// #region 方法
 // 关闭弹框
 function handleClose() {
   show.value = false
   emit('close')
 }
 
-// 弹框打开事件
-function handleOpen() {
-  emit('open')
+// 点击遮罩事件
+function handleClickModal() {
+  emit('click-modal')
 }
 
-// 弹框打开完成事件
-function handleOpened() {
-  emit('opened')
+// 进入前事件
+function handleBeforeEnter() {
+  emit('before-enter')
 }
 
-// 弹框关闭完成事件
-function handleClosed() {
-  emit('closed')
+// 进入事件
+function handleEnter() {
+  emit('enter')
+}
+
+// 进入后事件
+function handleAfterEnter() {
+  emit('after-enter')
+}
+
+// 离开前事件
+function handleBeforeLeave() {
+  emit('before-leave')
+}
+
+// 离开事件
+function handleLeave() {
+  emit('leave')
+}
+
+// 离开后事件
+function handleAfterLeave() {
+  emit('after-leave')
 }
 
 // 显示弹框
@@ -80,28 +121,37 @@ function hidePopup() {
 function togglePopup() {
   show.value = !show.value
 }
+// #endregion
 
+// #region 暴露
 // 暴露方法给父组件
 defineExpose({
   show: showPopup,
   hide: hidePopup,
   toggle: togglePopup,
 })
+// #endregion
 </script>
 
 <template>
   <wd-popup
+    v-bind="$attrs"
     v-model="show"
     position="bottom"
     :close-on-click-modal="closeOnClickModal"
     :safe-area-inset-bottom="safeAreaInsetBottom"
     :z-index="zIndex"
+    :root-portal="true"
     :custom-style="popupStyle"
     :custom-class="customClass"
-    @open="handleOpen"
-    @opened="handleOpened"
     @close="handleClose"
-    @closed="handleClosed"
+    @click-modal="handleClickModal"
+    @before-enter="handleBeforeEnter"
+    @enter="handleEnter"
+    @after-enter="handleAfterEnter"
+    @before-leave="handleBeforeLeave"
+    @leave="handleLeave"
+    @after-leave="handleAfterLeave"
   >
     <view class="bottom-popup" overflow-hidden flex="~ col">
       <!-- 标题栏 -->
@@ -161,10 +211,6 @@ defineExpose({
     cursor: pointer;
     padding: 8rpx;
     margin: -8rpx;
-
-    &:hover {
-      opacity: 0.7;
-    }
   }
 
   &__content {
