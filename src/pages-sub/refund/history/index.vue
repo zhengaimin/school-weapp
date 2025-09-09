@@ -19,8 +19,7 @@ import { getRefundApplicationsApi, postCancelRefundApplicationApi } from '@/api/
 import FilterGroup from '@/components/common/filter-group/index.vue'
 import Page from '@/components/common/page/index.vue'
 import RefreshList from '@/components/common/refresh-list/index.vue'
-import { ALL } from '@/constant/modules/common'
-import { REFUND_STATUS, REFUND_STATUS_I18N, REFUND_STATUS_OPTIONS } from '@/constant/modules/refund'
+import { ALL, REFUND_STATUS, REFUND_STATUS_I18N, REFUND_STATUS_OPTIONS } from '@/constant/modules'
 import { REFUND_RESULT_PATH } from '@/constant/router'
 import { usePage } from '@/hooks/usePage'
 import { useRefresh } from '@/hooks/useRefresh'
@@ -79,7 +78,7 @@ const filterConfigs = computed<FilterConfig[]>(() => [
   {
     key: 'status',
     title: '选择退款状态',
-    options: REFUND_STATUS_OPTIONS,
+    options: [{ label: '全部', value: ALL }, ...REFUND_STATUS_OPTIONS],
   },
 ])
 

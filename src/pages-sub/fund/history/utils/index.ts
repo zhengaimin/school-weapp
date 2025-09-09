@@ -1,6 +1,6 @@
 import type { User } from '@/api/interface/modules/user'
-import type { TAmountType } from '@/constant/modules/fund'
-import { AMOUNT_TYPE_I18N, AMOUNT_TYPE_ICON_MAP, POSITIVE_AMOUNT_TYPES } from '@/constant/modules/fund'
+import type { TAmountType } from '@/constant/modules'
+import { AMOUNT_TYPE_I18N, AMOUNT_TYPE_ICON_MAP, POSITIVE_AMOUNT_TYPES } from '@/constant/modules'
 
 // #region 格式化函数
 // 获取交易类型的中文显示

@@ -1,6 +1,6 @@
 export namespace Devices {
   /** 设备组信息 */
-  export interface DeviceGroupInfo {
+  export interface IDeviceGroupVo {
     id: number
     code: string
     name: string
@@ -21,9 +21,6 @@ export namespace Devices {
   }
 
   export namespace Group {
-    /** 设备组接口别名，保持向后兼容 */
-    export interface IDeviceGroup extends DeviceGroupInfo {}
-
     /** 获取设备组列表 - 请求 */
     export interface ReqGetDeviceGroupsApi {
       page?: number
@@ -32,7 +29,7 @@ export namespace Devices {
 
     /** 获取设备组列表 - 响应 */
     export interface ResGetDeviceGroupsApi {
-      deviceGroups: DeviceGroupInfo[]
+      deviceGroups: IDeviceGroupVo[]
       total: number
     }
 
@@ -65,8 +62,8 @@ export namespace Devices {
     message: string
   }
   export namespace Subscription {
-    /** 单个订阅信息 */
-    export interface MySubscription {
+    /** 订阅信息 */
+    export interface ISubscriptionVo {
       code: string
       currentDeviceCount: number
       description: string
@@ -87,8 +84,8 @@ export namespace Devices {
 
     /** 获取我的订阅列表 - 响应 */
     export interface ResGetMySubscriptionsApi {
-      subscribed: MySubscription[]
-      unsubscribed: MySubscription[]
+      subscribed: ISubscriptionVo[]
+      unsubscribed: ISubscriptionVo[]
     }
   }
 }

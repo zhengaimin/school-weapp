@@ -11,14 +11,14 @@
 <script lang="ts" setup>
 // #region 导入
 import type { Payment } from '@/api/interface/modules/payment'
-import type { TPaymentStatus } from '@/constant/modules/payment/recharge'
+import type { TPaymentStatus } from '@/constant/modules'
 import { storeToRefs } from 'pinia'
 import { computed, ref, unref } from 'vue'
 import { getPaymentDetailApi } from '@/api/modules/payment/order'
 import TButton from '@/components/common/button/index.vue'
 import DetailBlock from '@/components/common/detail-block/index.vue'
 import Page from '@/components/common/page/index.vue'
-import { PAYMENT_STATUS, RECHARGE_RESULT_STATUS_CONFIG } from '@/constant/modules/payment/recharge'
+import { PAYMENT_STATUS, RECHARGE_RESULT_STATUS_CONFIG } from '@/constant/modules'
 import { usePage } from '@/hooks/usePage'
 import { usePayment } from '@/pages-sub/balance/hooks/usePayment'
 import { useUserStore } from '@/store/user'
@@ -127,9 +127,8 @@ const rechargeItems = computed(() => {
   } = unref(resultInfo)
 
   const items = [
+    { key: 'orderNo', label: '订单号', value: orderNo || '-' },
     { key: 'studentName', label: '学生姓名', value: studentName || '-' },
-    { key: 'studentCode', label: '学生学号', value: studentCode || '-' },
-    { key: 'className', label: '班级', value: className || '-' },
     { key: 'schoolName', label: '学校', value: schoolName || '-' },
     { key: 'amount', label: '充值金额', value: String(amount ?? '-') },
     {
@@ -137,8 +136,6 @@ const rechargeItems = computed(() => {
       label: '充值时间',
       value: payTime ? formatTime(payTime) : formatTime(createdAt),
     },
-    { key: 'status', label: '交易状态', value: statusText || '-' },
-    { key: 'orderNo', label: '订单号', value: orderNo || '-' },
     { key: 'isSelf', label: '是否本人操作', value: isSelfOperation.value ? '是' : '否' },
   ]
 

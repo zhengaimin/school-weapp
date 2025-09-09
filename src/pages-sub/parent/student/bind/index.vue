@@ -25,9 +25,13 @@ import Form from '@/components/form/index/index.vue'
 import Picker from '@/components/form/picker/index.vue'
 import Icon from '@/components/icon/index.vue'
 import BottomPopup from '@/components/popup/bottom-popup/index.vue'
-import { NAVIGATION_SUFFIX_COLOR, NAVIGATION_SUFFIX_SIZE } from '@/constant/modules/navigation'
-import { SEARCH_TYPE, SEARCH_TYPE_OPTIONS } from '@/constant/modules/user'
-import { ROLE_TYPE } from '@/constant/modules/user/role'
+import {
+  NAVIGATION_SUFFIX_COLOR,
+  NAVIGATION_SUFFIX_SIZE,
+  ROLE_TYPE,
+  SEARCH_TYPE,
+  SEARCH_TYPE_OPTIONS,
+} from '@/constant/modules'
 import { TABBAR_HOME_PATH } from '@/constant/router'
 import { useForm } from '@/hooks/useForm'
 import { usePage } from '@/hooks/usePage'
@@ -464,14 +468,19 @@ async function onLoginSuccess() {
             </view>
 
             <!-- Avatar -->
-            <RoleAvatar type="student" m="l-3" />
+            <RoleAvatar
+              type="student"
+              :face-img="false"
+              :path="student?.faceImageUrl"
+              m="l-3"
+            />
 
             <!-- Info -->
             <view m="l-3" flex="1">
               <view text="base" font="medium" color="text-primary">
                 {{ student.name }}
                 <text text="sm" color="text-secondary" m="l-1">
-                  ({{ student.studentCode }})
+                  ({{ formData.searchType === SEARCH_TYPE.CODE ? student.studentCode : student.idCard }})
                 </text>
               </view>
               <view text="sm" color="text-secondary" m="t-0.5">

@@ -1,4 +1,4 @@
-import { PAYMENT_STATUS, PAYMENT_STATUS_I18N } from '@/constant/modules/payment/recharge'
+import { PAYMENT_STATUS } from '@/constant/modules'
 
 // 时间筛选类型
 export type TimeFilterType = 'all' | 'week' | 'month' | 'quarter'

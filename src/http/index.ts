@@ -1,5 +1,5 @@
 import type { CustomRequestOptions } from '@/http/interceptor'
-import { TOKEN_WHITE_LIST } from '@/constant/modules/http'
+import { TOKEN_WHITE_LIST } from '@/constant/modules'
 import { useUserStore } from '@/store/user'
 import { toast } from '@/utils/toast'
 // import { tokenManager } from './tokenManager'

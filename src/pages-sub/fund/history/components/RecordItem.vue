@@ -16,7 +16,7 @@ defineOptions({
 
 // #region 定义 Props 和 Emits
 defineProps<{
-  record: User.Balance.BalanceDetailRecord
+  record: User.Balance.IBalanceDetailRecordVo
 }>()
 
 const emit = defineEmits<{

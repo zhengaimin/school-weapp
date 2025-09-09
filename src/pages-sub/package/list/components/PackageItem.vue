@@ -2,7 +2,7 @@
 // #region 导入
 import type { Pkg } from '@/api/interface/modules/package.ts'
 import WhiteCard from '@/components/common/white-card/index.vue'
-import { PACKAGE_TYPE_I18N } from '@/constant/modules/package'
+import { PACKAGE_TYPE_I18N } from '@/constant/modules'
 // #endregion
 
 // #region 属性定义

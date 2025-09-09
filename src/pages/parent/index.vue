@@ -20,6 +20,7 @@ import { getConsumptionStatisticsApi } from '@/api/modules/user/consumption'
 import TButton from '@/components/common/button/index.vue'
 import Page from '@/components/common/page/index.vue'
 import Icon from '@/components/icon/index.vue'
+import { MENU_LIST } from '@/constant/modules'
 import { BALANCE_RECHARGE_PATH } from '@/constant/router'
 import { useBalance } from '@/hooks/useBalance'
 import { usePage } from '@/hooks/usePage'
@@ -28,7 +29,7 @@ import { useParentStore } from '@/store/parent'
 import { useUserStore } from '@/store/user'
 import { toast } from '@/utils/toast'
 import StudentSelect from './components/StudentSelect.vue'
-import { functionButtons, getGreeting } from './data'
+import { getGreeting } from './data'
 // #endregion
 
 // #region 组件选项配置
@@ -339,7 +340,7 @@ onShow(handleShow)
             <!-- 功能按钮网格 -->
             <view grid="~ cols-4 gap-4">
               <view
-                v-for="(item, index) in functionButtons"
+                v-for="(item, index) in MENU_LIST"
                 :key="index"
                 flex="~ col items-center"
                 @click="handleNavigationToPath(item.path, item)"

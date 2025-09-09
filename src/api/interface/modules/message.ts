@@ -1,6 +1,6 @@
 // src/api/interface/modules/message.ts
 
-import type { TFileType, TMessageDirection } from '@/constant/modules/message'
+import type { TFileType, TMessageDirection } from '@/constant/modules'
 
 export namespace Message {
   /** 留言发送者信息 */

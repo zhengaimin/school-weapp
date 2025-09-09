@@ -12,18 +12,22 @@
 // #region 导入
 import type { File } from '@/api/interface/modules/file'
 import { storeToRefs } from 'pinia'
-import { computed, onMounted, ref } from 'vue'
+import { computed, ref } from 'vue'
 import { putStudentFaceApi } from '@/api/modules/students'
 import TButton from '@/components/common/button/index.vue'
+import Notice from '@/components/common/notice/index.vue'
 import Page from '@/components/common/page/index.vue'
 import WhiteCard from '@/components/common/white-card/index.vue'
 import Icon from '@/components/icon/index.vue'
 import BottomPopup from '@/components/popup/bottom-popup/index.vue'
-import { NAVIGATION_SUFFIX_COLOR, NAVIGATION_SUFFIX_SIZE } from '@/constant/modules/navigation'
+import { NAVIGATION_SUFFIX_COLOR, NAVIGATION_SUFFIX_SIZE } from '@/constant/modules'
+import { FACE_STATUS } from '@/constant/modules/business/user/student'
+import { COMMON_AUTO_CAMERA_PATH } from '@/constant/router'
 import { usePage } from '@/hooks/usePage'
 import { useUserStore } from '@/store/user'
 import { toast } from '@/utils/toast'
 import { uploadFileUrl, useFileUpload } from '@/utils/uploadFile'
+import { FACE_STATUS_CONFIG } from './utils/business'
 // #endregion
 
 // #region 组件选项配置
@@ -35,7 +39,7 @@ defineOptions({
 // #endregion
 
 // #region 使用 Hooks
-const { pageLoading, pageError, onLoginSuccess, onLoginFail } = usePage()
+const { pageLoading, pageError, pageLoaded, onLoginSuccess, onLoginFail } = usePage()
 const userStore = useUserStore()
 const { currentStudent } = storeToRefs(userStore)
 // #endregion
@@ -43,14 +47,92 @@ const { currentStudent } = storeToRefs(userStore)
 // #region 定义响应式数据
 const uploadedImageInfo = ref<File.Upload.ResPostUploadApi | null>(null)
 // 页面状态
-const selectedMethod = ref<'upload' | null>(null)
+const selectedMethod = ref<'upload' | 'camera' | null>(null)
 const capturedPhoto = ref<string | null>(null)
 const showImagePreview = ref(false)
 const showLastImageModal = ref(false)
 const previewImageUrl = ref('')
+const cameraResult = ref<{ tempImagePath: string } | null>(null)
+const showExternalImagePreview = ref(false)
+const externalImageUrl = ref('')
+// #endregion
+
+// #region 定义计算属性
+// 人脸状态公告配置
+const noticeConfig = computed(() => {
+  const faceStatus = currentStudent.value?.faceStatus ?? FACE_STATUS.NOT_COLLECTED
+  return FACE_STATUS_CONFIG[faceStatus]
+})
 // #endregion
 
 // #region 事件处理函数
+// 重新拍照处理函数
+function handleRetakePhoto() {
+  externalImageUrl.value = ''
+  showExternalImagePreview.value = false
+  // 跳转到自动拍照页面
+  uni.navigateTo({
+    url: COMMON_AUTO_CAMERA_PATH,
+  })
+}
+
+// 提交外部图片
+async function handleSubmitExternalImage() {
+  if (!externalImageUrl.value) {
+    toast.show('缺少图片信息')
+    return
+  }
+
+  try {
+    uni.showLoading({ title: '正在上传...' })
+
+    const uploadResult = await new Promise<{ code: number, data: File.Upload.ResPostUploadApi }>(
+      (resolve, reject) => {
+        const { run } = useFileUpload<File.Upload.ResPostUploadApi>(
+          uploadFileUrl.UPLOAD,
+          externalImageUrl.value,
+          { bizType: 'FACE_COLLECTION' },
+          {
+            onSuccess: (resData) => {
+              resolve({ code: 0, data: resData as File.Upload.ResPostUploadApi })
+            },
+            onError: (err) => {
+              reject(err)
+            },
+          },
+        )
+        run()
+      },
+    ).finally(() => {
+      uni.hideLoading()
+    })
+
+    if (uploadResult.code === 0) {
+      const faceImageUrl = import.meta.env.VITE_UPLOAD_BASEURL + uploadResult.data.fileUrl
+      // 调用更新用户信息接口
+      const result = await putStudentFaceApi({ faceImageUrl })
+
+      // 更新成功提示
+      if (result.code === 0) {
+        toast.show('人脸信息更新成功')
+        showExternalImagePreview.value = false
+        // 清空外部图片路径
+        externalImageUrl.value = ''
+
+        // 重新获取个人信息
+        await userStore.getUserInfo()
+      }
+    }
+    else {
+      toast.show('图片上传失败，请重试')
+    }
+  }
+  catch (error) {
+    console.error('提交外部图片失败:', error)
+    toast.show('图片上传失败，请重试')
+  }
+}
+
 // 选择上传照片方式
 async function selectUploadMethod() {
   selectedMethod.value = 'upload'
@@ -108,6 +190,21 @@ async function selectUploadMethod() {
   }
 }
 
+// 选择自动拍照方式
+function selectCameraMethod() {
+  selectedMethod.value = 'camera'
+  // 跳转到自动拍照页面
+  uni.navigateTo({
+    url: COMMON_AUTO_CAMERA_PATH,
+  })
+}
+
+// 暴露给其他页面调用的方法 - 接收图片路径并弹框显示
+function showImageDialog(imagePath: string) {
+  externalImageUrl.value = imagePath
+  showExternalImagePreview.value = true
+}
+
 // 查看上次上传的图片
 function handleLastImage() {
   showLastImageModal.value = true
@@ -136,6 +233,9 @@ async function confirmSubmitImage() {
     if (result.code === 0) {
       toast.show('人脸信息更新成功')
       showImagePreview.value = false
+
+      // 重新获取个人信息
+      await userStore.getUserInfo()
     }
   }
   catch (error) {
@@ -149,12 +249,18 @@ async function confirmSubmitImage() {
     selectedMethod.value = null
   }
 }
-
 // #endregion
 
 // #region 生命周期钩子
-onMounted(() => {
-  pageLoading.value = false
+onShow(() => {
+  if (unref(pageLoaded)) {
+    userStore.getUserInfo()
+  }
+})
+
+// 通过 defineExpose 暴露方法（Vue 3 推荐方式）
+defineExpose({
+  showImageDialog,
 })
 // #endregion
 </script>
@@ -179,6 +285,13 @@ onMounted(() => {
     </template>
 
     <view p="4 t-2!" flex="~ col" gap="4">
+      <!-- 人脸状态公告提示 -->
+      <Notice
+        :type="noticeConfig.type"
+        :title="noticeConfig.title"
+        :content="noticeConfig.content"
+      />
+
       <!-- 上传照片按钮 -->
       <WhiteCard @click="selectUploadMethod">
         <view flex="~ items-center">
@@ -201,6 +314,33 @@ onMounted(() => {
               flex="~ items-center justify-center"
             >
               <Icon name="upload-2-line" icon-color="#7c3aed" icon-size="48rpx" />
+            </view>
+          </view>
+        </view>
+      </WhiteCard>
+
+      <!-- 自动拍照按钮 -->
+      <WhiteCard @click="selectCameraMethod">
+        <view flex="~ items-center">
+          <view flex="1" text="left">
+            <view text="base gray-900" font="medium" m="b-1">
+              自动拍照
+            </view>
+            <view text="sm gray-500" leading="relaxed">
+              智能识别人脸
+              <br />
+              自动拍摄清晰照片
+            </view>
+          </view>
+          <view flex="shrink-0" m="l-4">
+            <view
+              w="16"
+              h="16"
+              bg="primary-50"
+              border="rounded-xl"
+              flex="~ items-center justify-center"
+            >
+              <Icon name="camera-line" icon-color="#3269dd" icon-size="48rpx" />
             </view>
           </view>
         </view>
@@ -249,6 +389,34 @@ onMounted(() => {
               border="rounded-lg gray-200"
             />
           </view>
+        </view>
+      </view>
+    </BottomPopup>
+
+    <!-- 外部图片预览弹框 -->
+    <BottomPopup v-model="showExternalImagePreview" title="图片预览" height="auto">
+      <view p="4">
+        <!-- 图片显示区域 -->
+        <view m="b-4">
+          <view flex="~ justify-center">
+            <image
+              :src="externalImageUrl"
+              mode="aspectFit"
+              w="full"
+              h="64"
+              border="rounded-lg gray-200"
+            />
+          </view>
+        </view>
+
+        <!-- 操作按钮 -->
+        <view flex="~" gap="3">
+          <TButton type="default" size="large" flex="1" full @click="handleRetakePhoto">
+            重新拍照
+          </TButton>
+          <TButton type="primary" size="large" flex="1" full @click="handleSubmitExternalImage">
+            提交
+          </TButton>
         </view>
       </view>
     </BottomPopup>

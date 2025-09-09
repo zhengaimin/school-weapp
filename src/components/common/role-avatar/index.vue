@@ -7,6 +7,8 @@ import { useUserStore } from '@/store/user'
 
 // 组件属性
 const props = withDefaults(defineProps<AvatarProps>(), {
+  path: '',
+  faceImg: true,
   type: 'student',
   size: 'medium',
   customStyle: '',
@@ -54,7 +56,7 @@ const sizeConfig: Record<AvatarSize, { container: string, icon: string }> = {
 const containerClass = computed(() => {
   const sizeClass = sizeConfig[props.size].container
   const baseClasses = 'rounded-full flex items-center justify-center overflow-hidden'
-  const bgColor = props.src ? 'bg-transparent' : defaultAvatars[props.type].bgColor
+  const bgColor = props.path ? 'bg-transparent' : defaultAvatars[props.type].bgColor
   return `${baseClasses} ${sizeClass} ${bgColor} ${props.customClass}`
 })
 
@@ -72,11 +74,12 @@ const defaultAvatar = computed(() => {
 <template>
   <view :class="containerClass" :style="customStyle">
     <image
-      v-if="type === 'student'"
+      v-if="props.faceImg"
       :src="currentStudent.faceImageUrl"
       class="h-full w-full"
       mode="aspectFill"
     />
+    <image v-else-if="props.path" :src="props.path" class="h-full w-full" mode="aspectFill" />
     <Icon
       v-else
       :name="defaultAvatar.icon"

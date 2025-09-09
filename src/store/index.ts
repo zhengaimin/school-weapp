@@ -16,5 +16,6 @@ export default store
 // 模块统一导出
 // export * from './app'
 // export * from './config'
+// export * from './package'
 // export * from './parent'
 // export * from './user'

@@ -1,7 +1,7 @@
 import { pages, subPackages } from '@/pages.json'
 import { isMpWeixin } from './platform'
 
-export function getLastPage() {
+export function getLastPage(): any {
   // getCurrentPages() 至少有1个元素，所以不再额外判断
   // const lastPage = getCurrentPages().at(-1)
   // 上面那个在低版本安卓中打包会报错，所以改用下面这个【虽然我加了 src/interceptions/prototype.ts，但依然报错】
@@ -19,9 +19,10 @@ export function getPrevPage() {
 
   return prevPage || null
 }
-export function getPrevPageExposed(): { refresh?: any } {
+export function getPrevPageExposed(): { refresh?: any, showImageDialog?: (imagePath: string) => void } {
   const prevPage = getPrevPage()
-  return prevPage?._.exposed || null
+  console.log(prevPage?.$vm)
+  return prevPage?.$vm || prevPage?._.exposed || null
 }
 
 /**

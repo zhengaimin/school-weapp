@@ -21,20 +21,14 @@ const props = defineProps<{
 const totalMinutes = computed(() => {
   if (!props.validGifts?.records?.length)
     return '--'
-  return props.validGifts.records.reduce(
-    (total, gift) => total + (gift.totalMinutes || 0),
-    0,
-  )
+  return props.validGifts.records.reduce((total, gift) => total + (gift.totalMinutes || 0), 0)
 })
 
 // 计算剩余时长(分钟)
 const remainingMinutes = computed(() => {
   if (!props.validGifts?.records?.length)
     return '--'
-  return props.validGifts.records.reduce(
-    (total, gift) => total + (gift.remainingMinutes || 0),
-    0,
-  )
+  return props.validGifts.records.reduce((total, gift) => total + (gift.remainingMinutes || 0), 0)
 })
 
 // 计算剩余天数(最小值)
@@ -43,8 +37,7 @@ const remainingDays = computed(() => {
     return '--'
 
   const minDays = props.validGifts.records.reduce(
-    (min, gift) =>
-      gift.remainingDays !== undefined ? Math.min(min, gift.remainingDays) : min,
+    (min, gift) => (gift.remainingDays !== undefined ? Math.min(min, gift.remainingDays) : min),
     Number.MAX_SAFE_INTEGER,
   )
 

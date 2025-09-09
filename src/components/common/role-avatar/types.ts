@@ -16,7 +16,8 @@ export interface AvatarProps {
   /**
    * 图片地址，如果提供，将优先显示图片
    */
-  src?: string
+  path?: string
+  faceImg?: boolean
   /**
    * 头像尺寸
    * @default 'medium'

@@ -18,6 +18,9 @@ import { getConsumptionStatisticsApi } from '@/api/modules/user/consumption'
 import Page from '@/components/common/page/index.vue'
 import WhiteCard from '@/components/common/white-card/index.vue'
 import { usePage } from '@/hooks/usePage'
+import { usePayment } from '@/pages-sub/package/hooks/usePayment'
+import ActivePackageCard from '@/pages-sub/package/list/components/ActivePackageCard.vue'
+import { usePackageStore } from '@/store/package'
 import { useParentStore } from '@/store/parent'
 import { useUserStore } from '@/store/user'
 import GiftInfo from './components/GiftCard.vue'
@@ -33,13 +36,16 @@ defineOptions({
 
 // #region 使用 Hooks
 const { pageLoading, pageError, onLoginFail, batchRequestHandler, getContentHeight } = usePage()
+const { axiosGetStudentActivePackageApi } = usePayment()
 // #endregion
 
 // #region 使用 Store
 const userStore = useUserStore()
 const parentStore = useParentStore()
+const packageStore = usePackageStore()
 const { currentStudent } = storeToRefs(userStore)
 const { balanceInfo } = storeToRefs(parentStore)
+const { activePackage } = storeToRefs(packageStore)
 // #endregion
 
 // #region 定义响应式数据
@@ -87,7 +93,11 @@ async function axiosGetValidGiftsApi() {
 
 // #region 生命周期钩子
 async function onLoginSuccess() {
-  await batchRequestHandler([axiosGetConsumptionStatisticsApi(), axiosGetValidGiftsApi()])
+  await batchRequestHandler([
+    axiosGetConsumptionStatisticsApi(),
+    axiosGetValidGiftsApi(),
+    axiosGetStudentActivePackageApi(),
+  ])
 }
 // #endregion
 </script>
@@ -161,45 +171,11 @@ async function onLoginSuccess() {
           </view>
         </WhiteCard>
 
-        <!-- 分块：套餐信息（使用 WhiteCard） -->
-        <WhiteCard>
-          <view text="sm text-secondary" m="b-3">
-            套餐信息
-          </view>
-          <view grid="~ cols-3" gap="4">
-            <view text="center">
-              <view text="lg text-primary" font="medium">
-                {{ balanceInfo?.packageMinutes ?? '--' }}
-              </view>
-              <view text="xs text-secondary">
-                套餐分钟
-              </view>
-            </view>
-            <view text="center">
-              <view text="lg text-primary" font="medium">
-                {{
-                  balanceInfo?.packageMessageCount === -1
-                    ? '不限额'
-                    : (balanceInfo?.packageMessageCount ?? '--')
-                }}
-              </view>
-              <view text="xs text-secondary">
-                套餐消息数
-              </view>
-            </view>
-            <view text="center">
-              <view text="lg text-primary" font="medium">
-                {{ balanceInfo?.giftMinutes ?? '--' }}
-              </view>
-              <view text="xs text-secondary">
-                赠送分钟
-              </view>
-            </view>
-          </view>
-        </WhiteCard>
+        <!-- 分块：套餐信息 -->
+        <ActivePackageCard :active-package="activePackage" />
 
         <!-- 分块：赠费信息 -->
-        <GiftInfo v-if="validGifts" :valid-gifts="validGifts" />
+        <GiftInfo v-if="validGifts?.records" :valid-gifts="validGifts" />
       </view>
     </scroll-view>
   </Page>

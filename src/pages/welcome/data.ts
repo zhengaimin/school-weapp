@@ -1,5 +1,5 @@
 import type { IdentityOption } from './components/IdentityCard.vue'
-import { ROLE_TYPE } from '@/constant/modules/user'
+import { ROLE_TYPE } from '@/constant/modules'
 
 // 身份选择选项
 import { TABBAR_HOME_PATH } from '@/constant/router'

@@ -10,18 +10,18 @@
 
 <script lang="ts" setup>
 // #region 导入
-import type { Refund } from '@/api/interface/modules/refund'
+import type { Pkg } from '@/api/interface/modules/package'
 import type { FilterConfig } from '@/components/common/filter-group/index.vue'
 import dayjs from 'dayjs'
 import { computed, ref } from 'vue'
-import { getRefundApplicationsApi } from '@/api/modules/refund'
+import { getPackageRefundListApi } from '@/api/modules/package/refund'
 import FilterGroup from '@/components/common/filter-group/index.vue'
 import Page from '@/components/common/page/index.vue'
 import RefreshList from '@/components/common/refresh-list/index.vue'
-import { ALL } from '@/constant/modules/common'
-import { REFUND_STATUS_OPTIONS } from '@/constant/modules/refund'
+import { ALL, REFUND_STATUS, REFUND_STATUS_I18N, REFUND_STATUS_OPTIONS } from '@/constant/modules'
 import { usePage } from '@/hooks/usePage'
 import { useRefresh } from '@/hooks/useRefresh'
+import { usePackageEmitter } from '@/utils/emit/package'
 import RefundHistoryItem from './components/RefundHistoryItem.vue'
 // #endregion
 
@@ -35,10 +35,11 @@ defineOptions({
 
 // #region 使用 Hooks
 const { pageLoading, pageError, getContentHeight, batchRequestHandler, onLoginFail } = usePage()
+const { emitPackageRefund } = usePackageEmitter()
 // #endregion
 
 // #region 定义响应式数据
-// 筛选条件：默认获取这一年的数据
+// 筛选条件：默认获取这一年的数据，选择全部状态
 type FilterValue = string | number | number[] | [number, number]
 const filters = ref<FilterValue[]>([
   [dayjs().subtract(1, 'year').valueOf(), dayjs().valueOf()],
@@ -60,7 +61,7 @@ const filterConfigs = computed<FilterConfig[]>(() => [
     key: 'status',
     title: '退款状态',
     type: 'select',
-    options: REFUND_STATUS_OPTIONS,
+    options: [{ label: '全部', value: ALL }, ...REFUND_STATUS_OPTIONS],
   },
 ])
 
@@ -70,7 +71,6 @@ const contentStyle = computed(() => {
 // #endregion
 
 // #region 接口请求函数
-// 使用 useRefresh hook
 const {
   query,
   list: recordsList,
@@ -80,8 +80,8 @@ const {
   empty,
   onRefreshList,
   onLoadMore,
-} = useRefresh<Refund.IRefundApplicationVo>({
-  get: params => getRefundApplicationsApi(params),
+} = useRefresh<Pkg.Refund.IRefundApplicationRecord>({
+  get: params => getPackageRefundListApi(params),
   listField: 'list',
   immediate: false,
 })
@@ -92,8 +92,9 @@ const {
 function onFilterChange(key: string, value: [number, number] | string | number) {
   if (key === 'daterange') {
     const [startTime, endTime] = value as [number, number]
-    query.value.startTime = dayjs(startTime).format('YYYY-MM-DD')
-    query.value.endTime = dayjs(endTime).format('YYYY-MM-DD')
+
+    query.value.startDate = dayjs(startTime).format('YYYY-MM-DD')
+    query.value.endDate = dayjs(endTime).format('YYYY-MM-DD')
   }
   else if (key === 'status') {
     query.value.status = value === ALL ? undefined : value
@@ -102,10 +103,17 @@ function onFilterChange(key: string, value: [number, number] | string | number) 
   onRefreshList()
 }
 
-// 跳转到退款记录详情
-function handleGoToRefundDetail(event: Event, record: Refund.IRefundApplicationVo) {
-  // 预留详情页面功能
-  console.log('查看退款详情:', record)
+// 处理取消申请成功
+function handleCancelSuccess(record: Pkg.Refund.IRefundApplicationRecord) {
+  // 根据 record.id 找到对应的 item，修改状态为已取消
+  const targetRecord = recordsList.value.find(item => item.id === record.id)
+  if (targetRecord) {
+    targetRecord.status = REFUND_STATUS.CANCELLED
+    targetRecord.statusText = REFUND_STATUS_I18N[REFUND_STATUS.CANCELLED]
+  }
+
+  // 调用退款分发事件
+  emitPackageRefund()
 }
 // #endregion
 
@@ -113,8 +121,9 @@ function handleGoToRefundDetail(event: Event, record: Refund.IRefundApplicationV
 function handleLoginSuccess() {
   const daterange = filters.value[0] as [number, number]
   const [startTime, endTime] = daterange
-  query.value.startTime = dayjs(startTime).format('YYYY-MM-DD')
-  query.value.endTime = dayjs(endTime).format('YYYY-MM-DD')
+  query.value.startDate = dayjs(startTime).format('YYYY-MM-DD')
+  query.value.endDate = dayjs(endTime).format('YYYY-MM-DD')
+
   query.value.status = filters.value[1] === ALL ? undefined : filters.value[1]
 
   batchRequestHandler([onRefreshList()])
@@ -124,7 +133,7 @@ function handleLoginSuccess() {
 
 <template>
   <Page
-    title="套餐退款记录"
+    title="套餐退费申请记录"
     :loading="pageLoading"
     :error="pageError"
     :scroll-y="false"
@@ -151,7 +160,7 @@ function handleLoginSuccess() {
           v-for="record in recordsList"
           :key="record.id"
           :record="record"
-          @click="handleGoToRefundDetail"
+          @cancel="handleCancelSuccess"
         />
       </view>
     </RefreshList>

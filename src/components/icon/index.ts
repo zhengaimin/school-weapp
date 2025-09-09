@@ -9,6 +9,7 @@ import {
   ARROW_RIGHT_S_LINE,
   ARROW_UP_S_LINE,
   BILL_LINE,
+  CAMERA_LINE,
   CHECK_LINE,
   CHECKBOX_CIRCLE_LINE,
   CLOSE_CIRCLE_LINE,
@@ -47,6 +48,7 @@ import {
   TABLET_LINE,
   TIME_LINE,
   UPLOAD_2_LINE,
+  UPLOAD_CLOUD_LINE,
   USER_5_LINE,
   USER_ADD_LINE,
   USER_LINE,
@@ -93,6 +95,7 @@ const svgMap = {
   'play-circle-fill': PLAY_CIRCLE_FILL,
   'pause-circle-line': PAUSE_CIRCLE_LINE,
   'voiceprint-line': VOICEPRINT_LINE,
+  'camera-line': CAMERA_LINE,
 
   // finance
   'refund-2-line': REFUND_2_LINE,
@@ -127,6 +130,7 @@ const svgMap = {
   'lock-unlock-line': LOCK_UNLOCK_LINE,
   'alarm-warning-line': ALARM_WARNING_LINE,
   'alarm-warning-fill': ALARM_WARNING_FILL,
+  'upload-cloud-line': UPLOAD_CLOUD_LINE,
 
   // user
   'user-settings-line': USER_SETTINGS_LINE,

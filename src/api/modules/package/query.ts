@@ -7,7 +7,7 @@ const PACKAGE_QUERY_API = {
   STUDENT: `${API}/packages/student`,
   STUDENT_ACTIVE: `${API}/packages/student/active`,
   BASE_RATES: `${API}/packages/base-rates`,
-  PACKAGE_DETAIL: (id: number) => `${API}/packages/${id}`,
+  PACKAGE_DETAIL: (id: number) => `${API}/packages/student/${id}`,
 }
 
 /**

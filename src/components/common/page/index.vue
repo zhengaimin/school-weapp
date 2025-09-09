@@ -9,7 +9,7 @@ import DefaultBg from '@/components/common/default-bg/index.vue'
 import Loading from '@/components/common/loading/index.vue'
 import Navigation from '@/components/common/navigation/index.vue'
 
-import { ROLE_TYPE } from '@/constant/modules/user'
+import { ROLE_TYPE } from '@/constant/modules'
 
 import {
   LAUNCH_PATH,
@@ -174,7 +174,7 @@ async function otherEnvLogin() {
     userStore.setRole(ROLE_TYPE.PARENT)
     userStore.setPhone('15972227364')
     userStore.setToken(
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ3ZWNoYXRBY2NvdW50SWQiOjE1LCJjdXJyZW50VXNlcklkIjoyNSwidXNlcm5hbWUiOiJ3ZWNoYXRfdXNlcl8xNSIsImlkZW50aXRpZXMiOnsiMjUiOnsidXNlcklkIjoxOCwicm9sZUlkIjo0LCJyb2xlQ29kZSI6InBhcmVudCIsInRlbmFudElkIjoyLCJ0ZW5hbnRDb2RlIjoidGVzdF90ZW5hbnRfMDAxIiwic2Nob29sSWQiOjEsInNjaG9vbENvZGUiOiJTQ0hPT0xfM18xNzU1NjE1NjYwIiwidXNlclR5cGUiOiJwYXJlbnQifX0sInVzZXJUeXBlIjoiVVNFUiIsImV4cCI6MTc1NzA2Mzk1OCwibmJmIjoxNzU2OTc3NTU4LCJpYXQiOjE3NTY5Nzc1NTh9.AAJMae3uoddqeuzWXwgbX_efLepIqb0cZxH4QIRvlN8',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ3ZWNoYXRBY2NvdW50SWQiOjE1LCJjdXJyZW50VXNlcklkIjozMywidXNlcm5hbWUiOiJ3ZWNoYXRfdXNlcl8xNSIsImlkZW50aXRpZXMiOnsiMzMiOnsidXNlcklkIjoyMiwicm9sZUlkIjo0LCJyb2xlQ29kZSI6InBhcmVudCIsInRlbmFudElkIjoyLCJ0ZW5hbnRDb2RlIjoidGVzdF90ZW5hbnRfMDAxIiwic2Nob29sSWQiOjEsInNjaG9vbENvZGUiOiJTQ0hPT0xfM18xNzU1NjE1NjYwIiwidXNlclR5cGUiOiJwYXJlbnQifX0sInVzZXJUeXBlIjoiVVNFUiIsImV4cCI6MTc1NzQ4NDYwMywibmJmIjoxNzU3Mzk4MjAzLCJpYXQiOjE3NTczOTgyMDN9.tUXWMKVq4lQGbdQQVynIsNzk2Yj1GuC4LVxyCnkoQdo',
     )
 
     if (unref(isFirstLaunch)) {

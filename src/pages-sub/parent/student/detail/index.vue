@@ -15,6 +15,7 @@ import Page from '@/components/common/page/index.vue'
 import RoleAvatar from '@/components/common/role-avatar/index.vue'
 import WhiteCard from '@/components/common/white-card/index.vue'
 import Icon from '@/components/icon/index.vue'
+import { FACE_STATUS_I18N } from '@/constant/modules/business'
 import { usePage } from '@/hooks/usePage'
 import { useUserStore } from '@/store/user'
 
@@ -31,9 +32,9 @@ const userStore = useUserStore()
 const { currentStudent } = storeToRefs(userStore)
 
 const faceStatusText = computed(() => {
-  if (!currentStudent.value)
-    return ''
-  return currentStudent.value.faceStatus === 1 ? '已录入' : '未录入'
+  if (!currentStudent.value || currentStudent.value.faceStatus === null)
+    return '未知'
+  return FACE_STATUS_I18N[currentStudent.value.faceStatus] || '未知'
 })
 // 复制文本到剪贴板
 function copyToClipboard(text: string, label: string) {

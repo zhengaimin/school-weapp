@@ -42,7 +42,7 @@ const {
   onRefreshList,
   onLoadMore,
   query,
-} = useRefresh<User.Consumption.ConsumptionRecord>({
+} = useRefresh<User.Consumption.IConsumptionRecordVo>({
   get: getConsumptionRecordsApi,
   immediate: false,
   listField: 'records',

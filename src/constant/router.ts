@@ -27,8 +27,6 @@ export const PACKAGE_LIST_PATH = '/pages-sub/package/list/index'
 export const PACKAGE_HISTORY_PATH = '/pages-sub/package/history/index'
 // 套餐 - 详情
 export const PACKAGE_DETAIL_PATH = '/pages-sub/package/detail/index'
-// 套餐 - 申请退款
-export const PACKAGE_REFUND_APPLY_PATH = '/pages-sub/package/refund/apply/index'
 // 套餐 - 退款历史
 export const PACKAGE_REFUND_HISTORY_PATH = '/pages-sub/package/refund/history/index'
 
@@ -65,6 +63,8 @@ export const BALANCE_RECHARGE_RESULT_PATH = '/pages-sub/balance/result/index'
 export const COMMON_ROLE_SWITCH_PATH = '/pages-sub/common/role-switch/index'
 // 人脸采集
 export const COMMON_FACE_COLLECTION_PATH = '/pages-sub/common/face-collection/index'
+// 自动拍照
+export const COMMON_AUTO_CAMERA_PATH = '/pages-sub/common/auto-camera/index'
 
 /** 设备 */
 // 我的订阅

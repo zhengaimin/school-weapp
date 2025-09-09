@@ -6,12 +6,9 @@ import { ref } from 'vue'
 
 import { getUserInfoApi, getWxCode, postWxLoginApi } from '@/api/modules/user'
 
-import { useParentStore } from './parent'
-
 export const useUserStore = defineStore(
   'user',
   () => {
-    const parentStore = useParentStore()
     const token = ref<string | null>(null)
     const role = ref<number | null>(null)
 
@@ -40,7 +37,7 @@ export const useUserStore = defineStore(
         return null
 
       const student = {
-        ...((roleInfo as User.Common.ParentRoleInfo)?.currentChild || {}),
+        ...((roleInfo as User.Common.IParentRoleInfoVo)?.currentChild || {}),
         schoolName,
         schoolId,
       }

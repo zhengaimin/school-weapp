@@ -11,7 +11,10 @@ const USER_COMMON_API = {
   BALANCE_DETAILS: `${API}/user/balance/details`,
 }
 
-/** 获取微信登录凭证 */
+/**
+ * @description 获取微信登录凭证
+ * @returns {Promise<UniApp.LoginRes>}
+ */
 export function getWxCode() {
   return new Promise<UniApp.LoginRes>((resolve, reject) => {
     uni.login({
@@ -22,33 +25,53 @@ export function getWxCode() {
   })
 }
 
-/** 获取用户信息 */
+/**
+ * @description 获取用户信息
+ * @returns {Promise<User.Common.IUserInfoVo>}
+ */
 export function getUserInfoApi() {
   return http.get<User.Common.IUserInfoVo>(USER_COMMON_API.PROFILE)
 }
 
-/** 微信登录 */
+/**
+ * @description 微信登录
+ * @param {User.Common.ReqWxLoginApi} data
+ * @returns {Promise<User.Common.ResWxLoginApi>}
+ */
 export function postWxLoginApi(data: User.Common.ReqWxLoginApi) {
   return http.post<User.Common.ResWxLoginApi>(USER_COMMON_API.WX_LOGIN, data)
 }
-/** 微信绑定的手机号 */
+
+/**
+ * @description 获取微信绑定的手机号
+ * @param {User.Common.ReqWxPhoneApi} data
+ * @returns {Promise<User.Common.ResWxPhoneApi>}
+ */
 export function postWxPhoneApi(data: User.Common.ReqWxPhoneApi) {
   return http.post<User.Common.ResWxPhoneApi>(USER_COMMON_API.WX_BIND_PHONE, data)
 }
-/** 获取用户余额信息 */
+
+/**
+ * @description 获取用户余额信息
+ * @returns {Promise<User.Common.IStudentBalanceVo>}
+ */
 export function getUserBalanceApi() {
   return http.get<User.Common.IStudentBalanceVo>(USER_COMMON_API.BALANCE)
 }
 
-/** 更新用户信息 */
+/**
+ * @description 更新用户信息
+ * @param {User.Common.ReqPutMeInfoApi} data
+ * @returns {Promise<any>}
+ */
 export function putMeInfoApi(data: User.Common.ReqPutMeInfoApi) {
   return http.put(USER_COMMON_API.PROFILE, data)
 }
 
 /**
  * @description 获取资金流水明细
- * @param {Balance.ReqGetBalanceDetails} params 请求参数
- * @returns {Promise<Balance.ResGetBalanceDetails>} 资金流水明细响应
+ * @param {User.Balance.ReqGetBalanceDetails} params 请求参数
+ * @returns {Promise<User.Balance.ResGetBalanceDetails>} 资金流水明细响应
  */
 export function getBalanceDetailsApi(params: User.Balance.ReqGetBalanceDetails) {
   return http.get<User.Balance.ResGetBalanceDetails>(USER_COMMON_API.BALANCE_DETAILS, params)

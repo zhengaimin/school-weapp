@@ -1,4 +1,4 @@
-import type { TRefundApplicationStatus } from '@/constant/modules/refund/apply'
+import type { TRefundApplicationStatus } from '@/constant/modules'
 
 // src/api/interface/modules/refund.ts
 export namespace Refund {

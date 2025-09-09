@@ -7,7 +7,7 @@ import {
   postContinueApi,
   postRechargeApi,
 } from '@/api/modules/payment'
-import { USER_TYPE } from '@/constant/modules/user'
+import { USER_TYPE } from '@/constant/modules'
 import { useUserStore } from '@/store/user'
 import { useMessage } from '@/uni_modules/wot-design-uni'
 import { toast } from '@/utils/toast'

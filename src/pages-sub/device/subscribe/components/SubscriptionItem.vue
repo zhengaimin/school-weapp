@@ -3,12 +3,12 @@ import type { Devices } from '@/api/interface/modules/devices'
 import WhiteCard from '@/components/common/white-card/index.vue'
 
 defineProps<{
-  device: Devices.Subscription.MySubscription
+  device: Devices.Subscription.ISubscriptionVo
   subscribing: boolean
 }>()
 
 const emit = defineEmits<{
-  (e: 'toggle-subscription', device: Devices.Group.IDeviceGroup): void
+  (e: 'toggle-subscription', device: Devices.IDeviceGroupVo): void
 }>()
 </script>
 

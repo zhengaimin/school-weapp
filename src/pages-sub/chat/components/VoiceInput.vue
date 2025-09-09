@@ -5,8 +5,9 @@ import type { Message } from '@/api/interface/modules/message'
 import { computed, inject, ref } from 'vue'
 import { postMessageApi } from '@/api/modules/message'
 import Icon from '@/components/icon/index.vue'
-import { FILE_TYPE } from '@/constant/modules/message'
+import { FILE_TYPE } from '@/constant/modules'
 import { uploadFileUrl, useFileUpload } from '@/utils/uploadFile'
+import { voiceMessageDataKey } from '../provide'
 
 defineOptions({
   options: {
@@ -19,9 +20,8 @@ const emit = defineEmits<{
   sendVoice: [filePath: string, duration: number]
 }>()
 
-// 提供录音消息数据
-// 从父组件注入 voiceMessageData
-const voiceMessageData = inject<Ref<Message.IMessageItemVo | null>>('voiceMessageData', ref(null))
+// 从父组件注入语音消息数据
+const voiceMessageData = inject(voiceMessageDataKey, ref(null))
 
 // 语音输入相关状态
 const isRecording = ref(false) // 是否正在录音
@@ -76,14 +76,35 @@ function initRecorderManager() {
 
           const duration = Math.floor(result.duration / 1000)
 
+          // 录音时间太短提示
+          if (duration < 1) {
+            uni.showToast({
+              title: '录音时间太短',
+              icon: 'none',
+            })
+            return
+          }
+
           try {
             // 1. 上传文件到服务器
             isUploading.value = true
+            uni.showLoading({
+              title: '上传中...',
+              mask: true,
+            })
+
             const uploadResult = await uploadVoiceFile(result.tempFilePath, duration)
+            uni.hideLoading()
 
             // 2. 发送消息
             isSending.value = true
+            uni.showLoading({
+              title: '发送中...',
+              mask: true,
+            })
+
             await sendVoiceMessage(uploadResult, duration)
+            uni.hideLoading()
 
             // 3. 通知父组件
             emit('sendVoice', result.tempFilePath, duration)
@@ -95,6 +116,7 @@ function initRecorderManager() {
           }
           catch (error) {
             console.error('语音消息发送失败:', error)
+            uni.hideLoading()
             uni.showToast({
               title: '发送失败，请重试',
               icon: 'none',
@@ -317,24 +339,50 @@ defineExpose({
     flex="1 ~ items-center justify-center"
     h-64rpx
     rounded-md
-    :class="isRecording ? 'bg-red-500' : 'bg-gray-100'"
+    :class="{
+      'bg-red-500': isRecording,
+      'bg-blue-500': isUploading || isSending,
+      'bg-gray-100': !isRecording && !isUploading && !isSending,
+    }"
+    :style="{
+      pointerEvents: isUploading || isSending ? 'none' : 'auto',
+    }"
     @touchstart="handleStartRecording"
     @touchend="handleStopRecording"
     @touchcancel="handleStopRecording"
   >
-    <view v-if="!isRecording" flex="~ items-center" gap="2">
-      <Icon name="voiceprint-line" icon-color="#666666" icon-size="32rpx" />
-      <text text-sm color-gray-600>
-        按住说话
-      </text>
-    </view>
-    <view v-else flex="~ items-center" gap="2">
-      <Icon name="keyboard-line" icon-color="#ffffff" icon-size="32rpx" />
+    <!-- 录音中状态 -->
+    <view v-if="isRecording" flex="~ items-center" gap="2">
+      <Icon name="voiceprint-line" icon-color="#ffffff" icon-size="32rpx" />
       <text text-sm color-white>
         {{ recordingTimeText }}
       </text>
       <text text-xs color-white>
         松开发送
+      </text>
+    </view>
+
+    <!-- 上传中状态 -->
+    <view v-else-if="isUploading" flex="~ items-center" gap="2">
+      <Icon name="upload-cloud-line" icon-color="#ffffff" icon-size="32rpx" />
+      <text text-sm color-white>
+        上传中...
+      </text>
+    </view>
+
+    <!-- 发送中状态 -->
+    <view v-else-if="isSending" flex="~ items-center" gap="2">
+      <Icon name="send-plane-line" icon-color="#ffffff" icon-size="32rpx" />
+      <text text-sm color-white>
+        发送中...
+      </text>
+    </view>
+
+    <!-- 默认状态 -->
+    <view v-else flex="~ items-center" gap="2">
+      <Icon name="voiceprint-line" icon-color="#666666" icon-size="32rpx" />
+      <text text-sm color-gray-600>
+        按住说话
       </text>
     </view>
   </view>

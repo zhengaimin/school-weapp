@@ -25,8 +25,12 @@ import Form from '@/components/form/index/index.vue'
 import Radio from '@/components/form/radio/index.vue'
 import Icon from '@/components/icon/index.vue'
 import BottomPopup from '@/components/popup/bottom-popup/index.vue'
-import { NAVIGATION_SUFFIX_COLOR, NAVIGATION_SUFFIX_SIZE } from '@/constant/modules/navigation'
-import { REFUND_TYPE, REFUND_TYPE_OPTIONS } from '@/constant/modules/refund/index'
+import {
+  NAVIGATION_SUFFIX_COLOR,
+  NAVIGATION_SUFFIX_SIZE,
+  REFUND_TYPE,
+  REFUND_TYPE_OPTIONS,
+} from '@/constant/modules'
 import { REFUND_HISTORY_PATH, REFUND_RESULT_PATH } from '@/constant/router'
 import { useBalance } from '@/hooks/useBalance'
 import { useForm } from '@/hooks/useForm'
@@ -342,6 +346,7 @@ defineExpose({
               <Cell id="reason" required label="退费原因" prop="reason">
                 <wd-textarea
                   v-model="formData.reason"
+                  :show-confirm-bar="false"
                   placeholder="请输入退费原因"
                   :maxlength="200"
                 />

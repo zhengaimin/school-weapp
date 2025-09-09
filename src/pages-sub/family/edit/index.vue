@@ -60,6 +60,7 @@ const currentEditContact = ref<Family.Contact.ResGetFamilyContactsApi | null>(nu
 const formData = ref<Family.Contact.ReqPostFamilyContactApi>({
   relationship: 0,
   phone: '',
+  nickname: '',
 })
 // #endregion
 
@@ -93,6 +94,9 @@ const rules = {
       message: '请输入正确的手机号码',
     },
   ],
+  nickname: [
+    { max: 20, message: '昵称不能超过20个字符', trigger: 'blur' },
+  ],
 }
 // #endregion
 
@@ -106,6 +110,7 @@ async function axiosGetFamilyContactDetailApi(id: number) {
       currentEditContact.value = result.data
       formData.value.relationship = result.data.relationship || 0
       formData.value.phone = result.data.phone || ''
+      formData.value.nickname = result.data.nickname || ''
     }
 
     return result
@@ -121,7 +126,7 @@ async function axiosGetFamilyContactDetailApi(id: number) {
 async function handleSubmit() {
   try {
     console.log(formData.value)
-    const { valid } = await validate(['relationship', 'phone'])
+    const { valid } = await validate(['relationship', 'phone', 'nickname'])
     if (!valid) {
       scrollToFirstError()
       return
@@ -200,6 +205,11 @@ function onLoginSuccess() {
             <!-- 手机号输入 -->
             <Cell id="phone" required label="手机号" prop="phone">
               <wd-input v-model="formData.phone" type="tel" placeholder="请输入手机号" />
+            </Cell>
+
+            <!-- 昵称输入 -->
+            <Cell id="nickname" label="昵称" prop="nickname">
+              <wd-input v-model="formData.nickname" placeholder="请输入昵称（可选）" />
             </Cell>
           </view>
         </Form>

@@ -1,4 +1,4 @@
-import type { TPaymentStatus } from '@/constant/modules/payment'
+import type { TPaymentStatus } from '@/constant/modules'
 
 // 定义事件名称
 const RECHARGE_SUCCESS_EVENT = 'balance:rechargeSuccess'

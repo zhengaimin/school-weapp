@@ -1,4 +1,4 @@
-import { CUSTOMER_SERVICE_PHONE } from '@/constant/modules/system'
+import { CUSTOMER_SERVICE_PHONE } from '@/constant/modules'
 
 // 孩子余额信息
 export interface ChildBalanceInfo {

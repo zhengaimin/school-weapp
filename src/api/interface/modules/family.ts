@@ -35,7 +35,6 @@ export namespace Family {
       wechatAccountId: number
       /** 微信绑定时间 */
       wechatBindTime: string
-      [property: string]: any
     }
 
     /** 获取学生的亲情号列表 - 请求参数 */
@@ -68,6 +67,8 @@ export namespace Family {
       isWechatBind?: boolean
       /** 别称（用户自定义） */
       nickname?: string
+      /** 地址 */
+      address?: string
       /** 手机号码 */
       phone?: string
       /**
@@ -87,7 +88,7 @@ export namespace Family {
     }
 
     /** 获取亲情号详情 - 响应 */
-    export interface FamilyContactDetailResp {
+    export interface ResGetFamilyContactDetailApi {
       /** 班级名称 */
       className?: string
       /** 创建时间 */
@@ -100,6 +101,8 @@ export namespace Family {
       isWechatBind?: boolean
       /** 别称（用户自定义） */
       nickname?: string
+      /** 地址 */
+      address?: string
       /** 手机号码 */
       phone?: string
       /**
@@ -130,6 +133,8 @@ export namespace Family {
       relationship: number
       /** 别称（用户自定义） */
       nickname?: string
+      /** 地址 */
+      address?: string
       /** 是否主联系人 */
       isPrimary?: boolean
     }
@@ -151,7 +156,7 @@ export namespace Family {
     }
 
     /** 本人亲情号信息 */
-    export interface SelfContactInfo {
+    export interface ISelfContactVo {
       /** 亲情号ID */
       id: number
       /** 是否主联系人 */
@@ -171,7 +176,7 @@ export namespace Family {
       exists: boolean
       message: string
       /** 亲情号和登录用户手机号一致的亲情号信息 */
-      contactInfo?: SelfContactInfo
+      contactInfo?: ISelfContactVo
     }
   }
 

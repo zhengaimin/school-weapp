@@ -17,7 +17,7 @@ import { getDeviceSubscriptionsApi } from '@/api/modules/devices/groups'
 import TButton from '@/components/common/button/index.vue'
 import Page from '@/components/common/page/index.vue'
 import RefreshList from '@/components/common/refresh-list/index.vue'
-import { DEP_UUID, VOIP_BIND_PATH, WX_APP_ID } from '@/constant/modules/system'
+import { DEP_UUID, VOIP_BIND_PATH, WX_APP_ID } from '@/constant/modules'
 import { usePage } from '@/hooks/usePage'
 import { useRefresh } from '@/hooks/useRefresh'
 import { useParentStore } from '@/store/parent'
@@ -39,7 +39,7 @@ defineOptions({
 const { pageLoading, pageError, pageLoaded, onLoginFail, getContentHeight, batchRequestHandler }
   = usePage()
 const { loading, refreshLoading, loaded, empty, list, onRefreshList, onLoadMore }
-  = useRefresh<Devices.Subscription.MySubscription>({
+  = useRefresh<Devices.Subscription.ISubscriptionVo>({
     get: getDeviceSubscriptionsApi,
     listField: 'subscribed',
     immediate: false,

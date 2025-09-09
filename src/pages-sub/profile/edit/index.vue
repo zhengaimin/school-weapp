@@ -20,7 +20,7 @@ import Cell from '@/components/form/cell/index.vue'
 
 import Form from '@/components/form/index/index.vue'
 
-import { ROLE_TYPE, ROLE_TYPE_I18N } from '@/constant/modules/user/role'
+import { ROLE_TYPE_I18N } from '@/constant/modules'
 import { useForm } from '@/hooks/useForm'
 import { usePage } from '@/hooks/usePage'
 import { useUserStore } from '@/store/user'
@@ -60,7 +60,6 @@ const contentHeight = computed(() => {
 // 保存个人信息
 async function onSaveProfile() {
   try {
-    // 使用 wot ui 表单验证
     const { valid } = await validate(['userName'])
     if (!valid)
       return
@@ -126,12 +125,7 @@ async function onSaveProfile() {
           <view flex="~ col" gap="2.5">
             <!-- 姓名 -->
             <Cell id="userName" required label="姓名" prop="userName">
-              <wd-input
-                v-model="formData.userName"
-                placeholder="请输入姓名"
-                suffix-icon="error-warning-line"
-                :rules="rules.userName"
-              />
+              <wd-input v-model="formData.userName" placeholder="请输入姓名" />
             </Cell>
 
             <!-- 角色 -->

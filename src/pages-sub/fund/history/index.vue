@@ -18,7 +18,7 @@ import { getBalanceDetailsApi } from '@/api/modules/user'
 import FilterGroup from '@/components/common/filter-group/index.vue'
 import Page from '@/components/common/page/index.vue'
 import RefreshList from '@/components/common/refresh-list/index.vue'
-import { AMOUNT_TYPE_OPTIONS } from '@/constant/modules/fund'
+import { AMOUNT_TYPE_OPTIONS } from '@/constant/modules'
 import { usePage } from '@/hooks/usePage'
 import { useRefresh } from '@/hooks/useRefresh'
 import RecordItem from './components/RecordItem.vue'
@@ -83,7 +83,7 @@ const {
   empty,
   onRefreshList,
   onLoadMore,
-} = useRefresh<User.Balance.BalanceDetailRecord>({
+} = useRefresh<User.Balance.IBalanceDetailRecordVo>({
   get: params => getBalanceDetailsApi(params),
   listField: 'records',
   immediate: false,
@@ -107,7 +107,7 @@ function onFilterChange(key: string, value: [number, number] | string) {
 }
 
 // 跳转到流水详情（预留）
-function goToBalanceDetail(record: User.Balance.BalanceDetailRecord) {
+function goToBalanceDetail(record: User.Balance.IBalanceDetailRecordVo) {
   // 预留详情页面功能
   console.log('查看详情:', record)
 }
@@ -129,7 +129,7 @@ function onLoginSuccess() {
 
 <template>
   <Page
-    title="资金流水"
+    title="余额明细"
     :loading="pageLoading"
     :error="pageError"
     :scroll-y="false"

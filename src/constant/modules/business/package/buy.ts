@@ -1,0 +1,66 @@
+import type { IOption, TI18NMap } from '@/types'
+
+// #region 套餐购买状态
+// Types
+export const PACKAGE_BUY_STATUS = {
+  PENDING: 0, // 待支付
+  WAITING_ACTIVE: 1, // 待激活（已支付，等待生效）
+  ACTIVE: 2, // 有效/已激活
+  EXPIRED: 3, // 已过期
+  USED_UP: 4, // 已用完
+  REFUNDED: 5, // 已退款
+  CANCELLED: 6, // 已取消
+  REFUND_PENDING: 7, // 申请退款中
+} as const
+
+export type TPackageBuyStatus
+  = (typeof PACKAGE_BUY_STATUS)[keyof typeof PACKAGE_BUY_STATUS]
+
+// I18N
+export const PACKAGE_BUY_STATUS_I18N: TI18NMap<TPackageBuyStatus> = {
+  [PACKAGE_BUY_STATUS.PENDING]: '待支付',
+  [PACKAGE_BUY_STATUS.WAITING_ACTIVE]: '待激活',
+  [PACKAGE_BUY_STATUS.ACTIVE]: '有效',
+  [PACKAGE_BUY_STATUS.EXPIRED]: '已过期',
+  [PACKAGE_BUY_STATUS.USED_UP]: '已用完',
+  [PACKAGE_BUY_STATUS.REFUNDED]: '已退款',
+  [PACKAGE_BUY_STATUS.CANCELLED]: '已取消',
+  [PACKAGE_BUY_STATUS.REFUND_PENDING]: '申请退款中',
+}
+
+// Options
+export const PACKAGE_BUY_STATUS_OPTIONS: IOption<string | TPackageBuyStatus>[] = [
+  {
+    label: PACKAGE_BUY_STATUS_I18N[PACKAGE_BUY_STATUS.PENDING],
+    value: PACKAGE_BUY_STATUS.PENDING,
+  },
+  {
+    label: PACKAGE_BUY_STATUS_I18N[PACKAGE_BUY_STATUS.WAITING_ACTIVE],
+    value: PACKAGE_BUY_STATUS.WAITING_ACTIVE,
+  },
+  {
+    label: PACKAGE_BUY_STATUS_I18N[PACKAGE_BUY_STATUS.ACTIVE],
+    value: PACKAGE_BUY_STATUS.ACTIVE,
+  },
+  {
+    label: PACKAGE_BUY_STATUS_I18N[PACKAGE_BUY_STATUS.EXPIRED],
+    value: PACKAGE_BUY_STATUS.EXPIRED,
+  },
+  {
+    label: PACKAGE_BUY_STATUS_I18N[PACKAGE_BUY_STATUS.USED_UP],
+    value: PACKAGE_BUY_STATUS.USED_UP,
+  },
+  {
+    label: PACKAGE_BUY_STATUS_I18N[PACKAGE_BUY_STATUS.REFUNDED],
+    value: PACKAGE_BUY_STATUS.REFUNDED,
+  },
+  {
+    label: PACKAGE_BUY_STATUS_I18N[PACKAGE_BUY_STATUS.CANCELLED],
+    value: PACKAGE_BUY_STATUS.CANCELLED,
+  },
+  {
+    label: PACKAGE_BUY_STATUS_I18N[PACKAGE_BUY_STATUS.REFUND_PENDING],
+    value: PACKAGE_BUY_STATUS.REFUND_PENDING,
+  },
+]
+// #endregion

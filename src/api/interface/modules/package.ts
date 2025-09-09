@@ -1,12 +1,23 @@
-import type { TServiceType } from '@/constant/modules/device'
-import type { TPackageType } from '@/constant/modules/package'
-import type { TPaymentMethod } from '@/constant/modules/payment'
-import type { TRefundApplicationStatus } from '@/constant/modules/refund/apply'
+import type {
+  TPackageBuyStatus,
+  TPackageType,
+  TPaymentMethod,
+  TRefundStatus,
+  TServiceType,
+} from '@/constant/modules'
 
 export namespace Pkg {
   // #region 套餐查询
   export namespace Query {
     // #region 获取可购买套餐列表
+    /** 获取可购买套餐列表 - 请求 */
+    export interface ReqGetAvailableApi {
+      /** 页码，默认1 */
+      page?: number
+      /** 每页数量，默认20 */
+      pageSize?: number
+    }
+
     /** 套餐内容 */
     export interface IPackageContent {
       /** 视频通话分钟数 */
@@ -45,14 +56,6 @@ export namespace Pkg {
       monthlyDecrease: boolean
     }
 
-    /** 获取可购买套餐列表 - 请求 */
-    export interface ReqGetAvailableApi {
-      /** 页码，默认1 */
-      page?: number
-      /** 每页数量，默认20 */
-      pageSize?: number
-    }
-
     /** 获取可购买套餐列表 - 响应 */
     export interface ResGetAvailableApi {
       /** 总数量 */
@@ -71,15 +74,6 @@ export namespace Pkg {
       packages: IPackage[]
     }
     // #endregion
-
-    // #region 获取学生套餐列表
-    /** 获取学生套餐列表 - 请求 */
-    export interface ReqGetStudentApi {
-      /** 页码，默认1 */
-      page?: number
-      /** 每页数量，默认10 */
-      pageSize?: number
-    }
 
     /** 快照信息 */
     export interface ISnapshotInfo {
@@ -103,35 +97,108 @@ export namespace Pkg {
       monthlyDecrease: boolean
     }
 
-    /** 学生套餐信息 */
-    export interface IStudentPackage {
-      /** 当前模板 */
-      currentTemplate: any
-      /** 结束日期 */
-      endDate: string
-      /** ID */
+    // #region 获取套餐购买记录
+    /** 套餐购买信息 */
+    export interface IPackagePurchaseVo {
+      /** 套餐记录ID */
       id: number
-      /** 套餐是否存在 */
-      isPackageExists: boolean
       /** 套餐ID */
       packageId: number
-      /** 支付日期 */
-      paymentDate: string | null
       /** 购买日期 */
       purchaseDate: string
-      /** 购买者信息 */
-      purchaserInfo: any
+      /** 购买价格 */
+      purchasePrice: string
+      /** 支付日期 */
+      paymentDate: string | null
+      /** 支付订单号 */
+      paymentOrderNo: string
       /** 开始日期 */
       startDate: string
+      /** 结束日期 */
+      endDate: string
       /** 状态 */
-      status: number
+      status: TPackageBuyStatus
       /** 状态文本 */
       statusText: string
+      /** 购买者信息 */
+      purchaserInfo: IPurchaserInfo | null
       /** 快照信息 */
-      snapshotInfo: ISnapshotInfo
+      snapshotInfo: {
+        /** 套餐编码 */
+        packageCode: string
+        /** 套餐类型 */
+        packageType: TPackageType
+        /** 设备类型 */
+        deviceType: string
+        /** 视频通话分钟数 */
+        videoCallMinutes: number
+        /** 留言条数 */
+        messageCount: number
+        /** 总月数 */
+        totalMonths: number
+        /** 是否按月重置 */
+        monthlyReset: boolean
+        /** 首月是否按比例计算 */
+        firstMonthRatio: boolean
+        /** 是否按月递减 */
+        monthlyDecrease: boolean
+      }
+      /** 套餐是否存在 */
+      isPackageExists: boolean
+      /** 当前模板 */
+      currentTemplate: {
+        /** 模板ID */
+        id: number
+        /** 租户ID */
+        tenantId: number
+        /** 学校ID */
+        schoolId: number
+        /** 模板编码 */
+        templateCode: string
+        /** 套餐类型 */
+        packageType: TPackageType
+        /** 套餐内容 */
+        packageContent: string
+        /** 基础价格 */
+        basePrice: number
+        /** 总月数 */
+        totalMonths: number
+        /** 是否按月重置 */
+        monthlyReset: boolean
+        /** 首月是否按比例计算 */
+        firstMonthRatio: boolean
+        /** 是否按月递减 */
+        monthlyDecrease: boolean
+        /** 开始时间 */
+        startTime: string | null
+        /** 结束时间 */
+        endTime: string | null
+        /** 是否默认 */
+        isDefault: boolean
+        /** 模板描述 */
+        templateDescription: string
+        /** 使用规则 */
+        usageRules: string
+        /** 状态 */
+        status: TPackageBuyStatus
+        /** 排序 */
+        sortOrder: number
+        /** 创建时间 */
+        createdAt: string
+        /** 更新时间 */
+        updatedAt: string
+      }
     }
 
-    /** 获取学生套餐列表 - 响应 */
+    /** 获取套餐购买记录 - 请求 */
+    export interface ReqGetStudentApi {
+      /** 页码，默认1 */
+      page?: number
+      /** 每页数量，默认10 */
+      pageSize?: number
+    }
+
+    /** 获取套餐购买记录 - 响应 */
     export interface ResGetStudentApi {
       /** 总数量 */
       total: number
@@ -142,7 +209,7 @@ export namespace Pkg {
       /** 学生ID */
       studentId: number
       /** 套餐列表 */
-      packages: IStudentPackage[]
+      packages: IPackagePurchaseVo[]
     }
     // #endregion
 
@@ -183,18 +250,76 @@ export namespace Pkg {
       currentTemplate: any
     }
 
-    /** 获取学生当前正在使用的套餐 - 响应 */
     export interface ResGetStudentActiveApi {
       /** 学生ID */
       studentId: number
+      /** 套餐总数 */
+      totalCount: number
       /** 活跃套餐列表 */
       activePackages: IStudentActivePackageVo[]
+      /** 待生效的套餐列表 */
+      waitingPackages: IStudentActivePackageVo[]
     }
     // #endregion
 
     // #region 获取套餐详情
     /** 获取套餐详情 - 响应 */
-    export interface ResGetPackageDetailApi extends IPackage {}
+    export interface ResGetPackageDetailApi {
+      /** 套餐记录ID */
+      id: number
+      /** 套餐模板ID */
+      packageTemplateId: number
+      /** 模板代码 */
+      templateCode: string
+      /** 套餐类型 */
+      packageType: TPackageType
+      /** 套餐内容 */
+      packageContent: {
+        /** 留言条数 */
+        messageCount: number
+        /** 视频通话分钟数 */
+        videoCallMinutes: number
+      }
+      /** 购买时间 */
+      purchaseDate: string
+      /** 购买价格 */
+      purchasePrice: string
+      /** 支付时间 */
+      paymentDate: string | null
+      /** 支付订单号 */
+      paymentOrderNo: string
+      /** 购买者信息 */
+      purchaserInfo: any | null
+      /** 开始时间 */
+      startDate: string
+      /** 结束时间 */
+      endDate: string
+      /** 套餐是否存在 */
+      isPackageExists: boolean
+      /** 当前模板信息 */
+      currentTemplate: {
+        /** 基础价格 */
+        basePrice: number
+        /** 模板ID */
+        id: number
+        /** 套餐类型 */
+        packageType: TPackageType
+        /** 模板代码 */
+        templateCode: string
+      }
+      /** 是否可退款 */
+      canRefund: boolean
+      /** 剩余可退款金额 */
+      remainingRefundAmount: string
+      /** 退款状态 */
+      refundStatus: string
+      /** 模板描述 */
+      templateDescription: string
+      /** 总月份 */
+      totalMonths: number
+      /** 使用规则 */
+      usageRules: string
+    }
     // #endregion
 
     // #region 获取基础费率
@@ -226,6 +351,14 @@ export namespace Pkg {
   // #region 套餐支付
   export namespace Payment {
     // #region 购买套餐
+    /** 购买套餐 - 请求 */
+    export interface ReqPostPurchaseApi {
+      /** 套餐ID */
+      packageId: number
+      /** 支付方式 */
+      paymentMethod: TPaymentMethod
+    }
+
     /** 微信JSAPI支付参数 */
     export interface IJsApiPayParams {
       /** 微信小程序AppID */
@@ -244,14 +377,6 @@ export namespace Pkg {
       prepayId: string
       /** 商户号 */
       partnerId: string
-    }
-
-    /** 购买套餐 - 请求 */
-    export interface ReqPostPurchaseApi {
-      /** 套餐ID */
-      packageId: number
-      /** 支付方式 */
-      paymentMethod: TPaymentMethod
     }
 
     /** 购买套餐 - 响应 */
@@ -334,6 +459,7 @@ export namespace Pkg {
     // #endregion
   }
   // #endregion
+
   // #region 套餐退款
   export namespace Refund {
     // #region 申请套餐退费
@@ -350,6 +476,7 @@ export namespace Pkg {
     // #endregion
 
     // #region 检查是否存在待审核的套餐退费申请
+    /** 检查是否存在待审核的套餐退费申请 - 响应 */
     /** 待审核的套餐退费申请信息 */
     export interface IPendingApplication {
       /** 退费申请ID */
@@ -365,12 +492,11 @@ export namespace Pkg {
       /** 申请原因 */
       applyReason: string
       /** 状态 */
-      status: TRefundApplicationStatus
+      status: TRefundStatus
       /** 状态文本 */
       statusText: string
     }
 
-    /** 检查是否存在待审核的套餐退费申请 - 响应 */
     export interface ResGetPendingApi {
       /** 是否有待审核的申请 */
       hasPendingAudit: boolean
@@ -390,6 +516,16 @@ export namespace Pkg {
     // #endregion
 
     // #region 获取套餐退费申请列表
+    /** 获取套餐退费申请列表 - 请求 */
+    export interface ReqGetListApi {
+      /** 退费状态筛选 */
+      status?: number
+      /** 页码 */
+      page?: number
+      /** 每页数量 */
+      pageSize?: number
+    }
+
     /** 套餐退费申请记录 */
     export interface IRefundApplicationRecord {
       /** 申请ID */
@@ -409,7 +545,7 @@ export namespace Pkg {
       /** 实际退款金额 */
       actualAmount: string
       /** 状态 */
-      status: TRefundApplicationStatus
+      status: TRefundStatus
       /** 状态文本 */
       statusText: string
       /** 申请原因 */
@@ -420,16 +556,6 @@ export namespace Pkg {
       applyTime: string
       /** 审核时间 */
       auditTime: string | null
-    }
-
-    /** 获取套餐退费申请列表 - 请求 */
-    export interface ReqGetListApi {
-      /** 退费状态筛选 */
-      status?: number
-      /** 页码 */
-      page?: number
-      /** 每页数量 */
-      pageSize?: number
     }
 
     /** 获取套餐退费申请列表 - 响应 */

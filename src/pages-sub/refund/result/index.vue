@@ -10,7 +10,7 @@
 
 <script lang="ts" setup>
 import type { Refund } from '@/api/interface/modules/refund'
-import type { TRefundStatus } from '@/constant/modules/refund'
+import type { TRefundStatus } from '@/constant/modules'
 import dayjs from 'dayjs'
 import { computed, ref, unref } from 'vue'
 import { useMessage } from 'wot-design-uni'
@@ -18,9 +18,9 @@ import { getRefundApplicationDetailApi, postCancelRefundApplicationApi } from '@
 import TButton from '@/components/common/button/index.vue'
 import DetailBlock from '@/components/common/detail-block/index.vue'
 import Page from '@/components/common/page/index.vue'
-import { REFUND_STATUS, REFUND_STATUS_CONFIGS } from '@/constant/modules/refund'
+import { REFUND_STATUS, REFUND_STATUS_CONFIGS } from '@/constant/modules'
 import { usePage } from '@/hooks/usePage'
-import { currRoute, getPrevPageExposed } from '@/utils'
+import { currRoute } from '@/utils'
 import { useRefundEmitter } from '@/utils/emit/refund'
 import { toast } from '@/utils/toast'
 
@@ -74,11 +74,12 @@ const statusBgColors = computed(() => {
     [REFUND_STATUS.PARTIAL]: ['bg-yellow-200', 'bg-orange-100', 'bg-gray-200'],
     [REFUND_STATUS.REJECTED]: ['bg-red-200', 'bg-orange-200', 'bg-gray-300'],
     [REFUND_STATUS.CANCELLED]: ['bg-gray-200', 'bg-gray-100', 'bg-gray-300'],
+    [REFUND_STATUS.ALL_CANCELLED]: ['bg-gray-200', 'bg-gray-100', 'bg-gray-300'],
   }
-  if (status === undefined) {
+  if (status === undefined || !(status in colors)) {
     return colors[REFUND_STATUS.PENDING]
   }
-  return colors[status as TRefundStatus]
+  return colors[status]
 })
 
 const filteredRefundDetails = computed(() => {

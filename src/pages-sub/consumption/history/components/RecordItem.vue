@@ -3,14 +3,13 @@
 import type { User } from '@/api/interface/modules/user'
 import { computed } from 'vue'
 import WhiteCard from '@/components/common/white-card/index.vue'
-import { SERVICE_TYPE, SERVICE_TYPE_I18N } from '@/constant/modules/device'
-import { CONSUMPTION_SOURCE_I18N } from '@/constant/modules/user'
+import { CONSUMPTION_SOURCE_I18N, SERVICE_TYPE, SERVICE_TYPE_I18N } from '@/constant/modules'
 import { formatTime } from '@/utils/time'
 // #endregion
 
 // #region 属性定义
 const props = defineProps<{
-  record: User.Consumption.ConsumptionRecord
+  record: User.Consumption.IConsumptionRecordVo
 }>()
 // #endregion
 
@@ -72,11 +71,7 @@ function formatAmount(amount: string): string {
         </view>
       </view>
       <view text="right">
-        <view
-          text="sm"
-          font="medium"
-          class="text-red-600"
-        >
+        <view text="sm" font="medium" class="text-red-600">
           {{ formatAmount(record.amount) }}
         </view>
         <view text="xs text-muted" m="t-1">

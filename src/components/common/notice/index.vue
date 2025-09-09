@@ -1,100 +1,83 @@
 <script lang="ts" setup>
-import type { NoticeType } from './types'
+// #region 导入
 import { computed } from 'vue'
-import { useMessage } from 'wot-design-uni'
 import Icon from '@/components/icon/index.vue'
 import { typeConfig } from './config'
+// #endregion
 
+// #region 属性定义
 const props = withDefaults(
   defineProps<{
     /** 通知类型 */
-    type?: NoticeType
-    /** 通知标题 */
+    type?: 'info' | 'success' | 'warning' | 'error' | 'custom'
+    /** 标题 */
     title?: string
-    /** 通知是否可点击 */
-    clickable?: boolean
-    /** 是否可关闭 */
-    closable?: boolean
-    /** 是否显示弹框 */
-    showPopup?: boolean
-    /** 弹框标题 */
-    popupTitle?: string
-    /** 弹框内容 */
-    popupContent?: string
-    /** 弹框确认按钮文本 */
-    confirmButtonText?: string
-    /** 弹框取消按钮文本 */
-    cancelButtonText?: string
+    /** 内容 */
+    content?: string
   }>(),
   {
-    type: 'warning',
+    type: 'info',
     title: '',
-    clickable: true,
-    closable: false,
-    showPopup: true,
-    popupTitle: '提示',
-    popupContent: '',
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
+    content: '',
   },
 )
 
 const emit = defineEmits<{
+  /** 点击事件 */
   click: [event: Event]
-  confirm: []
-  cancel: []
-  close: []
 }>()
+// #endregion
 
-const message = useMessage()
-
+// #region 计算属性
+// 获取当前类型的配置
 const currentConfig = computed(() => typeConfig[props.type])
 
-// 点击通知的处理函数
+// 根据类型获取图标名称
+const iconName = computed(() => currentConfig.value.icon)
+
+// 根据类型获取图标颜色
+const iconColor = computed(() => currentConfig.value.iconColor)
+
+// 根据类型获取边框颜色
+const borderColor = computed(() => currentConfig.value.borderColor)
+
+// 根据类型获取背景颜色
+const bgColor = computed(() => currentConfig.value.bgColor)
+
+// 根据类型获取文本颜色
+const textColor = computed(() => currentConfig.value.textColor)
+// #endregion
+
+// #region 事件处理函数
 function handleClick(event: Event) {
-  // 如果需要显示弹窗，则处理弹窗逻辑
-  if (props.showPopup) {
-    message
-      .confirm({
-        title: props.popupTitle,
-        msg: props.popupContent || props.title,
-        confirmButtonText: props.confirmButtonText,
-        cancelButtonText: props.cancelButtonText,
-      })
-      .then(() => {
-        emit('confirm')
-      })
-      .catch(() => {
-        emit('cancel')
-      })
-  }
-  // 否则，直接触发 click 事件
-  else {
-    emit('click', event)
-  }
+  emit('click', event)
 }
+// #endregion
 </script>
 
 <template>
-  <view
-    flex="~ items-center justify-between"
-    p="3"
-    gap="2"
-    border="~ solid rounded-lg"
-    :style="{
-      backgroundColor: currentConfig.bgColor,
-      borderColor: currentConfig.borderColor,
-      color: currentConfig.textColor,
-    }"
-    :class="[clickable ? 'cursor-pointer' : '']"
-    @click.stop="handleClick"
-  >
-    <view flex="~ items-start" gap="2">
-      <view h-40rpx flex="~ items-center justify-center">
-        <Icon :name="currentConfig.icon" :icon-color="currentConfig.iconColor" />
+  <!-- 通知内容 -->
+  <view @click.stop="handleClick">
+    <view
+      flex="~ items-start"
+      gap="3"
+      p="x-4 y-3"
+      border="solid rounded-lg"
+      :style="{
+        borderColor,
+        backgroundColor: bgColor,
+      }"
+    >
+      <view h-6 flex="~ items-center justify-center">
+        <Icon :name="iconName" :icon-color="iconColor" icon-size="40rpx" />
       </view>
-      <view text="sm" flex="~ col 1" :style="{ color: currentConfig.textColor }">
-        {{ title }}
+      <view flex="1 ~ col" gap="1">
+        <view v-if="props.title" font="medium" :style="{ color: textColor }">
+          {{ props.title }}
+        </view>
+        <view v-if="props.content" :style="{ color: textColor }">
+          {{ props.content }}
+        </view>
       </view>
     </view>
   </view>

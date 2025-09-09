@@ -1,13 +1,11 @@
-import type { TServiceType } from '@/constant/modules/device/service'
-import type { TConsumptionSource } from '@/constant/modules/user/consumption'
-import type { TUserType } from '@/constant/modules/user/role'
+import type { TConsumptionSource, TFaceStatus, TServiceType, TUserType } from '@/constant/modules'
 
 export namespace User {
   export namespace Common {
     // #region Common - 基本接口定义
     // #region 微信信息
     /** 微信信息 */
-    export interface WechatInfo {
+    export interface IWechatInfoVo {
       /** 用户 openid */
       MiniOpenID: string
       miniOpenID: string
@@ -20,7 +18,7 @@ export namespace User {
 
     // #region 余额信息
     /** 余额信息 */
-    export interface BalanceInfo {
+    export interface IBalanceInfoVo {
       /** 总余额 */
       totalBalance: string | null
       /** 可用余额 */
@@ -43,7 +41,7 @@ export namespace User {
     // #endregion Common - 基本接口定义
 
     /** 当前孩子信息 */
-    export interface CurrentChildInfo {
+    export interface ICurrentChildVo {
       /** 学生ID */
       studentId: number | null
       /** 学生姓名 */
@@ -59,15 +57,15 @@ export namespace User {
       /** 当前总余额 */
       balance: string | null
       /** 详细余额信息 */
-      balanceInfo: BalanceInfo | null
+      balanceInfo: IBalanceInfoVo | null
       /** IC卡号 */
       cardNumber: string | null
       /** 与孩子关系 */
       relationship: number | null
       /** 学生人脸图片地址 */
       faceImageUrl: string | null
-      /** 人脸状态：1-已录入，0-未录入 */
-      faceStatus: number | null
+      /** 人脸状态：0-未采集，1-已采集，2-审核中，3-审核通过，4-审核失败 */
+      faceStatus: TFaceStatus | null
       /** 身份证号 */
       idCard: string | null
       /** 性别 */
@@ -77,15 +75,15 @@ export namespace User {
     }
 
     /** 家长角色特定信息 */
-    export interface ParentRoleInfo {
+    export interface IParentRoleInfoVo {
       /** 当前孩子信息 */
-      currentChild: CurrentChildInfo
+      currentChild: ICurrentChildVo
       /** 关联的孩子数量 */
       childrenCount: number
     }
 
     /** 教师角色特定信息 */
-    export interface TeacherRoleInfo {
+    export interface ITeacherRoleInfoVo {
       /** 教师编号 */
       teacherNumber: string
       /** 任教科目 */
@@ -113,9 +111,9 @@ export namespace User {
       /** 学校名称 */
       schoolName: string
       /** 微信信息 */
-      wechatInfo: WechatInfo
+      wechatInfo: IWechatInfoVo
       /** 角色特定信息 */
-      roleInfo: ParentRoleInfo | TeacherRoleInfo
+      roleInfo: IParentRoleInfoVo | ITeacherRoleInfoVo
       /** 账户状态 */
       status: number
       /** 最后登录时间 */
@@ -273,7 +271,7 @@ export namespace User {
       startDate?: string
     }
 
-    export interface ConsumptionRecord {
+    export interface IConsumptionRecordVo {
       id: number
       consumeId: string
       serviceType: TServiceType
@@ -294,7 +292,7 @@ export namespace User {
     }
 
     export interface ResGetConsumptionRecords {
-      records: ConsumptionRecord[]
+      records: IConsumptionRecordVo[]
       total: number
       page: number
       pageSize: number
@@ -328,7 +326,7 @@ export namespace User {
         | 'PACKAGE_PURCHASE' // 套餐购买
 
     /** 资金流水明细记录 */
-    export interface BalanceDetailRecord {
+    export interface IBalanceDetailRecordVo {
       /** 记录ID */
       id: number
       /** 流水号 */
@@ -355,10 +353,20 @@ export namespace User {
       createdAt: string
     }
 
+    /** 资金流水明细汇总信息 */
+    export interface IBalanceSummaryVo {
+      /** 总收入 */
+      totalIncome: string
+      /** 总支出 */
+      totalExpense: string
+      /** 净变动 */
+      netChange: string
+    }
+
     /** 资金流水明细响应 */
     export interface ResGetBalanceDetails {
       /** 流水记录列表 */
-      records: BalanceDetailRecord[]
+      records: IBalanceDetailRecordVo[]
       /** 总记录数 */
       total: number
       /** 当前页码 */
@@ -368,14 +376,7 @@ export namespace User {
       /** 总页数 */
       totalPages: number
       /** 汇总信息 */
-      summary?: {
-        /** 总收入 */
-        totalIncome: string
-        /** 总支出 */
-        totalExpense: string
-        /** 净变动 */
-        netChange: string
-      }
+      summary?: IBalanceSummaryVo
     }
   }
 }

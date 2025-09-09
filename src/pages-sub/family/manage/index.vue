@@ -191,29 +191,19 @@ onUnmounted(() => {
           <view flex="~ items-center justify-between">
             <view>
               <view text="sm" font="medium" color="text-primary">
-                {{ relationshipValueMap[contact.relationship]?.label }}
+                {{ contact?.nickname || relationshipValueMap[contact.relationship]?.label }}
               </view>
               <view text="xs" color="text-secondary" m="t-1">
                 {{ contact.phone }}
               </view>
             </view>
 
-            <view flex="~ items-center" gap="2">
-              <view
-                w="8"
-                h="8"
-                flex="~ items-center justify-center"
-                @click="handleToEdit(contact.id!)"
-              >
-                <Icon name="edit-line" icon-size="28rpx" />
+            <view flex="~ items-center" gap="3">
+              <view text="sm primary" @click="handleToEdit(contact.id!)">
+                编辑
               </view>
-              <view
-                w="8"
-                h="8"
-                flex="~ items-center justify-center"
-                @click="showDeleteConfirmModal(contact.id!)"
-              >
-                <Icon name="delete-bin-line" icon-size="28rpx" icon-color="#ef4444" />
+              <view text="sm red-500" @click="showDeleteConfirmModal(contact.id!)">
+                删除
               </view>
             </view>
           </view>

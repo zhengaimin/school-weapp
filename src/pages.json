@@ -136,6 +136,15 @@
           }
         },
         {
+          "path": "common/auto-camera/index",
+          "type": "page",
+          "layout": "default",
+          "style": {
+            "navigationStyle": "custom",
+            "navigationBarTitleText": "自动拍照"
+          }
+        },
+        {
           "path": "common/face-collection/index",
           "type": "page",
           "layout": "default",
@@ -295,15 +304,6 @@
           "style": {
             "navigationStyle": "custom",
             "navigationBarTitleText": ""
-          }
-        },
-        {
-          "path": "package/refund/apply/index",
-          "type": "page",
-          "layout": "default",
-          "style": {
-            "navigationStyle": "custom",
-            "navigationBarTitleText": "申请退款"
           }
         },
         {
