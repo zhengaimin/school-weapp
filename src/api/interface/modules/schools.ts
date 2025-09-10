@@ -41,4 +41,25 @@ export namespace Schools {
     classes: IClassVo[]
     total: number
   }
+  /** 模块信息 */
+  export interface IModuleVo {
+    /** 模块Key */
+    moduleKey: string
+    /** 模块名称 */
+    moduleName: string
+    /** 排序 */
+    sort: number
+  }
+
+  export namespace Modules {
+    /** 获取学校模块列表 - 响应 */
+    export interface ResGetModulesApi {
+      /** 学校ID */
+      schoolId: number
+      /** 用户类型 */
+      userType: string
+      /** 模块列表 */
+      modules: IModuleVo[]
+    }
+  }
 }

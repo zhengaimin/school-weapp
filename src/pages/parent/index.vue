@@ -10,17 +10,19 @@
 
 <script setup lang="ts">
 // #region 导入
+import type { Schools } from '@/api/interface/modules/schools'
 import type { User } from '@/api/interface/modules/user'
 import dayjs from 'dayjs'
 import { storeToRefs } from 'pinia'
 import { computed, nextTick, ref, unref } from 'vue'
 import { getCheckSelfApi } from '@/api/modules/family/contacts'
+import { getSchoolModulesApi } from '@/api/modules/schools'
 import { postParentSwitchChildApi } from '@/api/modules/students'
 import { getConsumptionStatisticsApi } from '@/api/modules/user/consumption'
 import TButton from '@/components/common/button/index.vue'
 import Page from '@/components/common/page/index.vue'
 import Icon from '@/components/icon/index.vue'
-import { MENU_LIST } from '@/constant/modules'
+import { MENU_ACCOUNT_INFO, MENU_LIST } from '@/constant/modules'
 import { BALANCE_RECHARGE_PATH } from '@/constant/router'
 import { useBalance } from '@/hooks/useBalance'
 import { usePage } from '@/hooks/usePage'
@@ -58,6 +60,7 @@ const { navBarInfo } = storeToRefs(useAppStore())
 const showStudentSelector = ref(false)
 const consumptionStats = ref<User.Consumption.IConsumptionStatisticsVo>()
 const isInFamilyContact = ref<boolean>(false)
+const schoolModules = ref<Schools.Modules.ResGetModulesApi>()
 // #endregion
 
 // #region 定义计算属性
@@ -69,6 +72,49 @@ const headerInfoTop = computed(() => {
 })
 const contentHeight = computed(() => {
   return getContentHeight('(260rpx - 48rpx)')
+})
+// 根据学校模块动态过滤和排序菜单
+const filteredMenuList = computed(() => {
+  const { modules } = unref(schoolModules) || {}
+
+  if (!modules) {
+    return [] // 如果没有模块数据，什么都不显示
+  }
+
+  // 创建模块key到模块信息的映射
+  const moduleInfoMap = new Map(modules.map(module => [module.moduleKey, module]))
+
+  // 过滤出启用的菜单项并添加排序信息
+  const enabledMenus = MENU_LIST.filter((menuItem) => {
+    // 如果菜单项没有ID，则显示（兼容没有ID的菜单项）
+    if (!menuItem.id) {
+      return true
+    }
+
+    // 检查该模块是否在启用的模块列表中（现在MENU_LIST已经和moduleKey一一对应）
+    return moduleInfoMap.has(menuItem.id)
+  }).map((menuItem) => {
+    // 获取对应的模块信息
+    const moduleInfo = moduleInfoMap.get(menuItem.id!)
+
+    return {
+      ...menuItem,
+      sortOrder: moduleInfo?.sort || 999, // 没有排序信息的放到最后
+    }
+  })
+
+  // 根据sort字段进行排序
+  return enabledMenus.sort((a, b) => a.sortOrder - b.sortOrder)
+})
+// 是否存在账户模块
+const hasAccountModules = computed(() => {
+  const { modules } = unref(schoolModules) || {}
+  return modules?.some(module => module.moduleKey === MENU_ACCOUNT_INFO.id) || false
+})
+// 是否存在充值模块
+const hasRechargeModules = computed(() => {
+  const { modules } = unref(schoolModules) || {}
+  return modules?.some(module => module.moduleKey === 'recharge') || false
 })
 // #endregion
 
@@ -111,6 +157,23 @@ async function axiosGetCheckSelfApi() {
   catch (error) {
     console.error('获取联系人信息失败:', error)
     isInFamilyContact.value = false
+    return { code: -1 }
+  }
+}
+
+// 获取学校模块列表
+async function axiosGetSchoolModulesApi() {
+  try {
+    const result = await getSchoolModulesApi()
+
+    if (result.code === 0) {
+      schoolModules.value = result.data
+    }
+
+    return result
+  }
+  catch (error) {
+    console.error('获取学校模块列表失败:', error)
     return { code: -1 }
   }
 }
@@ -171,7 +234,12 @@ async function handleStudentChange(childId: number) {
 // #region 生命周期钩子
 // 登录成功处理
 async function handleLoginSuccess() {
-  await batchRequestHandler([axiosGetConsumptionStatisticsApi(), axiosGetCheckSelfApi()])
+  // 批量处理其他接口
+  await batchRequestHandler([
+    axiosGetSchoolModulesApi(),
+    axiosGetConsumptionStatisticsApi(),
+    axiosGetCheckSelfApi(),
+  ])
 }
 // 页面显示处理
 function handleShow() {
@@ -270,6 +338,7 @@ onShow(handleShow)
                   </view>
                 </view>
                 <TButton
+                  v-if="hasRechargeModules"
                   size="small"
                   type="primary"
                   custom-class="w-auto!"
@@ -280,7 +349,12 @@ onShow(handleShow)
               </view>
 
               <!-- 余额和消费信息 -->
-              <view v-if="balanceInfo" border="rounded-xl" bg="bg-secondary" p="3">
+              <view
+                v-if="balanceInfo && hasAccountModules"
+                border="rounded-xl"
+                bg="bg-secondary"
+                p="3"
+              >
                 <view flex="~ items-center justify-between">
                   <view>
                     <view m="b-1" text="xs primary" font="medium">
@@ -340,7 +414,7 @@ onShow(handleShow)
             <!-- 功能按钮网格 -->
             <view grid="~ cols-4 gap-4">
               <view
-                v-for="(item, index) in MENU_LIST"
+                v-for="(item, index) in filteredMenuList"
                 :key="index"
                 flex="~ col items-center"
                 @click="handleNavigationToPath(item.path, item)"

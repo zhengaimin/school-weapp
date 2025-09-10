@@ -49,7 +49,7 @@ const remainingDays = computed(() => {
 <template>
   <WhiteCard>
     <view text="sm text-secondary" m="b-3">
-      赠费信息
+      赠时长信息
     </view>
     <view grid="~ cols-3" gap="4">
       <view text="center">

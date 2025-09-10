@@ -39,7 +39,7 @@ defineOptions({
 // #endregion
 
 // #region 使用 Hooks
-const { pageLoading, pageError, pageLoaded, onLoginSuccess, onLoginFail } = usePage()
+const { pageLoading, pageError, pageLoaded, batchRequestHandler, onLoginFail } = usePage()
 const userStore = useUserStore()
 const { currentStudent } = storeToRefs(userStore)
 // #endregion
@@ -252,6 +252,10 @@ async function confirmSubmitImage() {
 // #endregion
 
 // #region 生命周期钩子
+function onLoginSuccess() {
+  batchRequestHandler([userStore.getUserInfo()])
+}
+
 onShow(() => {
   if (unref(pageLoaded)) {
     userStore.getUserInfo()
