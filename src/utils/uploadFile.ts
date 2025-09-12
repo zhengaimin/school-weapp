@@ -323,3 +323,33 @@ function uploadFile<T>({
     onError?.(new Error('创建上传任务失败'))
   }
 }
+
+/**
+ * Promise版本的文件上传工具
+ * @param url 上传地址
+ * @param filePath 文件路径
+ * @param formData 表单数据
+ * @returns Promise<{ code: number, data: T }>
+ */
+export function uploadFilePromise<T = any>(
+  url: string,
+  filePath: string,
+  formData: Record<string, any> = {},
+): Promise<{ code: number, data: T }> {
+  return new Promise<{ code: number, data: T }>((resolve, reject) => {
+    const { run } = useFileUpload<T>(
+      url,
+      filePath,
+      formData,
+      {
+        onSuccess: (resData) => {
+          resolve({ code: 0, data: resData as T })
+        },
+        onError: (err) => {
+          reject(err)
+        },
+      },
+    )
+    run()
+  })
+}

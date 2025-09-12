@@ -82,6 +82,7 @@ declare global {
   const useConfig: typeof import('../hooks/useConfig')['useConfig']
   const useCssModule: typeof import('vue')['useCssModule']
   const useCssVars: typeof import('vue')['useCssVars']
+  const useErrorHandler: typeof import('../hooks/useErrorHandler')['useErrorHandler']
   const useFRVExternal: typeof import('../hooks/useFRVExternal')['useFRVExternal']
   const useFaceCollect: typeof import('../hooks/useFaceCollect')['useFaceCollect']
   const useForm: typeof import('../hooks/useForm')['useForm']
@@ -189,6 +190,7 @@ declare module 'vue' {
     readonly useConfig: UnwrapRef<typeof import('../hooks/useConfig')['useConfig']>
     readonly useCssModule: UnwrapRef<typeof import('vue')['useCssModule']>
     readonly useCssVars: UnwrapRef<typeof import('vue')['useCssVars']>
+    readonly useErrorHandler: UnwrapRef<typeof import('../hooks/useErrorHandler')['useErrorHandler']>
     readonly useForm: UnwrapRef<typeof import('../hooks/useForm')['useForm']>
     readonly useId: UnwrapRef<typeof import('vue')['useId']>
     readonly useModel: UnwrapRef<typeof import('vue')['useModel']>

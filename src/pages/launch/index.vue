@@ -28,46 +28,13 @@ const { pageError, onLoginSuccess, onLoginFail } = usePage()
     :show="false"
     :loading="false"
     :error="pageError"
+    :show-bg="true"
+    :bg-colors="['bg-primary', 'bg-primary-light', 'bg-primary']"
     @login:success="onLoginSuccess"
     @login:fail="onLoginFail"
   >
     <!-- 启动页内容 -->
-    <view min-h="screen" flex="~ col items-center justify-center" relative overflow="hidden">
-      <!-- 模糊气泡背景 -->
-      <view
-        absolute
-        right--10
-        top-10
-        h-32
-        w-32
-        rounded-full
-        bg-primary
-        opacity-10
-        style="filter: blur(30px)"
-      />
-      <view
-        top-1_2
-        absolute
-        left--12
-        h-40
-        w-40
-        rounded-full
-        bg-primary-light
-        opacity-15
-        style="filter: blur(40px)"
-      />
-      <view
-        top-3_4
-        absolute
-        right--20
-        h-28
-        w-28
-        rounded-full
-        bg-primary
-        opacity-10
-        style="filter: blur(25px)"
-      />
-
+    <view min-h="screen" flex="~ col items-center justify-center">
       <!-- 主要内容区域 -->
       <view flex="~ col items-center justify-center">
         <!-- Logo 区域 -->

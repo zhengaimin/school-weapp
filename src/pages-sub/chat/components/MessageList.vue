@@ -22,6 +22,7 @@ export interface IMessage {
   fileSize?: number // 文件消息专用
   status?: 'sending' | 'sent' | 'failed'
   fileDuration?: number // 文件时长（语音、视频）
+  isRead?: boolean
 }
 // #endregion
 
@@ -37,6 +38,7 @@ withDefaults(
 
 const emit = defineEmits<{
   resend: [messageId: string | number]
+  click: []
 }>()
 // #endregion
 
@@ -162,7 +164,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <view class="message-list">
+  <view class="message-list" @click="emit('click')">
     <view v-for="item in messages" :id="`message-${item.id}`" :key="item.id">
       <view class="message-item-wrapper" p="x-4 y-2">
         <view flex :class="[item.isMine ? 'justify-end' : 'justify-start']">
@@ -468,10 +470,15 @@ onUnmounted(() => {
                 </view>
               </view>
 
-              <!-- 时间戳 -->
-              <text v-if="item.timestamp" mt-1 text-xs text-gray-400>
-                {{ formatTime(item.timestamp) }}
-              </text>
+              <!-- 时间戳和已读状态 -->
+              <view flex="~ items-center justify-end" mt-1 gap-2 text-xs text-gray-400>
+                <text v-if="item.isMine" :class="item.isRead ? 'text-gray-400' : 'text-blue-500'">
+                  {{ item.isRead ? '已读' : '未读' }}
+                </text>
+                <text v-if="item.timestamp">
+                  {{ formatTime(item.timestamp) }}
+                </text>
+              </view>
             </view>
           </view>
         </view>

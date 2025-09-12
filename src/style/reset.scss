@@ -24,6 +24,10 @@ page {
   }
 }
 
+.wd-picker-view__roller {
+  @apply bg-[#f7fafc]!;
+}
+
 .school-form {
   .wd-form-item {
     @apply p-0!;

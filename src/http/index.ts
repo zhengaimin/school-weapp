@@ -1,5 +1,6 @@
 import type { CustomRequestOptions } from '@/http/interceptor'
 import { TOKEN_WHITE_LIST } from '@/constant/modules'
+import { ERROR_CODES } from '@/constant/modules/error-codes'
 import { useUserStore } from '@/store/user'
 import { toast } from '@/utils/toast'
 // import { tokenManager } from './tokenManager'
@@ -21,7 +22,13 @@ function httpRequest<T>(options: CustomRequestOptions) {
         if (res.statusCode >= 200 && res.statusCode < 300) {
           // 2.0 轻提示错误信息
           if (!options.hideErrorToast && data.code !== 0) {
-            toast.info(data.msg || '网络错误，请稍后重试')
+            // 优先使用错误码对应的提示信息
+            const errorCode = String(data.code)
+            const errorMessage = (ERROR_CODES as Record<string, string>)[errorCode]
+              || data.msg
+              || '网络错误，请稍后重试'
+
+            toast.info(errorMessage)
           }
 
           // 2.1 提取核心数据 res.data
@@ -35,7 +42,14 @@ function httpRequest<T>(options: CustomRequestOptions) {
         }
         else {
           // 其他错误 -> 根据后端错误信息轻提示
-          !options.hideErrorToast && toast.info(data.msg || '网络错误，请稍后重试')
+          if (!options.hideErrorToast) {
+            const errorCode = String(data.code)
+            const errorMessage = (ERROR_CODES as Record<string, string>)[errorCode]
+              || data.msg
+              || '网络错误，请稍后重试'
+
+            toast.info(errorMessage)
+          }
           reject(res)
         }
       },

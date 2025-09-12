@@ -17,14 +17,14 @@ import { storeToRefs } from 'pinia'
 import { computed, onMounted, ref, unref } from 'vue'
 import { getPaymentLimitsApi, getPendingPaymentApi } from '@/api/modules/payment'
 import TButton from '@/components/common/button/index.vue'
+import FabActions from '@/components/common/fab-actions/index.vue'
 import Notice from '@/components/common/notice/index.vue'
 import Page from '@/components/common/page/index.vue'
 import RoleAvatar from '@/components/common/role-avatar/index.vue'
 import WhiteCard from '@/components/common/white-card/index.vue'
 import Cell from '@/components/form/cell/index.vue'
 import Form from '@/components/form/index/index.vue'
-import Icon from '@/components/icon/index.vue'
-import { NAVIGATION_SUFFIX_COLOR, NAVIGATION_SUFFIX_SIZE, PAYMENT_METHOD } from '@/constant/modules'
+import { PAYMENT_METHOD } from '@/constant/modules'
 import { BALANCE_RECHARGE_HISTORY_PATH, BALANCE_RECHARGE_RESULT_PATH } from '@/constant/router'
 import { useBalance } from '@/hooks/useBalance'
 import { useForm } from '@/hooks/useForm'
@@ -43,6 +43,7 @@ defineOptions({
     styleIsolation: 'apply-shared',
   },
 })
+
 // #endregion
 
 // #region 使用 Hooks
@@ -83,6 +84,16 @@ const paymentLimits = ref({
 
 // #region 定义计算属性
 const contentStyle = computed(() => getContentHeight('164rpx'))
+// Fab 操作按钮列表
+const fabActions = [
+  {
+    text: '充值记录',
+    path: BALANCE_RECHARGE_HISTORY_PATH,
+    icon: 'history-line',
+    iconColor: '#606266',
+    iconSize: '24rpx',
+  },
+]
 // #endregion
 
 // #region 定义验证规则
@@ -274,12 +285,6 @@ async function handleConfirmRecharge() {
   })
 }
 
-// 跳转到充值记录
-function goToRechargeHistory() {
-  uni.navigateTo({
-    url: `${BALANCE_RECHARGE_HISTORY_PATH}`,
-  })
-}
 // #endregion
 
 // #region 生命周期钩子
@@ -309,14 +314,7 @@ onShow(() => {
     @login:fail="onLoginFail"
   >
     <template #header-right>
-      <view flex="~ row items-center justify-center" h-full gap="4">
-        <Icon
-          name="history-line"
-          :icon-color="NAVIGATION_SUFFIX_COLOR"
-          :icon-size="NAVIGATION_SUFFIX_SIZE"
-          @click="goToRechargeHistory"
-        />
-      </view>
+      <view flex="~ row items-center justify-center" h-full gap="4" @click.stop></view>
     </template>
 
     <!-- 内容区域 -->
@@ -399,6 +397,14 @@ onShow(() => {
         </WhiteCard>
       </view>
     </scroll-view>
+
+    <!-- 浮动操作按钮 -->
+    <FabActions
+      :actions="fabActions"
+      icon-color="white"
+      icon-size="32rpx"
+      :bottom="164"
+    />
 
     <view p="4">
       <!-- 确认充值按钮 -->

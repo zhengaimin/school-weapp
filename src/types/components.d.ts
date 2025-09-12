@@ -7,13 +7,13 @@ export {}
 
 declare module 'vue' {
   export interface GlobalComponents {
-    AutoCamera: typeof import('./../components/common/auto-camera/index.vue')['default']
     BottomPopup: typeof import('./../components/popup/bottom-popup/index.vue')['default']
     Button: typeof import('./../components/common/button/index.vue')['default']
     Cell: typeof import('./../components/form/cell/index.vue')['default']
     DatetimePickerPopup: typeof import('./../components/popup/datetime-picker-popup/index.vue')['default']
     DefaultBg: typeof import('./../components/common/default-bg/index.vue')['default']
     DetailBlock: typeof import('./../components/common/detail-block/index.vue')['default']
+    FabActions: typeof import('./../components/common/fab-actions/index.vue')['default']
     FilterGroup: typeof import('./../components/common/filter-group/index.vue')['default']
     FilterSelector: typeof import('./../components/common/filter-selector/index.vue')['default']
     FunctionList: typeof import('./../components/common/function-list/index.vue')['default']
@@ -31,7 +31,6 @@ declare module 'vue' {
     RoleAvatar: typeof import('./../components/common/role-avatar/index.vue')['default']
     SelectorPopup: typeof import('./../components/popup/selector-popup/index.vue')['default']
     Tab: typeof import('./../components/common/tab/index.vue')['default']
-    VirtualList: typeof import('./../components/common/virtual-list/index.vue')['default']
     WhiteCard: typeof import('./../components/common/white-card/index.vue')['default']
   }
 }

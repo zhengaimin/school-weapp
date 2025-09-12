@@ -26,7 +26,7 @@ export const useParentStore = defineStore(
     // 余额信息
     const balanceInfo = ref<IBalanceInfo | null>(null)
     // 亲情号信息
-    const contactInfo = ref<Family.Contact.SelfContactInfo | null>(null)
+    const contactInfo = ref<Family.Contact.ISelfContactVo | null>(null)
     // 亲情号列表缓存
     const familyContacts = ref<Family.Contact.ResGetFamilyContactsApi[]>([])
 
@@ -43,7 +43,7 @@ export const useParentStore = defineStore(
         lastUpdateTime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
       }
     }
-    const setContactInfo = (info: Family.Contact.SelfContactInfo | null) => {
+    const setContactInfo = (info: Family.Contact.ISelfContactVo | null) => {
       contactInfo.value = info
     }
     const setFamilyContacts = (contacts: Family.Contact.ResGetFamilyContactsApi[]) => {

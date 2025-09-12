@@ -111,8 +111,10 @@ export function useChat() {
         if ('list' in data && Array.isArray(data.list) && 'total' in data) {
           const apiMessages = data.list
 
+          console.log(apiMessages, messages.value)
           // 3. 合并、去重和排序
-          messages.value = mergeAndSortMessages(messages.value, apiMessages)
+          messages.value = mergeAndSortMessages(apiMessages, messages.value)
+          console.log(messages.value)
 
           await nextTick()
           scrollToBottom()
@@ -165,7 +167,7 @@ export function useChat() {
           const newMessages = data.list
 
           // 合并并处理重复消息
-          messages.value = mergeAndSortMessages(messages.value, newMessages)
+          messages.value = mergeAndSortMessages(newMessages, messages.value)
           listLoaded.value = messages.value.length >= data.total
 
           // 标记未读消息为已读
@@ -250,7 +252,10 @@ export function useChat() {
    */
   function saveCachedMessages(studentId: number, messageList: ChatMessage[]) {
     // 移除前端状态字段，只缓存标准 API V_o
-    const messageListForCache = messageList.map(({ _status, ...rest }) => rest)
+    const messageListForCache = messageList.map((msg) => {
+      const { _status, ...rest } = msg
+      return rest as Message.IMessageItemVo
+    })
     MessageCache.saveCachedMessages(studentId, messageListForCache)
   }
 
@@ -283,6 +288,7 @@ export function useChat() {
       timestamp: apiMessage.createdAt || new Date().toISOString(),
       status: (apiMessage as ChatMessage)._status || 'sent',
       fileDuration: apiMessage.fileDuration,
+      isRead: apiMessage.isRead,
     }
   }
 
@@ -292,33 +298,42 @@ export function useChat() {
    * @param listB - 消息数组B (可选)
    * @returns 处理后的消息数组
    */
-  function mergeAndSortMessages(listA: ChatMessage[], listB?: ChatMessage[]): ChatMessage[] {
-    if (!Array.isArray(listA)) {
-      throw new TypeError('listA must be an array')
+  function mergeAndSortMessages(
+    apiMessages: ChatMessage[],
+    localMessages?: ChatMessage[],
+  ): ChatMessage[] {
+    if (!Array.isArray(apiMessages)) {
+      throw new TypeError('apiMessages must be an array')
     }
 
     let allMessages: ChatMessage[] = []
 
-    // 如果只传入一个数组，只需排序
-    if (!listB || listB.length === 0) {
-      allMessages = [...listA]
+    // 如果只传入接口数据，直接返回
+    if (!localMessages || localMessages.length === 0) {
+      allMessages = [...apiMessages]
     }
     else {
-      if (!Array.isArray(listB)) {
-        throw new TypeError('listB must be an array')
+      if (!Array.isArray(localMessages)) {
+        throw new TypeError('localMessages must be an array')
       }
-      // 合并并去重
-      const combined = [...listA, ...listB]
+
+      // 合并并去重，接口有的用接口的，接口没有的才用本地的
       const messageMap = new Map<string | number, ChatMessage>()
-      combined.forEach((message) => {
-        if (!message || typeof message !== 'object' || !message.id) {
-          return // 跳过无效消息
-        }
-        const existing = messageMap.get(message.id)
-        if (!existing || new Date(message.createdAt) > new Date(existing.createdAt)) {
+
+      // 首先添加本地数据
+      localMessages.forEach((message) => {
+        if (message && message.id) {
           messageMap.set(message.id, message)
         }
       })
+
+      // 然后用接口数据覆盖已存在的消息
+      apiMessages.forEach((message) => {
+        if (message && message.id) {
+          messageMap.set(message.id, message)
+        }
+      })
+
       allMessages = Array.from(messageMap.values())
     }
 
@@ -382,6 +397,9 @@ export function useChat() {
 
         saveCachedMessages(studentId.value, messages.value)
       }
+
+      // 发送成功后收起键盘
+      uni.hideKeyboard()
     }
     catch (error) {
       const failedMessage = messages.value.find(m => m.id === tempId)

@@ -19,7 +19,7 @@ export function getPrevPage() {
 
   return prevPage || null
 }
-export function getPrevPageExposed(): { refresh?: any, showImageDialog?: (imagePath: string) => void } {
+export function getPrevPageExposed(): { refresh?: any, acceptParams?: any } {
   const prevPage = getPrevPage()
   console.log(prevPage?.$vm)
   return prevPage?.$vm || prevPage?._.exposed || null

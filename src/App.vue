@@ -2,7 +2,6 @@
 import { onLaunch } from '@dcloudio/uni-app'
 import { provide, ref } from 'vue'
 import { useAppStore } from '@/store/app'
-import { isMpWeixin } from './utils/platform'
 import 'abortcontroller-polyfill/dist/abortcontroller-polyfill-only'
 
 const { initNavBarInfo } = useAppStore()
@@ -10,20 +9,8 @@ const { initNavBarInfo } = useAppStore()
 const isFirstLaunch = ref(true)
 provide('isFirstLaunch', isFirstLaunch)
 
-function initWxVerity() {
-  if (!isMpWeixin)
-    return
-
-  // eslint-disable-next-line ts/no-require-imports
-  const verify = require('./wxcomponents/verify_mpsdk/main')
-
-  verify?.init()
-}
-
 onLaunch(() => {
   initNavBarInfo()
-
-  initWxVerity()
 })
 </script>
 

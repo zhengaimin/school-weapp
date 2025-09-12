@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import type { Ref } from 'vue'
 import type { File } from '@/api/interface/modules/file'
 import type { Message } from '@/api/interface/modules/message'
 import { computed, inject, ref } from 'vue'
 import { postMessageApi } from '@/api/modules/message'
 import Icon from '@/components/icon/index.vue'
 import { FILE_TYPE } from '@/constant/modules'
-import { uploadFileUrl, useFileUpload } from '@/utils/uploadFile'
+import { toast } from '@/utils/toast'
+import { uploadFilePromise, uploadFileUrl } from '@/utils/uploadFile'
 import { voiceMessageDataKey } from '../provide'
 
 defineOptions({
@@ -38,10 +38,7 @@ function initRecorderManager() {
       // 检查是否支持录音功能
       if (!uni.getRecorderManager) {
         console.warn('当前环境不支持录音功能')
-        uni.showToast({
-          title: '当前环境不支持录音功能',
-          icon: 'none',
-        })
+        toast.show('当前环境不支持录音功能')
         return false
       }
 
@@ -49,10 +46,7 @@ function initRecorderManager() {
 
       if (!recorderManager.value) {
         console.warn('录音管理器初始化失败')
-        uni.showToast({
-          title: '录音功能初始化失败',
-          icon: 'none',
-        })
+        toast.show('录音功能初始化失败')
         return false
       }
 
@@ -78,10 +72,7 @@ function initRecorderManager() {
 
           // 录音时间太短提示
           if (duration < 1) {
-            uni.showToast({
-              title: '录音时间太短',
-              icon: 'none',
-            })
+            toast.show('录音时间太短')
             return
           }
 
@@ -109,18 +100,12 @@ function initRecorderManager() {
             // 3. 通知父组件
             emit('sendVoice', result.tempFilePath, duration)
 
-            uni.showToast({
-              title: '发送成功',
-              icon: 'success',
-            })
+            toast.success('发送成功')
           }
           catch (error) {
             console.error('语音消息发送失败:', error)
             uni.hideLoading()
-            uni.showToast({
-              title: '发送失败，请重试',
-              icon: 'none',
-            })
+            toast.show('发送失败，请重试')
           }
           finally {
             isUploading.value = false
@@ -134,18 +119,12 @@ function initRecorderManager() {
         console.error('录音错误:', error)
         isRecording.value = false
         stopRecordingTimer()
-        uni.showToast({
-          title: '录音失败',
-          icon: 'none',
-        })
+        toast.show('录音失败')
       })
     }
     catch (error) {
       console.error('录音管理器初始化异常:', error)
-      uni.showToast({
-        title: '录音功能不可用',
-        icon: 'none',
-      })
+      toast.show('录音功能不可用')
       return false
     }
   }
@@ -196,17 +175,11 @@ function handleStartRecording() {
     }
     catch (error) {
       console.error('开始录音失败:', error)
-      uni.showToast({
-        title: '录音启动失败',
-        icon: 'none',
-      })
+      toast.show('录音启动失败')
     }
   }
   else {
-    uni.showToast({
-      title: '录音功能不可用',
-      icon: 'none',
-    })
+    toast.show('录音功能不可用')
   }
 }
 
@@ -218,10 +191,7 @@ function handleStopRecording() {
   try {
     // 录音时间太短提示
     if (recordingTime.value < 1) {
-      uni.showToast({
-        title: '录音时间太短',
-        icon: 'none',
-      })
+      toast.show('录音时间太短')
       recorderManager.value.stop()
       return
     }
@@ -232,10 +202,7 @@ function handleStopRecording() {
     console.error('停止录音失败:', error)
     isRecording.value = false
     stopRecordingTimer()
-    uni.showToast({
-      title: '录音停止失败',
-      icon: 'none',
-    })
+    toast.show('录音停止失败')
   }
 }
 
@@ -255,22 +222,12 @@ function stopRecording() {
 
 // 上传语音文件
 async function uploadVoiceFile(filePath: string, duration: number) {
-  return new Promise<File.Upload.ResPostUploadApi>((resolve, reject) => {
-    const { run } = useFileUpload<File.Upload.ResPostUploadApi>(
-      uploadFileUrl.UPLOAD,
-      filePath,
-      { bizType: 'VOICE_MESSAGE' },
-      {
-        onSuccess: (resData) => {
-          resolve(resData as File.Upload.ResPostUploadApi)
-        },
-        onError: (err) => {
-          reject(err)
-        },
-      },
-    )
-    run()
-  })
+  const result = await uploadFilePromise<File.Upload.ResPostUploadApi>(
+    uploadFileUrl.UPLOAD,
+    filePath,
+    { bizType: 'VOICE_MESSAGE' },
+  )
+  return result.data
 }
 
 // 发送语音消息

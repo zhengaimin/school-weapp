@@ -92,7 +92,6 @@ export const refundRules = [
 ]
 
 export const refundNotices = [
-  '退费申请一旦提交不可撤销，请谨慎操作',
   `如有疑问请联系客服：${CUSTOMER_SERVICE_PHONE}（工作时间：9:00-18:00）`,
 ]
 

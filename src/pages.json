@@ -25,15 +25,6 @@
       }
     },
     {
-      "path": "pages/face/index",
-      "type": "page",
-      "layout": "default",
-      "style": {
-        "navigationStyle": "custom",
-        "navigationBarTitleText": ""
-      }
-    },
-    {
       "path": "pages/parent/index",
       "type": "page",
       "layout": "default",
@@ -136,30 +127,21 @@
           }
         },
         {
-          "path": "common/auto-camera/index",
-          "type": "page",
-          "layout": "default",
-          "style": {
-            "navigationStyle": "custom",
-            "navigationBarTitleText": "自动拍照"
-          }
-        },
-        {
-          "path": "common/face-collection/index",
-          "type": "page",
-          "layout": "default",
-          "style": {
-            "navigationStyle": "custom",
-            "navigationBarTitleText": "身份认证"
-          }
-        },
-        {
           "path": "common/role-switch/index",
           "type": "page",
           "layout": "default",
           "style": {
             "navigationStyle": "custom",
             "navigationBarTitleText": "切换身份"
+          }
+        },
+        {
+          "path": "common/signature/index",
+          "type": "page",
+          "layout": "default",
+          "style": {
+            "navigationStyle": "custom",
+            "navigationBarTitleText": "请签字"
           }
         },
         {
@@ -178,6 +160,33 @@
           "style": {
             "navigationStyle": "custom",
             "navigationBarTitleText": "我的订阅"
+          }
+        },
+        {
+          "path": "face/camera/index",
+          "type": "page",
+          "layout": "default",
+          "style": {
+            "navigationStyle": "custom",
+            "navigationBarTitleText": "自动拍照"
+          }
+        },
+        {
+          "path": "face/collection/index",
+          "type": "page",
+          "layout": "default",
+          "style": {
+            "navigationStyle": "custom",
+            "navigationBarTitleText": "身份认证"
+          }
+        },
+        {
+          "path": "face/consent/index",
+          "type": "page",
+          "layout": "default",
+          "style": {
+            "navigationStyle": "custom",
+            "navigationBarTitleText": "告知函"
           }
         },
         {

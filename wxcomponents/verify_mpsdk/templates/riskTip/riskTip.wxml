@@ -1,1 +1,0 @@
-<template name="riskTip"><cover-view wx:if="{{isCoverView}}" class="risk-tip">{{riskTip}}</cover-view><view wx:else class="risk-tip">{{riskTip}}</view></template>

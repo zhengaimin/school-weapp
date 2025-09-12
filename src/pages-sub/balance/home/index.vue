@@ -13,7 +13,6 @@ import dayjs from 'dayjs'
 import { storeToRefs } from 'pinia'
 // #region 导入
 import { computed, ref } from 'vue'
-import { getValidGiftsApi } from '@/api/modules/gifts'
 import { getConsumptionStatisticsApi } from '@/api/modules/user/consumption'
 import Page from '@/components/common/page/index.vue'
 import WhiteCard from '@/components/common/white-card/index.vue'
@@ -23,7 +22,6 @@ import ActivePackageCard from '@/pages-sub/package/list/components/ActivePackage
 import { usePackageStore } from '@/store/package'
 import { useParentStore } from '@/store/parent'
 import { useUserStore } from '@/store/user'
-import GiftInfo from './components/GiftCard.vue'
 // #endregion
 
 // #region 组件选项配置
@@ -50,12 +48,11 @@ const { activePackage } = storeToRefs(packageStore)
 
 // #region 定义响应式数据
 const consumptionStatistics = ref()
-const validGifts = ref(null)
 // #endregion
 
 // #region 定义计算属性
 const contentStyle = computed(() => {
-  return getContentHeight('164rpx')
+  return getContentHeight('0')
 })
 // #endregion
 
@@ -75,29 +72,11 @@ async function axiosGetConsumptionStatisticsApi() {
   }
 }
 
-async function axiosGetValidGiftsApi() {
-  try {
-    const result = await getValidGiftsApi()
-
-    if (result.code === 0) {
-      validGifts.value = result.data
-    }
-
-    return result
-  }
-  catch (error) {
-    return { code: -1 }
-  }
-}
 // #endregion
 
 // #region 生命周期钩子
 async function onLoginSuccess() {
-  await batchRequestHandler([
-    axiosGetConsumptionStatisticsApi(),
-    axiosGetValidGiftsApi(),
-    axiosGetStudentActivePackageApi(),
-  ])
+  await batchRequestHandler([axiosGetConsumptionStatisticsApi(), axiosGetStudentActivePackageApi()])
 }
 // #endregion
 </script>
@@ -173,9 +152,6 @@ async function onLoginSuccess() {
 
         <!-- 分块：套餐信息 -->
         <ActivePackageCard :active-package="activePackage" />
-
-        <!-- 分块：赠费信息 -->
-        <GiftInfo v-if="validGifts?.records" :valid-gifts="validGifts" />
       </view>
     </scroll-view>
   </Page>

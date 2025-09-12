@@ -113,18 +113,8 @@ const rechargeItems = computed(() => {
     return []
   }
 
-  const {
-    studentName,
-    studentCode,
-    className,
-    schoolName,
-    amount,
-    payTime,
-    statusText,
-    orderNo,
-    transactionId,
-    createdAt,
-  } = unref(resultInfo)
+  const { studentName, schoolName, amount, payTime, orderNo, transactionId, createdAt }
+    = unref(resultInfo)
 
   const items = [
     { key: 'orderNo', label: '订单号', value: orderNo || '-' },

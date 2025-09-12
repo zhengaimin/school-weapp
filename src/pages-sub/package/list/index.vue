@@ -14,11 +14,10 @@ import type { Pkg } from '@/api/interface/modules/package'
 import { storeToRefs } from 'pinia'
 import { computed, unref } from 'vue'
 import { getAvailablePackagesApi } from '@/api/modules/package'
+import FabActions from '@/components/common/fab-actions/index.vue'
 import Notice from '@/components/common/notice/index.vue'
 import Page from '@/components/common/page/index.vue'
 import RefreshList from '@/components/common/refresh-list/index.vue'
-import Icon from '@/components/icon/index.vue'
-import { NAVIGATION_SUFFIX_COLOR, NAVIGATION_SUFFIX_SIZE } from '@/constant/modules'
 import {
   PACKAGE_DETAIL_PATH,
   PACKAGE_HISTORY_PATH,
@@ -84,6 +83,20 @@ const hasActivePackage = computed(() => {
 })
 // #endregion
 
+// #endregion
+
+// #region 定义响应式数据
+// Fab 操作按钮列表
+const fabActions = computed(() => [
+  {
+    text: '购买\n历史',
+    path: PACKAGE_HISTORY_PATH,
+  },
+  {
+    text: '退费\n历史',
+    path: PACKAGE_REFUND_HISTORY_PATH,
+  },
+])
 // #endregion
 
 // #region 事件处理函数
@@ -194,20 +207,7 @@ onPackageTransaction(() => {
     @login:fail="onLoginFail"
   >
     <template #header-right>
-      <view flex="~ row items-center justify-center" h-full gap="4">
-        <Icon
-          name="history-line"
-          :icon-color="NAVIGATION_SUFFIX_COLOR"
-          :icon-size="NAVIGATION_SUFFIX_SIZE"
-          @click="handleGoToHistory"
-        />
-        <Icon
-          name="refund-line"
-          :icon-color="NAVIGATION_SUFFIX_COLOR"
-          :icon-size="NAVIGATION_SUFFIX_SIZE"
-          @click="handleGoToRefundHistory"
-        />
-      </view>
+      <view flex="~ row items-center justify-center" h-full gap="4" @click.stop></view>
     </template>
 
     <!-- 套餐列表区域（可刷新/上拉） -->
@@ -267,6 +267,9 @@ onPackageTransaction(() => {
         </view>
       </view>
     </RefreshList>
+
+    <!-- 浮动操作按钮 -->
+    <FabActions :actions="fabActions" :bottom="32" />
   </Page>
 </template>
 

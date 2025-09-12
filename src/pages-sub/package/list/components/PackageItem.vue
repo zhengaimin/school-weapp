@@ -35,7 +35,7 @@ function handleClick() {
 </script>
 
 <template>
-  <WhiteCard @click="handleClick">
+  <WhiteCard v-if="pkg" @click="handleClick">
     <view flex="~ col" gap="3">
       <!-- 套餐头部信息 -->
       <view flex="~ justify-between items-start">

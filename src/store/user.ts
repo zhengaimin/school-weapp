@@ -47,11 +47,11 @@ export const useUserStore = defineStore(
       if (student.schoolName) {
         list.push(student.schoolName)
       }
-      if (student.departmentName) {
-        list.push(student.departmentName)
-      }
       if (student.grade) {
         list.push(student.grade)
+      }
+      if (student.departmentName) {
+        list.push(student.departmentName)
       }
       if (student.className) {
         list.push(student.className)

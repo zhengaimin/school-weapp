@@ -61,21 +61,27 @@ export const BALANCE_RECHARGE_RESULT_PATH = '/pages-sub/balance/result/index'
 /** common */
 // 角色切换
 export const COMMON_ROLE_SWITCH_PATH = '/pages-sub/common/role-switch/index'
-// 人脸采集
-export const COMMON_FACE_COLLECTION_PATH = '/pages-sub/common/face-collection/index'
-// 自动拍照
-export const COMMON_AUTO_CAMERA_PATH = '/pages-sub/common/auto-camera/index'
+// 签名
+export const COMMON_SIGNATURE_PATH = '/pages-sub/common/signature/index'
 
 /** 设备 */
 // 我的订阅
 export const DEVICE_SUBSCRIBE_PATH = '/pages-sub/device/subscribe/index'
+
+/** 人脸 */
+// 人脸采集
+export const FACE_COLLECTION_PATH = '/pages-sub/face/collection/index'
+// 自动拍照
+export const FACE_CAMERA_PATH = '/pages-sub/face/camera/index'
+// 人脸识别同意书
+export const FACE_CONSENT_PATH = '/pages-sub/face/consent/index'
+
+/** 聊天 */
+// 聊天页面
+export const CHAT_PATH = '/pages-sub/chat/index'
 
 /** demo页面 */
 // 刷新列表
 export const DEMO_REFRESH_LIST_PATH = '/pages-sub/demo/refresh-list'
 // 时间选择器
 export const DEMO_DATETIME_PICKER_POPUP_PATH = '/pages-sub/demo/datetime-picker-popup'
-
-/** 聊天 */
-// 聊天页面
-export const CHAT_PATH = '/pages-sub/chat/index'

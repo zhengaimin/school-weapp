@@ -5,7 +5,6 @@
 
 interface NavigateToOptions {
   url: "/pages/launch/index" |
-       "/pages/face/index" |
        "/pages/parent/index" |
        "/pages/welcome/index" |
        "/pages-sub/chat/index" |
@@ -17,11 +16,13 @@ interface NavigateToOptions {
        "/pages-sub/balance/home/index" |
        "/pages-sub/balance/recharge/index" |
        "/pages-sub/balance/result/index" |
-       "/pages-sub/common/auto-camera/index" |
-       "/pages-sub/common/face-collection/index" |
        "/pages-sub/common/role-switch/index" |
+       "/pages-sub/common/signature/index" |
        "/pages-sub/consumption/history/index" |
        "/pages-sub/device/subscribe/index" |
+       "/pages-sub/face/camera/index" |
+       "/pages-sub/face/collection/index" |
+       "/pages-sub/face/consent/index" |
        "/pages-sub/family/edit/index" |
        "/pages-sub/family/manage/index" |
        "/pages-sub/fund/balance/index" |

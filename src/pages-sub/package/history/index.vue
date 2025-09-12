@@ -321,6 +321,13 @@ function onLoginSuccess() {
       <FilterGroup v-model="filters" :filters="filterConfigs" @change="onFilterChange" />
     </view>
 
+    <!-- 退款申请弹框 -->
+    <RefundModal
+      v-model:visible="showRefundModal"
+      :record="currentRefundRecord"
+      @confirm="handleRefundConfirm"
+    />
+
     <!-- 套餐记录列表 -->
     <RefreshList
       :loading="loading"
@@ -345,12 +352,5 @@ function onLoginSuccess() {
         />
       </view>
     </RefreshList>
-
-    <!-- 退款申请弹框 -->
-    <RefundModal
-      v-model:visible="showRefundModal"
-      :record="currentRefundRecord"
-      @confirm="handleRefundConfirm"
-    />
   </Page>
 </template>

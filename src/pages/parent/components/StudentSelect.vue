@@ -21,6 +21,26 @@ const top = computed(() => {
   return `calc(${navBarInfo.value.navBarHeight}px + 64rpx + 16rpx)`
 })
 
+// 生成完整班级名称
+function getFullClassName(child: any) {
+  const list = []
+
+  // if (child.schoolName) {
+  //   list.push(child.schoolName)
+  // }
+  if (child.grade) {
+    list.push(child.grade)
+  }
+  if (child.departmentName) {
+    list.push(child.departmentName)
+  }
+  if (child.className) {
+    list.push(child.className)
+  }
+
+  return list.join(' · ')
+}
+
 // 选择学生
 function selectChild(childId: number) {
   emit('change', childId)
@@ -49,62 +69,68 @@ function onClose() {
       bg="white"
       :style="{ top }"
     >
-      <view p="4" space="y-3">
-        <view
-          v-for="child in students"
-          :key="child.id"
-          flex="~ items-center justify-between"
-          p="3"
-          border="~ gray-200 solid rounded-md"
-          transition="colors"
-          cursor="pointer"
-          :class="
-            currentStudent.studentId === child.id ? 'border-primary bg-primary bg-opacity-5' : ''
-          "
-          @click="selectChild(child.id)"
-        >
-          <!-- 学生信息区域 -->
-          <view flex="~ items-center" w-full>
-            <!-- 单选圆圈 -->
-            <view
-              w="4"
-              h="4"
-              border="~ solid rounded-full"
-              m="r-3"
-              flex="~ items-center justify-center"
-              :class="
-                currentStudent.studentId === child.id
-                  ? 'border-primary bg-primary'
-                  : 'border-gray-300'
-              "
-            >
+      <scroll-view
+        scroll-y
+        :style="{ maxHeight: '50vh' }"
+        :show-scrollbar="true"
+      >
+        <view p="4" space="y-3">
+          <view
+            v-for="child in students"
+            :key="child.id"
+            flex="~ items-center justify-between"
+            p="3"
+            border="~ gray-200 solid rounded-md"
+            transition="colors"
+            cursor="pointer"
+            :class="
+              currentStudent.studentId === child.id ? 'border-primary bg-primary bg-opacity-5' : ''
+            "
+            @click="selectChild(child.id)"
+          >
+            <!-- 学生信息区域 -->
+            <view flex="~ items-center" w-full>
+              <!-- 单选圆圈 -->
               <view
-                v-if="currentStudent.studentId === child.id"
-                w="2"
-                h="2"
-                bg="white"
-                border="rounded-full"
-              />
-            </view>
-
-            <!-- 学生信息 -->
-            <view flex="~ col 1">
-              <view flex="~ row items-baseline" w-full gap="1">
-                <view text="sm gray-900" font="medium">
-                  {{ child.name }}
-                </view>
-                <text text="xs gray-500">
-                  ({{ child.schoolName }})
-                </text>
+                w="4"
+                h="4"
+                border="~ solid rounded-full"
+                m="r-3"
+                flex="~ items-center justify-center"
+                :class="
+                  currentStudent.studentId === child.id
+                    ? 'border-primary bg-primary'
+                    : 'border-gray-300'
+                "
+              >
+                <view
+                  v-if="currentStudent.studentId === child.id"
+                  w="2"
+                  h="2"
+                  bg="white"
+                  border="rounded-full"
+                />
               </view>
 
-              <view text="xs gray-500" m="t-1">
-                {{ child.grade }}·{{ child.className }}
+              <!-- 学生信息 -->
+              <view flex="~ col 1">
+                <view flex="~ row items-baseline" w-full gap="1">
+                  <view text="sm gray-900" font="medium">
+                    {{ child.name }}
+                  </view>
+                  <text text="xs gray-500">
+                    ({{ child.schoolName }})
+                  </text>
+                </view>
+
+                <view text="xs gray-500" m="t-1">
+                  {{ getFullClassName(child) }}
+                </view>
               </view>
             </view>
           </view>
         </view>
-      </view>
+      </scroll-view>
     </view>
   </wd-overlay>
 </template>

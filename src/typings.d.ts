@@ -7,6 +7,16 @@ declare global {
     data: T
   }
 
+  /**
+   * 业务错误类型
+   */
+  interface BusinessError extends Error {
+    /** 错误码 */
+    code: string | number
+    /** 错误消息 */
+    msg?: string
+  }
+
   // uni.uploadFile文件上传参数
   interface IUniUploadFileOptions {
     file?: File

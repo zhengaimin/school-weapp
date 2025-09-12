@@ -15,7 +15,7 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  confirm: [params: { record: Pkg.Query.IPackagePurchaseVo; reason: string }]
+  confirm: [params: { record: Pkg.Query.IPackagePurchaseVo, reason: string }]
 }>()
 
 const visible = defineModel<boolean>('visible', { default: false })
@@ -27,7 +27,7 @@ const { formRef, validate, submitLoading } = useForm()
 
 // #region 定义响应式数据
 const formData = ref({
-  reason: ''
+  reason: '',
 })
 // #endregion
 
@@ -35,29 +35,33 @@ const formData = ref({
 const rules = {
   reason: [
     { required: true, message: '请输入退款理由', trigger: 'blur' },
-    { min: 5, max: 200, message: '退款理由应为5-200个字符', trigger: 'blur' }
-  ]
+    { min: 5, max: 200, message: '退款理由应为5-200个字符', trigger: 'blur' },
+  ],
 }
 // #endregion
 
 // #region 事件处理函数
 // 确认退款申请
 async function handleConfirm() {
-  if (!props.record) return
+  if (!props.record)
+    return
 
   try {
     const { valid } = await validate(['reason'])
-    if (!valid) return
+    if (!valid)
+      return
 
     submitLoading.value = true
 
     emit('confirm', {
       record: props.record,
-      reason: formData.value.reason
+      reason: formData.value.reason,
     })
-  } catch (error) {
+  }
+  catch (error) {
     console.error('表单验证失败:', error)
-  } finally {
+  }
+  finally {
     submitLoading.value = false
   }
 }
@@ -91,7 +95,9 @@ function handleCancel() {
     <!-- 操作按钮 -->
     <template #footer>
       <view flex="~ row" gap="3" p="4">
-        <TButton type="default" size="large" full flex="1" @click="handleCancel">取消</TButton>
+        <TButton type="default" size="large" full flex="1" @click="handleCancel">
+          取消
+        </TButton>
         <TButton
           type="primary"
           size="large"

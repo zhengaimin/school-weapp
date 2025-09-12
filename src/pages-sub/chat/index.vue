@@ -22,8 +22,8 @@ import { voiceMessageDataKey } from './provide'
 // #region 组件选项配置
 defineOptions({
   options: {
-    styleIsolation: 'apply-shared'
-  }
+    styleIsolation: 'apply-shared',
+  },
 })
 // #endregion
 
@@ -52,8 +52,15 @@ const {
   handleInputBlur,
   handleInputChange,
   handleKeyboardHeightChange,
-  handleVoiceMessageSent
+  handleVoiceMessageSent,
 } = useChat()
+
+// #region 方法定义
+// 处理点击消息列表区域时收起键盘
+function handleHideKeyboard() {
+  uni.hideKeyboard()
+}
+// #endregion
 // #endregion
 
 // #region provide
@@ -73,7 +80,7 @@ watch(
       voiceMessageData.value = null
     }
   },
-  { deep: true }
+  { deep: true },
 )
 // #endregion
 </script>
@@ -98,7 +105,7 @@ watch(
       :input-base-height="inputHeight"
       @load-more="axiosLoadMoreMessages"
     >
-      <MessageList :messages="messagesForComponent" @resend="handleResendMessage" />
+      <MessageList :messages="messagesForComponent" @resend="handleResendMessage" @click="handleHideKeyboard" />
     </ChatRefreshList>
 
     <!-- 消息输入组件 -->

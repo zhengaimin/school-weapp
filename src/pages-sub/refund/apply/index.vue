@@ -16,6 +16,7 @@ import { computed, onUnmounted, ref, unref } from 'vue'
 import { useMessage } from 'wot-design-uni'
 import { getPendingRefundApi, postApplyRefundApi } from '@/api/modules/refund'
 import TButton from '@/components/common/button/index.vue'
+import FabActions from '@/components/common/fab-actions/index.vue'
 import Notice from '@/components/common/notice/index.vue'
 import Page from '@/components/common/page/index.vue'
 import RoleAvatar from '@/components/common/role-avatar/index.vue'
@@ -269,12 +270,6 @@ defineExpose({
           :icon-size="NAVIGATION_SUFFIX_SIZE"
           @click="showRefundInfo"
         />
-        <Icon
-          name="history-line"
-          :icon-color="NAVIGATION_SUFFIX_COLOR"
-          :icon-size="NAVIGATION_SUFFIX_SIZE"
-          @click="goToRefundHistory"
-        />
       </view>
     </template>
 
@@ -427,4 +422,11 @@ defineExpose({
       </view>
     </BottomPopup>
   </Page>
+
+  <!-- 悬浮操作按钮 -->
+  <FabActions
+    :actions="[{ text: '历史记录', path: REFUND_HISTORY_PATH }]"
+    :z-index="100"
+    :bottom="164"
+  />
 </template>
