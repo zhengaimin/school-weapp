@@ -35,8 +35,8 @@ const formData = ref({
 // #region 定义验证规则
 const rules = {
   reason: [
-    { required: true, message: '请输入退款理由', trigger: 'blur' },
-    { min: 5, max: 200, message: '退款理由应为5-200个字符', trigger: 'blur' },
+    { required: true, message: '请输入退款理由' },
+    { min: 5, max: 200, message: '退款理由应为5-200个字符' },
   ],
 }
 // #endregion
@@ -104,7 +104,6 @@ function handleCancel() {
           size="large"
           full
           flex="1"
-          :disabled="formData.reason?.length < 5"
           :loading="submitLoading"
           @click="handleConfirm"
         >

@@ -17,11 +17,11 @@ import { getDeviceSubscriptionsApi } from '@/api/modules/devices/groups'
 import TButton from '@/components/common/button/index.vue'
 import Page from '@/components/common/page/index.vue'
 import RefreshList from '@/components/common/refresh-list/index.vue'
-import { DEP_UUID, VOIP_BIND_PATH, WX_APP_ID } from '@/constant/modules'
 import { usePage } from '@/hooks/usePage'
 import { useRefresh } from '@/hooks/useRefresh'
 import { useParentStore } from '@/store/parent'
 import { useUserStore } from '@/store/user'
+import { getEnvBaseUrl } from '@/utils'
 import { isMpWeixin } from '@/utils/platform'
 import { toast } from '@/utils/toast'
 import SubscriptionItem from './components/SubscriptionItem.vue'
@@ -77,12 +77,12 @@ function getSubscribeUrl() {
   const { schoolId, schoolName, wechatInfo } = unref(userInfo) || {}
   const { id: userContactUuid } = unref(contactInfo) || {}
 
-  const basePath = VOIP_BIND_PATH
+  const basePath = getEnvBaseUrl()
   const params = {
     serverUrl: import.meta.env.VITE_SERVER_BASEURL,
     bindingFlag: 'Y',
     openId: wechatInfo?.MiniOpenID || wechatInfo?.miniOpenID,
-    depUuid: DEP_UUID,
+    depUuid: import.meta.env.VITE_APP_DEP_UUID,
     schoolUuid: schoolId,
     schoolName,
     userContactUuid,
@@ -100,7 +100,7 @@ function handleGoToSubscribe() {
 
   if (isMpWeixin) {
     uni.navigateToMiniProgram({
-      appId: WX_APP_ID,
+      appId: import.meta.env.VITE_WX_APPID,
       path: getSubscribeUrl(),
       success(res) {
         console.log('跳转成功', res)
@@ -120,6 +120,9 @@ function handleGoToSubscribe() {
 // #region 生命周期钩子
 // 登录成功后
 async function onLoginSuccess() {
+  console.log(import.meta.env.VITE_WX_APPID)
+  console.log(import.meta.env.VITE_APP_DEP_UUID)
+
   await batchRequestHandler([onRefreshList()])
 }
 

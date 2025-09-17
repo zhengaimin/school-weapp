@@ -19,7 +19,6 @@ import TButton from '@/components/common/button/index.vue'
 import DetailBlock from '@/components/common/detail-block/index.vue'
 import Page from '@/components/common/page/index.vue'
 import { PACKAGE_TYPE, PACKAGE_TYPE_I18N, PAYMENT_METHOD } from '@/constant/modules'
-import { useForm } from '@/hooks/useForm'
 import { usePage } from '@/hooks/usePage'
 import { usePackageStore } from '@/store/package'
 import { currRoute } from '@/utils'
@@ -38,7 +37,6 @@ defineOptions({
 
 // #region 使用 Hooks
 const { pageLoading, pageError, batchRequestHandler, onLoginFail, getContentHeight } = usePage()
-useForm('.refund-scroll')
 const packageStore = usePackageStore()
 const { activePackage, pendingPayment, hasPendingRefund } = storeToRefs(packageStore)
 const { emitPackageTransaction } = usePackageEmitter()

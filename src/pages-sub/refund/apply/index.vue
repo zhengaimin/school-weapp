@@ -103,8 +103,8 @@ const contentHeight = computed(() => {
 const rules = {
   refundType: [{ required: true, message: '请选择退费金额' }],
   reason: [
-    { required: true, message: '请输入退费原因', trigger: 'blur' },
-    { min: 5, max: 200, message: '退费原因应为5-200个字符', trigger: 'blur' },
+    { required: true, message: '请输入退费原因' },
+    { min: 5, max: 200, message: '退费原因应为5-200个字符' },
   ],
 }
 // #endregion

@@ -51,7 +51,8 @@ const { familyContactsRelationshipMap } = storeToRefs(parentStore)
 
 // #region 使用 Hooks
 const { pageLoading, pageError, batchRequestHandler, onLoginFail, getContentHeight } = usePage()
-const { formRef, validate, submitLoading, scrollToFirstError } = useForm('.contact-scroll')
+const { formRef, validate, submitLoading, scrollIntoView, scrollToFirstError }
+  = useForm('.contact-scroll')
 const { emitRefreshFamilyList } = useFamily()
 // #endregion
 
@@ -59,7 +60,7 @@ const { emitRefreshFamilyList } = useFamily()
 const currentEditContact = ref<Family.Contact.ResGetFamilyContactsApi | null>(null)
 
 const formData = ref<Family.Contact.ReqPostFamilyContactApi>({
-  relationship: 0,
+  relationship: null,
   phone: '',
   nickname: '',
 })
@@ -85,17 +86,17 @@ const processedRelationshipOptions = computed(() => {
 // #endregion
 
 // #region 定义验证规则
-const rules = {
+const rules: Record<string, import('@/components/form/types').RuleItem[]> = {
   relationship: [{ required: true, message: '请选择关系' }],
   phone: [
     { required: true, message: '请输入手机号' },
     {
-      required: true,
       pattern: /^1[3-9]\d{9}$/,
       message: '请输入正确的手机号码',
+      trigger: 'blur',
     },
   ],
-  nickname: [{ max: 20, message: '昵称不能超过20个字符', trigger: 'blur' }],
+  nickname: [{ max: 20, message: '昵称不能超过20个字符' }],
 }
 // #endregion
 
@@ -184,33 +185,41 @@ function onLoginSuccess() {
     @login:success="onLoginSuccess"
     @login:fail="onLoginFail"
   >
-    <view p="4 t-2" :style="contentHeight">
-      <WhiteCard>
-        <Form ref="formRef" :model="formData" :rules="rules">
-          <view flex="~ col" gap="2.5">
-            <!-- 关系选择 -->
-            <Cell id="relationship" required label="关系" prop="relationship">
-              <Picker
-                v-model.number="formData.relationship"
-                placeholder="请选择关系"
-                title="选择关系"
-                :options="processedRelationshipOptions"
-              />
-            </Cell>
+    <scroll-view
+      scroll-y
+      class="contact-scroll"
+      scroll-with-animation
+      :scroll-into-view="scrollIntoView"
+      :style="contentHeight"
+    >
+      <view p="4 t-2">
+        <WhiteCard>
+          <Form ref="formRef" :model="formData" :rules="rules">
+            <view flex="~ col" gap="2.5">
+              <!-- 关系选择 -->
+              <Cell id="relationship" required label="关系" prop="relationship">
+                <Picker
+                  v-model.number="formData.relationship"
+                  placeholder="请选择关系"
+                  title="选择关系"
+                  :options="processedRelationshipOptions"
+                />
+              </Cell>
 
-            <!-- 手机号输入 -->
-            <Cell id="phone" required label="手机号" prop="phone">
-              <wd-input v-model="formData.phone" type="tel" placeholder="请输入手机号" />
-            </Cell>
+              <!-- 手机号输入 -->
+              <Cell id="phone" required label="手机号" prop="phone">
+                <wd-input v-model="formData.phone" type="tel" placeholder="请输入手机号" />
+              </Cell>
 
-            <!-- 昵称输入 -->
-            <Cell id="nickname" label="昵称" prop="nickname">
-              <wd-input v-model="formData.nickname" placeholder="请输入昵称（可选）" />
-            </Cell>
-          </view>
-        </Form>
-      </WhiteCard>
-    </view>
+              <!-- 昵称输入 -->
+              <Cell id="nickname" label="昵称" prop="nickname">
+                <wd-input v-model="formData.nickname" placeholder="请输入昵称（可选）" />
+              </Cell>
+            </view>
+          </Form>
+        </WhiteCard>
+      </view>
+    </scroll-view>
 
     <!-- 底部添加按钮 -->
     <view p="4">

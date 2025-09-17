@@ -7,6 +7,8 @@ export interface CellProps {
   required?: boolean
   /** 标签文本 */
   label?: string
+  /** 表单域 model 字段，在使用 form 组件时，该属性是必填的 */
+  prop?: string
 }
 
 export interface CellSlots {

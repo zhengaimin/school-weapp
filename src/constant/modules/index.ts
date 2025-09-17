@@ -1,7 +1,6 @@
 export * from './app'
 export * from './business'
 export * from './common'
-export * from './config'
 export * from './http'
 export * from './miniapp'
 export * from './ui'

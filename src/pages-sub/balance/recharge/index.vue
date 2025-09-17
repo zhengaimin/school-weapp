@@ -10,7 +10,6 @@
 
 <script lang="ts" setup>
 // #region 导入
-import type { RechargeAmountOption } from './data'
 import type { Payment } from '@/api/interface/modules/payment'
 import { onShow } from '@dcloudio/uni-app'
 import { storeToRefs } from 'pinia'
@@ -67,7 +66,7 @@ const { currentStudent } = storeToRefs(userStore)
 const hasPendingOrder = ref(false)
 const pendingOrderInfo = ref<Payment.Order.Pending.ResGetPendingApi | null>(null)
 // 充值金额选项
-const amountOptions = ref<RechargeAmountOption[]>([])
+const amountOptions = ref<{ value: number, label: string, selected: boolean }[]>([])
 // 当前选中的金额
 const currentAmount = ref(0)
 // 表单数据

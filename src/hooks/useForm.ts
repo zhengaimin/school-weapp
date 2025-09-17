@@ -51,10 +51,12 @@ export function useForm(selector: string = '') {
       if (!fieldId || foundError)
         break
 
-      const errorSelector = `${selector} ${isMpWeixin ? '>>> ' : ''} #${fieldId} ${isMpWeixin ? '>>> ' : ''} .wd-input__error-message`
+      const errorSelector = `${selector} ${isMpWeixin ? '>>> ' : ''} #${fieldId} ${isMpWeixin ? '>>> ' : ''} .cell-error-message`
 
+      console.log(errorSelector)
       // 在微信小程序中，不传入组件实例，直接全局查询更可靠
       const errorElement = await boundingClientRect(errorSelector, instance)
+      console.log(errorElement)
       // 存在 .wd-input__error-message
       if (errorElement) {
         foundError = true
@@ -73,6 +75,7 @@ export function useForm(selector: string = '') {
       return
     }
 
+    console.log(formFieldsDom)
     // 如果没有缓存字段，先缓存
     if (unref(formFieldsDom).length === 0) {
       // 在微信小程序中，不传入组件实例，直接全局查询更可靠
