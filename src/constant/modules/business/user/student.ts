@@ -5,6 +5,7 @@ import type { IOption, TI18NMap } from '@/types'
 export const SEARCH_TYPE = {
   CODE: 'studentCode',
   ID_CARD: 'idCard',
+  UUID: 'UUID',
 } as const
 
 export type TSearchType = (typeof SEARCH_TYPE)[keyof typeof SEARCH_TYPE]
@@ -13,12 +14,14 @@ export type TSearchType = (typeof SEARCH_TYPE)[keyof typeof SEARCH_TYPE]
 export const SEARCH_TYPE_I18N: TI18NMap<TSearchType> = {
   [SEARCH_TYPE.CODE]: '学号',
   [SEARCH_TYPE.ID_CARD]: '身份证号',
+  [SEARCH_TYPE.UUID]: '唯一号',
 }
 
 // Options
-export const SEARCH_TYPE_OPTIONS: (IOption<TSearchType> & { maxLength: number })[] = [
-  { label: SEARCH_TYPE_I18N[SEARCH_TYPE.CODE], value: SEARCH_TYPE.CODE, maxLength: 6 },
-  { label: SEARCH_TYPE_I18N[SEARCH_TYPE.ID_CARD], value: SEARCH_TYPE.ID_CARD, maxLength: 6 },
+export const SEARCH_TYPE_OPTIONS: IOption<TSearchType>[] = [
+  { label: SEARCH_TYPE_I18N[SEARCH_TYPE.CODE], value: SEARCH_TYPE.CODE },
+  { label: SEARCH_TYPE_I18N[SEARCH_TYPE.ID_CARD], value: SEARCH_TYPE.ID_CARD },
+  { label: SEARCH_TYPE_I18N[SEARCH_TYPE.UUID], value: SEARCH_TYPE.UUID },
 ]
 // #endregion
 

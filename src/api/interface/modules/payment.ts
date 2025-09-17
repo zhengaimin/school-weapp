@@ -222,4 +222,21 @@ export namespace Payment {
       message: string
     }
   }
+
+  export namespace Config {
+    /** 支付配置信息 */
+    export interface IPaymentConfig {
+      /** 固定金额选项列表（逗号分隔的字符串） */
+      fixedAmounts: string
+      /** 单笔支付最小金额 */
+      minAmount: number | null
+      /** 单笔支付最大金额 */
+      maxAmount: number | null
+      /** 默认推荐金额（通常为固定金额的第一个） */
+      defaultAmount?: number | null
+    }
+
+    /** 获取支付配置 - 响应 */
+    export interface ResGetPaymentConfigApi extends IPaymentConfig {}
+  }
 }

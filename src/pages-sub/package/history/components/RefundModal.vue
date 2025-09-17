@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+// 单 textarea 框无法校验 - 小程序
 // #region 导入
 import type { Pkg } from '@/api/interface/modules/package'
 import { ref } from 'vue'

@@ -39,8 +39,7 @@ interface NavigateToOptions {
        "/pages-sub/service/purchase/index" |
        "/pages-sub/package/refund/history/index" |
        "/pages-sub/parent/student/bind/index" |
-       "/pages-sub/parent/student/detail/index" |
-       "/pages-sub/parent/student/manage/index";
+       "/pages-sub/parent/student/detail/index";
 }
 interface RedirectToOptions extends NavigateToOptions {}
 

@@ -20,6 +20,7 @@ declare module 'vue' {
     GradientHeader: typeof import('./../components/common/gradient-header/index.vue')['default']
     Icon: typeof import('./../components/icon/index.vue')['default']
     Index: typeof import('./../components/form/index/index.vue')['default']
+    InputNumber: typeof import('./../components/form/input-number/index.vue')['default']
     Loading: typeof import('./../components/common/loading/index.vue')['default']
     Login: typeof import('./../components/popup/login/index.vue')['default']
     Navigation: typeof import('./../components/common/navigation/index.vue')['default']

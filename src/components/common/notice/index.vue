@@ -62,7 +62,7 @@ function handleClick(event: Event) {
       flex="~ items-start"
       gap="3"
       p="x-4 y-3"
-      border="solid rounded-lg"
+      border="solid rounded-lg 1px"
       :style="{
         borderColor,
         backgroundColor: bgColor,
@@ -72,10 +72,10 @@ function handleClick(event: Event) {
         <Icon :name="iconName" :icon-color="iconColor" icon-size="40rpx" />
       </view>
       <view flex="1 ~ col" gap="1">
-        <view v-if="props.title" font="medium" :style="{ color: textColor }">
+        <view v-if="props.title" text-sm font="medium" :style="{ color: textColor }">
           {{ props.title }}
         </view>
-        <view v-if="props.content" :style="{ color: textColor }">
+        <view v-if="props.content" text-xs :style="{ color: textColor }">
           {{ props.content }}
         </view>
       </view>

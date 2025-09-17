@@ -199,6 +199,30 @@ const containerClass = computed(() => {
       }
     }
   }
+
+  :deep(.wd-input-number) {
+    .wd-input-number__action {
+      @apply hidden;
+    }
+
+    .wd-input-number__inner {
+      @apply rounded-lg overflow-hidden w-full box-border;
+      border: 1px solid #d1d5db;
+      padding: 0 24rpx;
+    }
+
+    .wd-input-number__input {
+      @apply h-full w-full p-0;
+      height: 72rpx !important;
+      line-height: 72rpx !important;
+      text-align: left !important;
+      @apply text-sm!;
+    }
+
+    .wd-input-number__input-border {
+      @apply hidden;
+    }
+  }
 }
 
 .error-message {

@@ -43,10 +43,9 @@ function getFullClassName(child: any) {
 
 // 选择学生
 function selectChild(childId: number) {
-  emit('change', childId)
-
   setTimeout(() => {
     show.value = false
+    emit('change', childId)
   }, 300)
 }
 // 关闭选择器
@@ -69,11 +68,7 @@ function onClose() {
       bg="white"
       :style="{ top }"
     >
-      <scroll-view
-        scroll-y
-        :style="{ maxHeight: '50vh' }"
-        :show-scrollbar="true"
-      >
+      <scroll-view scroll-y :style="{ maxHeight: '50vh' }" :show-scrollbar="true">
         <view p="4" space="y-3">
           <view
             v-for="child in students"

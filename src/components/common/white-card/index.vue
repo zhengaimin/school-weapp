@@ -5,10 +5,10 @@ interface Props {
   // 自定义类名
   customClass?: string
   // 自定义样式
-  customStyle?: string
+  customStyle?: string | Record<string, string>
 }
 
-withDefaults(defineProps<Props>(), {
+const props = withDefaults(defineProps<Props>(), {
   showBorder: true,
   customClass: '',
   customStyle: '',
@@ -19,11 +19,11 @@ const emit = defineEmits(['click'])
 <template>
   <view
     bg="white"
-    border="rounded-xl"
     p="4"
     overflow-hidden
-    :class="[showBorder ? 'border border-bg-muted border-solid' : '', customClass]"
-    :style="customStyle"
+    rounded-xl
+    :class="[props.showBorder ? 'border border-bg-muted border-solid' : '', props.customClass]"
+    :style="props.customStyle"
     @click="e => emit('click', e)"
   >
     <slot />

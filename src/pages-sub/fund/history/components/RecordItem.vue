@@ -1,6 +1,7 @@
 <script lang="ts" setup>
-// #region 导入
 import type { User } from '@/api/interface/modules/user'
+// #region 导入
+import { computed } from 'vue'
 import WhiteCard from '@/components/common/white-card/index.vue'
 import Icon from '@/components/icon/index.vue'
 import { formatTime } from '@/utils/time'
@@ -15,7 +16,7 @@ defineOptions({
 // #endregion
 
 // #region 定义 Props 和 Emits
-defineProps<{
+const props = defineProps<{
   record: User.Balance.IBalanceDetailRecordVo
 }>()
 
@@ -59,9 +60,38 @@ const AMOUNT_TYPE_ICON_MAP: Record<TAmountType, string> = {
 
 const POSITIVE_AMOUNT_TYPES: TAmountType[] = [
   AMOUNT_TYPE.RECHARGE,
-  AMOUNT_TYPE.REFUND,
   AMOUNT_TYPE.UNFREEZE,
 ]
+
+const AMOUNT_TYPE_COLOR_MAP: Record<string, string> = {
+  [AMOUNT_TYPE.RECHARGE]: '#10b981',
+  [AMOUNT_TYPE.CONSUMPTION]: '#ef4444',
+  [AMOUNT_TYPE.REFUND]: '#ef4444',
+  [AMOUNT_TYPE.FREEZE]: '#ef4444',
+  [AMOUNT_TYPE.UNFREEZE]: '#10b981',
+  [AMOUNT_TYPE.ADJUST]: '#ef4444',
+  [AMOUNT_TYPE.PACKAGE_PURCHASE]: '#ef4444',
+}
+
+const AMOUNT_TYPE_TEXT_COLOR_MAP: Record<string, string> = {
+  [AMOUNT_TYPE.RECHARGE]: 'text-green-600',
+  [AMOUNT_TYPE.CONSUMPTION]: 'text-red-600',
+  [AMOUNT_TYPE.REFUND]: 'text-red-600',
+  [AMOUNT_TYPE.FREEZE]: 'text-red-600',
+  [AMOUNT_TYPE.UNFREEZE]: 'text-green-600',
+  [AMOUNT_TYPE.ADJUST]: 'text-red-600',
+  [AMOUNT_TYPE.PACKAGE_PURCHASE]: 'text-red-600',
+}
+// #endregion
+
+// #region 计算属性
+const iconColor = computed(() => {
+  return AMOUNT_TYPE_COLOR_MAP[props.record.amountType as TAmountType] || '#ef4444'
+})
+
+const amountTextColorClass = computed(() => {
+  return AMOUNT_TYPE_TEXT_COLOR_MAP[props.record.amountType as TAmountType] || 'text-red-600'
+})
 // #endregion
 
 // #region 方法实现
@@ -92,13 +122,7 @@ function formatAmount(amount: string, type: User.Balance.AmountType): string {
       <view absolute left--68rpx top-68rpx style="transform: translateY(-50%)">
         <Icon
           :name="getAmountTypeIcon(record.amountType)"
-          :icon-color="
-            record.amountType === 'RECHARGE'
-              || record.amountType === 'REFUND'
-              || record.amountType === 'UNFREEZE'
-              ? '#10b981'
-              : '#ef4444'
-          "
+          :icon-color="iconColor"
           icon-size="256rpx"
           custom-class="opacity-10"
         />
@@ -114,13 +138,7 @@ function formatAmount(amount: string, type: User.Balance.AmountType): string {
           <view
             text="lg"
             font="bold"
-            :class="
-              record.amountType === 'RECHARGE'
-                || record.amountType === 'REFUND'
-                || record.amountType === 'UNFREEZE'
-                ? 'text-green-600'
-                : 'text-red-600'
-            "
+            :class="amountTextColorClass"
           >
             {{ formatAmount(record.amount, record.amountType) }}
           </view>

@@ -113,7 +113,7 @@ function takePhoto() {
         capturedPhoto.value = tempImagePath
 
         const exposed = getPrevPageExposed()
-        exposed?.showImageDialog(tempImagePath)
+        exposed?.acceptParams(tempImagePath)
         uni.navigateBack()
       }
     },
@@ -144,9 +144,9 @@ function confirmUpload() {
     // 使用 getPrevPageExposed 调用上一个页面的方法
     const prevPageExposed = getPrevPageExposed()
 
-    if (prevPageExposed && prevPageExposed.showImageDialog) {
+    if (prevPageExposed && prevPageExposed.acceptParams) {
       // 调用上一个页面暴露的 showImageDialog 方法
-      prevPageExposed.showImageDialog(capturedPhoto.value)
+      prevPageExposed.acceptParams(capturedPhoto.value)
     }
     else {
       // 兼容旧的调用方式

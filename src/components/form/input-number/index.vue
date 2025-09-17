@@ -1,60 +1,10 @@
-<template>
-  <view :class="`wd-input-number ${customClass} ${disabled ? 'is-disabled' : ''} ${withoutInput ? 'is-without-input' : ''}`" :style="customStyle">
-    <!-- 减号按钮 -->
-    <view
-      :class="`wd-input-number__action ${minDisabled || disableMinus ? 'is-disabled' : ''}`"
-      @click="handleClick('sub')"
-      @touchstart="handleTouchStart('sub')"
-      @touchend.stop="handleTouchEnd"
-    >
-      <wd-icon name="decrease" custom-class="wd-input-number__action-icon"></wd-icon>
-    </view>
-    <!-- 输入框 -->
-    <view v-if="!withoutInput" class="wd-input-number__inner" @click.stop="">
-      <input
-        class="wd-input-number__input"
-        :style="`${inputWidth ? 'width: ' + inputWidth : ''}`"
-        :type="inputType"
-        :input-mode="precision ? 'decimal' : 'numeric'"
-        :disabled="disabled || disableInput"
-        :value="String(inputValue)"
-        :placeholder="placeholder"
-        :adjust-position="adjustPosition"
-        @input="handleInput"
-        @focus="handleFocus"
-        @blur="handleBlur"
-      />
-      <view class="wd-input-number__input-border"></view>
-    </view>
-    <!-- 加号按钮 -->
-    <view
-      :class="`wd-input-number__action ${maxDisabled || disablePlus ? 'is-disabled' : ''}`"
-      @click="handleClick('add')"
-      @touchstart="handleTouchStart('add')"
-      @touchend.stop="handleTouchEnd"
-    >
-      <wd-icon name="add" custom-class="wd-input-number__action-icon"></wd-icon>
-    </view>
-  </view>
-</template>
-
-<script lang="ts">
-export default {
-  name: 'wd-input-number',
-  options: {
-    virtualHost: true,
-    addGlobalClass: true,
-    styleIsolation: 'shared'
-  }
-}
-</script>
-
 <script lang="ts" setup>
-import wdIcon from '../wd-icon/wd-icon.vue'
+import type { OperationType } from '@/uni_modules/wot-design-uni/components/wd-input-number/types'
 import { computed, nextTick, ref, watch } from 'vue'
-import { isDef, isEqual } from '../common/util'
-import { inputNumberProps, type OperationType } from './types'
-import { callInterceptor } from '../common/interceptor'
+import { callInterceptor } from '@/uni_modules/wot-design-uni/components/common/interceptor'
+import { isDef, isEqual } from '@/uni_modules/wot-design-uni/components/common/util'
+import wdIcon from '@/uni_modules/wot-design-uni/components/wd-icon/wd-icon.vue'
+import { inputNumberProps } from '@/uni_modules/wot-design-uni/components/wd-input-number/types'
 
 const props = defineProps(inputNumberProps)
 const emit = defineEmits<{
@@ -99,12 +49,11 @@ watch(
   () => props.modelValue,
   (val) => {
     inputValue.value = formatValue(val)
-  }
+  },
 )
 
 // 监听 max, min, precision 变化时重新格式化当前值
 watch([() => props.max, () => props.min, () => props.precision], () => {
-  // const val = toNumber(inputValue.value)
   inputValue.value = formatValue(inputValue.value)
 })
 
@@ -130,7 +79,8 @@ function getInitValue() {
  * 获取数字的小数位数
  */
 function getPrecision(val?: number) {
-  if (!isDef(val)) return 0
+  if (!isDef(val))
+    return 0
   const str = val.toString()
   const dotIndex = str.indexOf('.')
   return dotIndex === -1 ? 0 : str.length - dotIndex - 1
@@ -141,7 +91,7 @@ function getPrecision(val?: number) {
  */
 function toPrecision(val: number) {
   const precision = Number(props.precision)
-  return Math.round(val * Math.pow(10, precision)) / Math.pow(10, precision)
+  return Math.round(val * 10 ** precision) / 10 ** precision
 }
 
 /**
@@ -150,7 +100,7 @@ function toPrecision(val: number) {
 function toNumber(val: string | number): number {
   // 空值处理
   if (props.allowNull && (!isDef(val) || val === '')) {
-    return NaN
+    return Number.NaN
   }
 
   if (!isDef(val) || val === '') {
@@ -160,13 +110,18 @@ function toNumber(val: string | number): number {
   let str = String(val)
 
   // 处理中间输入状态
-  if (str.endsWith('.')) str = str.slice(0, -1)
-  if (str.startsWith('.')) str = '0' + str
-  if (str.startsWith('-.')) str = '-0' + str.substring(1)
-  if (str === '-' || str === '') return props.min
+  if (str.endsWith('.'))
+    str = str.slice(0, -1)
+  if (str.startsWith('.'))
+    str = `0${str}`
+  if (str.startsWith('-.'))
+    str = `-0${str.substring(1)}`
+  if (str === '-' || str === '')
+    return props.min
 
   let num = Number(str)
-  if (isNaN(num)) num = props.min
+  if (Number.isNaN(num))
+    num = props.min
 
   return normalizeValue(num)
 }
@@ -180,14 +135,15 @@ function normalizeValue(val: number): number {
   // 严格步进
   if (props.stepStrictly) {
     const stepPrecision = getPrecision(props.step)
-    const factor = Math.pow(10, stepPrecision)
+    const factor = 10 ** stepPrecision
     result = (Math.round(result / props.step) * factor * props.step) / factor
   }
 
   // 边界限制
   if (props.stepStrictly) {
     result = applyStrictBounds(result, props.min, props.max)
-  } else {
+  }
+  else {
     result = Math.min(Math.max(result, props.min), props.max)
   }
 
@@ -203,10 +159,11 @@ function normalizeValue(val: number): number {
  * 严格步进模式下的边界处理
  */
 function applyStrictBounds(val: number, min: number, max: number): number {
-  if (val >= min && val <= max) return val
+  if (val >= min && val <= max)
+    return val
 
   const stepPrecision = getPrecision(props.step)
-  const factor = Math.pow(10, stepPrecision)
+  const factor = 10 ** stepPrecision
 
   if (val < min) {
     const minSteps = Math.ceil((min * factor) / (props.step * factor))
@@ -259,8 +216,8 @@ function formatDisplay(val: string | number): string | number {
     return props.min
   }
 
-  let num = Number(val)
-  if (isNaN(num)) {
+  const num = Number(val)
+  if (Number.isNaN(num)) {
     return props.min
   }
 
@@ -275,16 +232,25 @@ function formatDisplay(val: string | number): string | number {
  * 检查是否为中间输入状态
  */
 function isIntermediate(val: string): boolean {
-  if (!val) return false
+  if (!val)
+    return false
   const str = String(val)
-  return str.endsWith('.') || str.startsWith('.') || str.startsWith('-.') || str === '-' || (Number(props.precision) > 0 && str.indexOf('.') === -1)
+  return (
+    str.endsWith('.')
+    || str.startsWith('.')
+    || str.startsWith('-.')
+    || str === '-'
+    // @ts-expect-error 忽略 indexOf 运算符优先级问题
+    || (Number(props.precision) > 0 && !str.indexOf('.') === -1)
+  )
 }
 
 /**
  * 清理输入值
  */
 function cleanInput(val: string): string {
-  if (!val) return ''
+  if (!val)
+    return ''
 
   // 清理非数字、小数点、负号
   let cleaned = val.replace(/[^\d.-]/g, '')
@@ -292,22 +258,26 @@ function cleanInput(val: string): string {
   // 处理负号，保证负号只出现在最前面
   const hasNegative = cleaned.startsWith('-')
   cleaned = cleaned.replace(/-/g, '')
-  if (hasNegative) cleaned = '-' + cleaned
+  if (hasNegative)
+    cleaned = `-${cleaned}`
 
   // 处理小数点
   const precision = Number(props.precision)
   if (precision > 0) {
     const parts = cleaned.split('.')
     if (parts.length > 2) {
-      cleaned = parts[0] + '.' + parts.slice(1).join('')
+      cleaned = `${parts[0]}.${parts.slice(1).join('')}`
     }
-  } else {
+  }
+  else {
     cleaned = cleaned.split('.')[0]
   }
 
   // 处理以点开头的情况
-  if (cleaned.startsWith('.')) return '0' + cleaned
-  if (cleaned.startsWith('-.')) return '-0' + cleaned.substring(1)
+  if (cleaned.startsWith('.'))
+    return `0${cleaned}`
+  if (cleaned.startsWith('-.'))
+    return `-0${cleaned.substring(1)}`
 
   return cleaned
 }
@@ -355,10 +325,11 @@ function updateValue(val: string | number) {
  */
 function addStep(val: string | number, step: number) {
   const num = Number(val)
-  if (isNaN(num)) return normalizeValue(props.min)
+  if (Number.isNaN(num))
+    return normalizeValue(props.min)
 
   const precision = Math.max(getPrecision(num), getPrecision(step))
-  const factor = Math.pow(10, precision)
+  const factor = 10 ** precision
   const result = (num * factor + step * factor) / factor
   return normalizeValue(result)
 }
@@ -368,7 +339,12 @@ function addStep(val: string | number, step: number) {
  */
 function handleClick(type: OperationType) {
   const step = type === 'add' ? props.step : -props.step
-  if ((step < 0 && (minDisabled.value || props.disableMinus)) || (step > 0 && (maxDisabled.value || props.disablePlus))) return
+  if (
+    (step < 0 && (minDisabled.value || props.disableMinus))
+    || (step > 0 && (maxDisabled.value || props.disablePlus))
+  ) {
+    return
+  }
 
   const newVal = addStep(inputValue.value, step)
   updateValue(newVal)
@@ -438,7 +414,8 @@ function longPressStep(type: OperationType) {
 }
 
 function handleTouchStart(type: OperationType) {
-  if (!props.longPress) return
+  if (!props.longPress)
+    return
   clearLongPressTimer()
   longPressTimer = setTimeout(() => {
     handleClick(type)
@@ -447,7 +424,8 @@ function handleTouchStart(type: OperationType) {
 }
 
 function handleTouchEnd() {
-  if (!props.longPress) return
+  if (!props.longPress)
+    return
   clearLongPressTimer()
 }
 
@@ -458,6 +436,50 @@ function clearLongPressTimer() {
   }
 }
 </script>
+
+<template>
+  <view
+    w-full
+    :class="`wd-input-number ${customClass} ${disabled ? 'is-disabled' : ''} ${withoutInput ? 'is-without-input' : ''}`"
+    :style="customStyle"
+  >
+    <!-- 减号按钮 -->
+    <view
+      :class="`wd-input-number__action ${minDisabled || disableMinus ? 'is-disabled' : ''}`"
+      @click="handleClick('sub')"
+      @touchstart="handleTouchStart('sub')"
+      @touchend.stop="handleTouchEnd"
+    >
+      <wd-icon name="decrease" custom-class="wd-input-number__action-icon"></wd-icon>
+    </view>
+    <!-- 输入框 -->
+    <view v-if="!withoutInput" class="wd-input-number__inner" @click.stop="">
+      <input
+        class="wd-input-number__input"
+        :style="`${inputWidth ? `width: ${inputWidth}` : ''}`"
+        :type="inputType"
+        :input-mode="precision ? 'decimal' : 'numeric'"
+        :disabled="disabled || disableInput"
+        :value="String(inputValue)"
+        :placeholder="placeholder"
+        :adjust-position="adjustPosition"
+        @input="handleInput"
+        @focus="handleFocus"
+        @blur="handleBlur"
+      />
+      <view class="wd-input-number__input-border"></view>
+    </view>
+    <!-- 加号按钮 -->
+    <view
+      :class="`wd-input-number__action ${maxDisabled || disablePlus ? 'is-disabled' : ''}`"
+      @click="handleClick('add')"
+      @touchstart="handleTouchStart('add')"
+      @touchend.stop="handleTouchEnd"
+    >
+      <wd-icon name="add" custom-class="wd-input-number__action-icon"></wd-icon>
+    </view>
+  </view>
+</template>
 
 <style lang="scss" scoped>
 @import './index.scss';

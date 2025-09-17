@@ -30,6 +30,7 @@ export namespace Students {
     name?: string
     studentCode?: string
     idCard?: string
+    UUID?: string
   }
   export interface ResPostPublicStudentApi {
     students: IStudentVo[]

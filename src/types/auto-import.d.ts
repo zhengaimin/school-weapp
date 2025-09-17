@@ -94,6 +94,7 @@ declare global {
   const useRefresh: typeof import('../hooks/useRefresh')['useRefresh']
   const useRefund: typeof import('../hooks/useRefund')['useRefund']
   const useRequest: typeof import('../hooks/useRequest')['default']
+  const useSchoolModules: typeof import('../hooks/useSchoolModules')['useSchoolModules']
   const useSlots: typeof import('vue')['useSlots']
   const useStudentId: typeof import('../hooks/useStudentId')['useStudentId']
   const useTemplateRef: typeof import('vue')['useTemplateRef']
@@ -197,6 +198,7 @@ declare module 'vue' {
     readonly usePage: UnwrapRef<typeof import('../hooks/usePage')['usePage']>
     readonly useRefresh: UnwrapRef<typeof import('../hooks/useRefresh')['useRefresh']>
     readonly useRequest: UnwrapRef<typeof import('../hooks/useRequest')['default']>
+    readonly useSchoolModules: UnwrapRef<typeof import('../hooks/useSchoolModules')['useSchoolModules']>
     readonly useSlots: UnwrapRef<typeof import('vue')['useSlots']>
     readonly useStudentId: UnwrapRef<typeof import('../hooks/useStudentId')['useStudentId']>
     readonly useTemplateRef: UnwrapRef<typeof import('vue')['useTemplateRef']>

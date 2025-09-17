@@ -9,6 +9,7 @@
 </route>
 
 <script lang="ts" setup>
+// #region 导入
 import { storeToRefs } from 'pinia'
 import { computed } from 'vue'
 
@@ -17,13 +18,13 @@ import TButton from '@/components/common/button/index.vue'
 import Page from '@/components/common/page/index.vue'
 import WhiteCard from '@/components/common/white-card/index.vue'
 import Cell from '@/components/form/cell/index.vue'
-
 import Form from '@/components/form/index/index.vue'
-
 import { ROLE_TYPE_I18N } from '@/constant/modules'
 import { useForm } from '@/hooks/useForm'
 import { usePage } from '@/hooks/usePage'
 import { useUserStore } from '@/store/user'
+import { toast } from '@/utils/toast'
+// #endregion
 
 // 表单数据接口
 interface FormData {
@@ -32,33 +33,40 @@ interface FormData {
   phone: string
 }
 
+// #region 使用 Hooks
 const { pageLoading, pageError, onLoginSuccess, onLoginFail, getContentHeight } = usePage()
 const { formRef, validate, submitLoading } = useForm()
+// #endregion
 
+// #region 使用 Store
 const userStore = useUserStore()
 const { userInfo, role, phone } = storeToRefs(userStore)
+// #endregion
 
-// 表单数据
+// #region 定义计算属性
 const formData = computed<FormData>(() => ({
   userName: userInfo.value?.userName || '',
   role: ROLE_TYPE_I18N[role.value],
   phone: phone.value ? `${phone.value.slice(0, 3)}****${phone.value.slice(-4)}` : '',
 }))
 
-// 表单验证规则
+const contentHeight = computed(() => {
+  return getContentHeight('164rpx')
+})
+// #endregion
+
+// #region 定义验证规则
 const rules = {
   userName: [
     { required: true, message: '请输入姓名' },
     { required: true, minLength: 2, message: '姓名至少2个字符' },
   ],
 }
+// #endregion
 
-const contentHeight = computed(() => {
-  return getContentHeight('164rpx')
-})
-
+// #region 事件处理函数
 // 保存个人信息
-async function onSaveProfile() {
+async function handleSaveProfile() {
   try {
     const { valid } = await validate(['userName'])
     if (!valid)
@@ -76,10 +84,7 @@ async function onSaveProfile() {
       // 更新成功，更新 store 中的用户信息
       await userStore.getUserInfo()
 
-      uni.showToast({
-        title: '个人信息保存成功！',
-        icon: 'none',
-      })
+      toast.success('个人信息保存成功！')
 
       // 延迟返回上一页
       setTimeout(() => {
@@ -87,23 +92,18 @@ async function onSaveProfile() {
       }, 1500)
     }
     else {
-      uni.showToast({
-        title: result.msg || '保存失败，请重试',
-        icon: 'none',
-      })
+      toast.error(result.msg || '保存失败，请重试')
     }
   }
   catch (error) {
     console.error('保存失败:', error)
-    uni.showToast({
-      title: '保存失败，请重试',
-      icon: 'none',
-    })
+    toast.error('保存失败，请重试')
   }
   finally {
     submitLoading.value = false
   }
 }
+// #endregion
 </script>
 
 <template>
@@ -143,7 +143,7 @@ async function onSaveProfile() {
     </view>
 
     <view p="4">
-      <TButton type="primary" full size="large" :loading="submitLoading" @click="onSaveProfile">
+      <TButton type="primary" full size="large" :loading="submitLoading" @click="handleSaveProfile">
         保存
       </TButton>
     </view>

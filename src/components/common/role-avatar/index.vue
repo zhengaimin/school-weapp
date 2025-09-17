@@ -74,7 +74,7 @@ const defaultAvatar = computed(() => {
 <template>
   <view :class="containerClass" :style="customStyle">
     <image
-      v-if="props.faceImg"
+      v-if="props.faceImg && currentStudent.faceImageUrl"
       :src="currentStudent.faceImageUrl"
       class="h-full w-full"
       mode="aspectFill"

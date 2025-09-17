@@ -23,23 +23,16 @@ import WhiteCard from '@/components/common/white-card/index.vue'
 import Cell from '@/components/form/cell/index.vue'
 import Form from '@/components/form/index/index.vue'
 import Picker from '@/components/form/picker/index.vue'
-import Icon from '@/components/icon/index.vue'
 import BottomPopup from '@/components/popup/bottom-popup/index.vue'
-import {
-  NAVIGATION_SUFFIX_COLOR,
-  NAVIGATION_SUFFIX_SIZE,
-  ROLE_TYPE,
-  SEARCH_TYPE,
-  SEARCH_TYPE_OPTIONS,
-} from '@/constant/modules'
+import { ROLE_TYPE, SEARCH_TYPE, SEARCH_TYPE_OPTIONS } from '@/constant/modules'
 import { TABBAR_HOME_PATH } from '@/constant/router'
+import { useBalance } from '@/hooks/useBalance'
 import { useForm } from '@/hooks/useForm'
 import { usePage } from '@/hooks/usePage'
 import { useParentStore } from '@/store/parent'
 import { useUserStore } from '@/store/user'
 import { sleep } from '@/utils'
 import { toast } from '@/utils/toast'
-import { helpContent } from './data'
 // #endregion
 
 // #region 组件选项配置
@@ -57,6 +50,7 @@ const { needBind, studentsIdMap } = storeToRefs(parentStore)
 // #endregion
 
 // #region 使用 Hooks
+const { axiosGetUserBalanceApi } = useBalance()
 const { pageLoading, pageError, batchRequestHandler, onLoginFail, getContentHeight } = usePage()
 const { formRef, submitLoading, scrollIntoView, validate, scrollToFirstError }
   = useForm('.bind-scroll')
@@ -76,7 +70,6 @@ const searchResult = ref<{
   type: null,
 })
 const selectedStudent = ref<Students.IStudentVo | null>(null)
-const showHelpModal = ref(false)
 const showStudentInfoModal = ref(false)
 const rawSchoolOptions = ref<any[]>([])
 const schoolOptions = ref<{ label: string, value: string | number }[]>([])
@@ -88,6 +81,16 @@ const searchValueLabel = computed(() => {
 })
 const contentHeight = computed(() => {
   return getContentHeight('164rpx')
+})
+// 获取学生唯一标识
+const getStudentIdentifier = computed(() => {
+  return (student: Students.IStudentVo) => {
+    if (formData.value.searchType === SEARCH_TYPE.CODE)
+      return student.studentCode
+    if (formData.value.searchType === SEARCH_TYPE.UUID)
+      return student.uuid
+    return student.idCard
+  }
 })
 // #endregion
 
@@ -179,6 +182,15 @@ async function axiosPostBindStudentApi(params: { studentId: number }) {
 
     if (result.data.token) {
       userStore.setToken(result.data.token)
+      await userStore.getUserInfo()
+      await axiosGetUserBalanceApi()
+
+      // 切换学生成功后，清除亲情号信息
+      parentStore.setContactInfo(null)
+
+      setTimeout(() => {
+        uni.navigateBack()
+      }, 500)
     }
 
     return result
@@ -195,10 +207,6 @@ async function axiosPostBindStudentApi(params: { studentId: number }) {
 // 隐藏搜索结果
 function hideSearchResult() {
   searchResult.value = { type: null }
-}
-// 显示帮助弹框
-function showHelp() {
-  showHelpModal.value = true
 }
 // #endregion
 
@@ -241,6 +249,8 @@ async function handleSearchStudent() {
       params.studentCode = searchValue.trim()
     else if (searchType === SEARCH_TYPE.ID_CARD)
       params.idCard = searchValue.trim()
+    else if (searchType === SEARCH_TYPE.UUID)
+      params.UUID = searchValue.trim()
 
     await axiosPostPublicStudentApi(params)
 
@@ -324,18 +334,6 @@ async function onLoginSuccess() {
     @login:success="onLoginSuccess"
     @login:fail="onLoginFail"
   >
-    <!-- 右侧帮助按钮 -->
-    <template #header-right>
-      <view flex="~ row items-center justify-center" h-full gap="4">
-        <Icon
-          name="question-line"
-          :icon-color="NAVIGATION_SUFFIX_COLOR"
-          :icon-size="NAVIGATION_SUFFIX_SIZE"
-          @click="showHelp"
-        />
-      </view>
-    </template>
-
     <scroll-view
       class="bind-scroll"
       scroll-y
@@ -411,20 +409,6 @@ async function onLoginSuccess() {
       </TButton>
     </view>
 
-    <!-- 绑定说明弹框 -->
-    <BottomPopup v-model="showHelpModal" title="绑定说明" height="auto">
-      <view p="4 b-6" text-sm color-text-secondary space-y-2>
-        <view v-for="(item, index) in helpContent" :key="index" flex="~">
-          <text mr-2>
-            ·
-          </text>
-          <text flex-1>
-            {{ item }}
-          </text>
-        </view>
-      </view>
-    </BottomPopup>
-
     <!-- 学生信息弹框 -->
     <BottomPopup v-model="showStudentInfoModal" title="学生列表" height="auto">
       <!-- 未找到学生 -->
@@ -468,19 +452,14 @@ async function onLoginSuccess() {
             </view>
 
             <!-- Avatar -->
-            <RoleAvatar
-              type="student"
-              :face-img="false"
-              :path="student?.faceImageUrl"
-              m="l-3"
-            />
+            <RoleAvatar type="student" :face-img="false" :path="student?.faceImageUrl" m="l-3" />
 
             <!-- Info -->
             <view m="l-3" flex="1">
               <view text="base" font="medium" color="text-primary">
                 {{ student.name }}
                 <text text="sm" color="text-secondary" m="l-1">
-                  ({{ formData.searchType === SEARCH_TYPE.CODE ? student.studentCode : student.idCard }})
+                  ({{ getStudentIdentifier(student) }})
                 </text>
               </view>
               <view text="sm" color="text-secondary" m="t-0.5">

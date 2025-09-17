@@ -6,6 +6,7 @@ import { storeToRefs } from 'pinia'
 import WhiteCard from '@/components/common/white-card/index.vue'
 import { PACKAGE_TYPE_I18N } from '@/constant/modules'
 import { PACKAGE_DETAIL_PATH } from '@/constant/router'
+import { useSchoolModules } from '@/hooks/useSchoolModules'
 import { useParentStore } from '@/store/parent'
 // #endregion
 
@@ -13,15 +14,12 @@ import { useParentStore } from '@/store/parent'
 const props = defineProps<{
   activePackage: Pkg.Query.IStudentActivePackageVo
 }>()
-
-const emit = defineEmits<{
-  click: [pkg: Pkg.Query.IStudentActivePackageVo]
-}>()
 // #endregion
 
 // #region 使用 Store
 const parentStore = useParentStore()
 const { balanceInfo } = storeToRefs(parentStore)
+const { hasPackageMinutesModules } = useSchoolModules()
 // #endregion
 
 // #region 方法
@@ -51,7 +49,8 @@ function handleClick() {
       <!-- 套餐内容：上面显示值，下面显示说明文字；不展示 icon -->
       <view flex="~ row justify-around" gap="2" p="3" bg="gray-50" border="rounded-lg">
         <!-- 剩余时长 -->
-        <view flex="~ col" gap="1" items-center>
+        <!-- 剩余时长 -->
+        <view v-if="hasPackageMinutesModules" flex="~ col" gap="1" items-center>
           <view text="lg gray-900" font="bold">
             {{ balanceInfo.packageMinutes }}(分钟)
           </view>

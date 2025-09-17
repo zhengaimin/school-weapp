@@ -42,6 +42,7 @@ export namespace User {
 
     /** 当前孩子信息 */
     export interface ICurrentChildVo {
+      UUID: string
       /** 学生ID */
       studentId: number | null
       /** 学生姓名 */

@@ -24,14 +24,7 @@ import WhiteCard from '@/components/common/white-card/index.vue'
 import Cell from '@/components/form/cell/index.vue'
 import Form from '@/components/form/index/index.vue'
 import Radio from '@/components/form/radio/index.vue'
-import Icon from '@/components/icon/index.vue'
-import BottomPopup from '@/components/popup/bottom-popup/index.vue'
-import {
-  NAVIGATION_SUFFIX_COLOR,
-  NAVIGATION_SUFFIX_SIZE,
-  REFUND_TYPE,
-  REFUND_TYPE_OPTIONS,
-} from '@/constant/modules'
+import { REFUND_TYPE, REFUND_TYPE_OPTIONS } from '@/constant/modules'
 import { REFUND_HISTORY_PATH, REFUND_RESULT_PATH } from '@/constant/router'
 import { useBalance } from '@/hooks/useBalance'
 import { useForm } from '@/hooks/useForm'
@@ -40,7 +33,6 @@ import { useParentStore } from '@/store/parent'
 import { useUserStore } from '@/store/user'
 import { useRefundEmitter } from '@/utils/emit/refund'
 import { toast } from '@/utils/toast'
-import { refundNotices, refundProcessSteps, refundRules } from './data'
 // #endregion
 
 // #region 组件选项配置
@@ -71,8 +63,6 @@ const { balanceInfo } = storeToRefs(parentStore)
 // #region 定义响应式数据
 // 待审核的退款申请信息
 const pendingRefundInfo = ref<Refund.Application.ResGetPendingApi | null>(null)
-// 退费说明弹框
-const showRefundInfoPopup = ref(false)
 // 表单数据
 const formData = ref({
   refundType: REFUND_TYPE.FULL,
@@ -140,16 +130,11 @@ async function axiosGetPendingRefundApi() {
 
 // #region 方法定义
 async function refresh() {
-  console.log('expose: 退款历史页面刷新方法')
   batchRequestHandler([axiosGetPendingRefundApi()])
 }
 // #endregion
 
 // #region 事件处理函数
-// 显示退费说明弹框
-function showRefundInfo() {
-  showRefundInfoPopup.value = true
-}
 // 跳转到退费记录页面
 function goToRefundHistory() {
   uni.navigateTo({
@@ -213,10 +198,7 @@ async function handleSubmitRefund() {
   }
   catch (error) {
     console.error('提交退费申请失败:', error)
-    uni.showToast({
-      title: '提交失败，请重试',
-      icon: 'none',
-    })
+    toast.show('提交失败，请重试')
   }
   finally {
     submitLoading.value = false
@@ -262,17 +244,6 @@ defineExpose({
     @login:success="onLoginSuccess"
     @login:fail="onLoginFail"
   >
-    <template #header-right>
-      <view flex="~ row items-center justify-center" h-full gap="4">
-        <Icon
-          name="information-line"
-          :icon-color="NAVIGATION_SUFFIX_COLOR"
-          :icon-size="NAVIGATION_SUFFIX_SIZE"
-          @click="showRefundInfo"
-        />
-      </view>
-    </template>
-
     <!-- 内容区域 -->
     <scroll-view
       class="apply-scroll"
@@ -365,62 +336,6 @@ defineExpose({
         提交退费申请
       </TButton>
     </view>
-
-    <!-- 退费说明弹框 -->
-    <BottomPopup v-model="showRefundInfoPopup" title="退费说明" height="auto">
-      <view p="4 b-6" text-sm color-text-secondary space-y-4>
-        <!-- 退费流程 -->
-        <view>
-          <view text="base" font="medium" m="b-2" color-text-primary>
-            退费流程
-          </view>
-          <view space-y-2>
-            <view v-for="(item, index) in refundProcessSteps" :key="index" flex="~">
-              <text mr-2>
-                {{ index + 1 }}.
-              </text>
-              <text flex-1>
-                {{ item }}
-              </text>
-            </view>
-          </view>
-        </view>
-
-        <!-- 退费规则 -->
-        <view>
-          <view text="base" font="medium" m="b-2" color-text-primary>
-            退费规则
-          </view>
-          <view space-y-2>
-            <view v-for="(item, index) in refundRules" :key="index" flex="~">
-              <text mr-2>
-                •
-              </text>
-              <text flex-1>
-                {{ item }}
-              </text>
-            </view>
-          </view>
-        </view>
-
-        <!-- 注意事项 -->
-        <view>
-          <view text="base" font="medium" m="b-2" color-text-primary>
-            注意事项
-          </view>
-          <view space-y-2>
-            <view v-for="(item, index) in refundNotices" :key="index" flex="~">
-              <text mr-2 color-red-500>
-                •
-              </text>
-              <text flex-1 color-red-600>
-                {{ item }}
-              </text>
-            </view>
-          </view>
-        </view>
-      </view>
-    </BottomPopup>
   </Page>
 
   <!-- 悬浮操作按钮 -->

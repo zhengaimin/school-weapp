@@ -18,7 +18,7 @@ import { getBalanceDetailsApi } from '@/api/modules/user'
 import FilterGroup from '@/components/common/filter-group/index.vue'
 import Page from '@/components/common/page/index.vue'
 import RefreshList from '@/components/common/refresh-list/index.vue'
-import { AMOUNT_TYPE_OPTIONS } from '@/constant/modules'
+import { ALL, AMOUNT_TYPE_OPTIONS } from '@/constant/modules'
 import { usePage } from '@/hooks/usePage'
 import { useRefresh } from '@/hooks/useRefresh'
 import RecordItem from './components/RecordItem.vue'
@@ -39,10 +39,7 @@ const { pageLoading, pageError, getContentHeight, batchRequestHandler, onLoginFa
 // #region 定义响应式数据
 // 筛选条件：默认获取这一年的数据，金额类型为空（全部）
 type FilterValue = string | number | number[] | [number, number]
-const filters = ref<FilterValue[]>([
-  [dayjs().subtract(1, 'year').valueOf(), dayjs().valueOf()],
-  '',
-])
+const filters = ref<FilterValue[]>([[dayjs().subtract(1, 'year').valueOf(), dayjs().valueOf()], ALL])
 // #endregion
 
 // #region 定义计算属性
@@ -60,10 +57,7 @@ const filterConfigs = computed<FilterConfig[]>(() => [
     title: '资金类型',
     type: 'select',
     concise: true,
-    options: [
-      { label: '全部类型', value: '' },
-      ...AMOUNT_TYPE_OPTIONS,
-    ],
+    options: [{ label: '全部', value: ALL }, ...AMOUNT_TYPE_OPTIONS],
   },
 ])
 
@@ -100,7 +94,12 @@ function onFilterChange(key: string, value: [number, number] | string) {
     query.value.endDate = dayjs(endTime).format('YYYY-MM-DD')
   }
   else if (key === 'amountType') {
-    query.value.amountType = (value as string) || undefined
+    if (value !== ALL) {
+      query.value.amountType = value
+    }
+    else {
+      delete query.value.amountType
+    }
   }
 
   onRefreshList()
@@ -120,7 +119,10 @@ function onLoginSuccess() {
   query.value.startDate = dayjs(startTime).format('YYYY-MM-DD')
   query.value.endDate = dayjs(endTime).format('YYYY-MM-DD')
 
-  query.value.amountType = filters.value[1] as string || undefined
+  const amountType = filters.value[1] as string
+  if (amountType !== ALL) {
+    query.value.amountType = amountType
+  }
 
   batchRequestHandler([onRefreshList()])
 }

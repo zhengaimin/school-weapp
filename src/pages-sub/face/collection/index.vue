@@ -3,7 +3,7 @@
   "layout": "default",
   "style": {
     "navigationStyle": "custom",
-    "navigationBarTitleText": "身份认证"
+    "navigationBarTitleText": "人脸采集"
   }
 }
 </route>
@@ -19,7 +19,7 @@ import Page from '@/components/common/page/index.vue'
 import WhiteCard from '@/components/common/white-card/index.vue'
 import Icon from '@/components/icon/index.vue'
 import BottomPopup from '@/components/popup/bottom-popup/index.vue'
-import { FACE_STATUS, NAVIGATION_SUFFIX_COLOR, NAVIGATION_SUFFIX_SIZE } from '@/constant/modules'
+import { FACE_STATUS } from '@/constant/modules'
 import { FACE_CAMERA_PATH } from '@/constant/router'
 import { usePage } from '@/hooks/usePage'
 import { useUserStore } from '@/store/user'
@@ -50,7 +50,6 @@ const capturedPhoto = ref<string | null>(null)
 const showImagePreview = ref(false)
 const showLastImageModal = ref(false)
 const previewImageUrl = ref('')
-const cameraResult = ref<{ tempImagePath: string } | null>(null)
 const showExternalImagePreview = ref(false)
 const externalImageUrl = ref('')
 // #endregion
@@ -171,14 +170,9 @@ function selectCameraMethod() {
 }
 
 // 暴露给其他页面调用的方法 - 接收图片路径并弹框显示
-function showImageDialog(imagePath: string) {
+function acceptParams(imagePath: string) {
   externalImageUrl.value = imagePath
   showExternalImagePreview.value = true
-}
-
-// 查看上次上传的图片
-function handleLastImage() {
-  showLastImageModal.value = true
 }
 
 // 重新选择图片
@@ -240,7 +234,7 @@ onShow(() => {
 
 // 通过 defineExpose 暴露方法（Vue 3 推荐方式）
 defineExpose({
-  showImageDialog,
+  acceptParams,
 })
 // #endregion
 </script>
@@ -257,10 +251,13 @@ defineExpose({
       <!-- 人脸状态与图片区域 -->
       <WhiteCard
         v-if="currentStudent?.faceImageUrl"
-        :custom-style="`background-color: ${noticeConfig.bgColor};border-color: ${noticeConfig.borderColor};border-width: 3rpx;`"
+        :custom-style="{
+          backgroundColor: noticeConfig.bgColor,
+          borderColor: noticeConfig.borderColor,
+        }"
       >
         <view flex="~ col" gap="3">
-          <view text="base gray-900" font="medium">
+          <view text="base gray-900" font="medium" :style="{ color: noticeConfig.textColor }">
             当前人脸图片
           </view>
           <view flex="~ justify-center">
@@ -283,17 +280,21 @@ defineExpose({
       <!-- 未上传时的提示 -->
       <WhiteCard
         v-else
-        :style="{
+        :custom-style="{
           backgroundColor: noticeConfig.bgColor,
           borderColor: noticeConfig.borderColor,
         }"
-        border="solid"
       >
         <view text="center" p="4">
-          <view text="base gray-900" font="medium" m="b-2">
+          <view
+            text="base gray-900"
+            font="medium"
+            m="b-2"
+            :style="{ color: noticeConfig.textColor }"
+          >
             {{ noticeConfig.title }}
           </view>
-          <view text="sm gray-700">
+          <view text="sm gray-700" :style="{ color: noticeConfig.textColor }">
             {{ noticeConfig.content }}
           </view>
         </view>
@@ -429,11 +430,3 @@ defineExpose({
     </BottomPopup>
   </Page>
 </template>
-
-<style scoped lang="scss">
-.picture-footer {
-  :deep(.button) {
-    width: 50%;
-  }
-}
-</style>
