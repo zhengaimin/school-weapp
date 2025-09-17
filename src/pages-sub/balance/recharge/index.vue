@@ -136,18 +136,20 @@ async function axiosGetPaymentConfigApi() {
     const result = await getPaymentConfigApi()
     if (result.code === 0) {
       paymentConfig.value = result.data
-      const { fixedAmounts } = result.data
+      const { fixedAmounts, minAmount, maxAmount } = result.data
 
       // 更新充值金额选项
       if (fixedAmounts) {
-        amountOptions.value = fixedAmounts.split(',').map((amountStr) => {
-          const amount = Number(amountStr)
-          return {
+        amountOptions.value = fixedAmounts
+          .split(',')
+          .map((amountStr) => Number(amountStr))
+          .filter((amount) => !Number.isNaN(amount))
+          .filter((amount) => (minAmount === null || amount >= minAmount) && (maxAmount === null || amount <= maxAmount))
+          .map((amount) => ({
             value: amount,
             label: `${amount}元`,
             selected: false,
-          }
-        })
+          }))
       }
       else {
         amountOptions.value = []
