@@ -238,7 +238,7 @@ async function handleSearchStudent() {
     const selectedSchool = rawSchoolOptions.value.find(s => s.id === school)
 
     if (!selectedSchool) {
-      toast.error('未找到学校信息')
+      toast.show('未找到学校信息')
       return
     }
 
@@ -261,10 +261,7 @@ async function handleSearchStudent() {
   }
   catch (error) {
     console.error('搜索学生失败:', error)
-    uni.showToast({
-      title: '搜索失败，请重试',
-      icon: 'none',
-    })
+    toast.show('搜索失败，请重试')
   }
   finally {
     submitLoading.value = false
@@ -311,10 +308,7 @@ async function handleConfirmBinding() {
 
     // 显示错误提示
     const errorMessage = error?.message || error?.data?.message || error?.msg || '绑定失败，请重试'
-    uni.showToast({
-      title: errorMessage,
-      icon: 'none',
-    })
+    toast.show(errorMessage)
   }
   finally {
     submitLoading.value = false

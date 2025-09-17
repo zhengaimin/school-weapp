@@ -79,7 +79,7 @@ async function onLoginSuccess() {
     @login:success="onLoginSuccess"
     @login:fail="onLoginFail"
   >
-    <view class="landscape-signature signature-wrapper" pt="4" pr="4" :style="contentStyle">
+    <view class="signature-wrapper landscape-signature" pt="4" pr="4" :style="contentStyle">
       <WdSignature
         v-if="inited"
         :height="height"

@@ -8,7 +8,7 @@ export function throttle(func: (...args: any[]) => void, delay: number) {
   let timeoutId: NodeJS.Timeout | null = null
   let lastExecTime = 0
 
-  return function(this: any, ...args: any[]) {
+  return function (this: any, ...args: any[]) {
     const currentTime = Date.now()
     const remainingTime = delay - (currentTime - lastExecTime)
 
@@ -19,7 +19,8 @@ export function throttle(func: (...args: any[]) => void, delay: number) {
       }
       lastExecTime = currentTime
       func.apply(this, args)
-    } else if (!timeoutId) {
+    }
+    else if (!timeoutId) {
       timeoutId = setTimeout(() => {
         lastExecTime = Date.now()
         timeoutId = null

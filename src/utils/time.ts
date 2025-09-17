@@ -16,10 +16,12 @@ export function formatTime(timeStr: string | undefined | null | number | Date): 
   // 如果是 number 类型，直接创建 Date 对象
   if (typeof timeStr === 'number') {
     date = new Date(timeStr)
-  } else if (timeStr instanceof Date) {
+  }
+  else if (timeStr instanceof Date) {
     // 如果已经是 Date 类型，直接使用
     date = timeStr
-  } else {
+  }
+  else {
     // 处理字符串类型
     // 检测是否是 iOS 不支持的格式 (yyyy-MM-dd HH:mm:ss)
     const iosUnsupportedFormat = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/

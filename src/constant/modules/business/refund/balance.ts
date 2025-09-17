@@ -80,56 +80,56 @@ export const REFUND_STATUS_CONFIGS: TStatusConfigMap<TRefundStatus> = {
     class: 'label-info',
     icon: 'search-line',
     iconColor: '#3b82f6',
-    bgColor: '#dbeafe'
+    bgColor: '#dbeafe',
   },
   [REFUND_STATUS.APPROVED]: {
     label: REFUND_STATUS_I18N[REFUND_STATUS.APPROVED],
     class: 'label-info',
     icon: 'shield-check-line',
     iconColor: '#3b82f6',
-    bgColor: '#dbeafe'
+    bgColor: '#dbeafe',
   },
   [REFUND_STATUS.PROCESSING]: {
     label: REFUND_STATUS_I18N[REFUND_STATUS.PROCESSING],
     class: 'label-warning',
     icon: 'time-line',
     iconColor: '#f59e0b',
-    bgColor: '#fef3c7'
+    bgColor: '#fef3c7',
   },
   [REFUND_STATUS.COMPLETED]: {
     label: REFUND_STATUS_I18N[REFUND_STATUS.COMPLETED],
     class: 'label-success',
     icon: 'checkbox-circle-line',
     iconColor: '#10b981',
-    bgColor: '#d1fae5'
+    bgColor: '#d1fae5',
   },
   [REFUND_STATUS.PARTIAL]: {
     label: REFUND_STATUS_I18N[REFUND_STATUS.PARTIAL],
     class: 'label-warning',
     icon: 'error-warning-line',
     iconColor: '#eab308',
-    bgColor: '#fef9c3'
+    bgColor: '#fef9c3',
   },
   [REFUND_STATUS.REJECTED]: {
     label: REFUND_STATUS_I18N[REFUND_STATUS.REJECTED],
     class: 'label-error',
     icon: 'close-circle-line',
     iconColor: '#ef4444',
-    bgColor: '#fee2e2'
+    bgColor: '#fee2e2',
   },
   [REFUND_STATUS.CANCELLED]: {
     label: REFUND_STATUS_I18N[REFUND_STATUS.CANCELLED],
     class: 'label-default',
     icon: 'forbid-line',
     iconColor: '#9ca3af',
-    bgColor: '#f3f4f6'
+    bgColor: '#f3f4f6',
   },
   [REFUND_STATUS.ALL_CANCELLED]: {
     label: REFUND_STATUS_I18N[REFUND_STATUS.ALL_CANCELLED],
     class: 'label-default',
     icon: 'close-circle-line',
     iconColor: '#6b7280',
-    bgColor: '#f9fafb'
-  }
+    bgColor: '#f9fafb',
+  },
 }
 // #endregion

@@ -491,9 +491,9 @@ onUnmounted(() => {
   <!-- 视频播放器 -->
   <wd-popup
     v-model="showVideoPlayer"
-    root-portal
+
     custom-class="bg-transparent!"
-    closable
+    closable root-portal
     @close="closeVideoPlayer"
   >
     <view h-screen w-screen flex items-center justify-center bg-black>

@@ -31,6 +31,7 @@ import { useConfigStore } from '@/store/config'
 import { useParentStore } from '@/store/parent'
 import { currRoute } from '@/utils'
 import { useFamily } from '@/utils/emit/family'
+import { toast } from '@/utils/toast'
 // #endregion
 
 // #region 组件选项配置
@@ -94,9 +95,7 @@ const rules = {
       message: '请输入正确的手机号码',
     },
   ],
-  nickname: [
-    { max: 20, message: '昵称不能超过20个字符', trigger: 'blur' },
-  ],
+  nickname: [{ max: 20, message: '昵称不能超过20个字符', trigger: 'blur' }],
 }
 // #endregion
 
@@ -140,14 +139,11 @@ async function handleSubmit() {
       : postFamilyContactApi(formData.value))
 
     if (result.code === 0) {
-      uni.showToast({
-        title: isEdit ? '修改成功' : '添加成功',
-        icon: 'none',
-      })
-    }
+      toast.show(isEdit ? '修改成功' : '添加成功')
 
-    emitRefreshFamilyList()
-    uni.navigateBack()
+      emitRefreshFamilyList()
+      uni.navigateBack()
+    }
   }
   catch (error) {
     console.error('操作失败:', error)

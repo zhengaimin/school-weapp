@@ -52,7 +52,8 @@ export function useCachedMedia(url: string) {
             localPath.value = path
           },
         })
-      } else {
+      }
+      else {
         // 下载失败，直接使用远程URL
         localPath.value = url
       }
