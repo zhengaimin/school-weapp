@@ -1,6 +1,5 @@
 import type { CustomRequestOptions } from '@/http/interceptor'
-import { TOKEN_WHITE_LIST } from '@/constant/modules'
-import { ERROR_CODES } from '@/constant/modules/error-codes'
+import { ERROR_CODES, getHttpStatusMessage, TOKEN_WHITE_LIST } from '@/constant/modules'
 import { useUserStore } from '@/store/user'
 import { toast } from '@/utils/toast'
 // import { tokenManager } from './tokenManager'
@@ -24,9 +23,10 @@ function httpRequest<T>(options: CustomRequestOptions) {
           if (!options.hideErrorToast && data.code !== 0) {
             // 优先使用错误码对应的提示信息
             const errorCode = String(data.code)
-            const errorMessage = (ERROR_CODES as Record<string, string>)[errorCode]
-              || data.msg
-              || '网络错误，请稍后重试'
+            const errorMessage
+              = (ERROR_CODES as Record<string, string>)[errorCode]
+                || data.msg
+                || '网络错误，请稍后重试'
 
             toast.info(errorMessage)
           }
@@ -34,22 +34,32 @@ function httpRequest<T>(options: CustomRequestOptions) {
           // 2.1 提取核心数据 res.data
           resolve(data)
         }
-        else if (res.statusCode === 401) {
-          // 401错误  -> 清理用户信息，跳转到登录页
-          // userStore.clearUserInfo()
-          // uni.navigateTo({ url: '/pages/login/login' })
-          reject(res)
-        }
         else {
-          // 其他错误 -> 根据后端错误信息轻提示
+          // 接口级别错误 -> 使用 HTTP 状态码提示
           if (!options.hideErrorToast) {
-            const errorCode = String(data.code)
-            const errorMessage = (ERROR_CODES as Record<string, string>)[errorCode]
-              || data.msg
-              || '网络错误，请稍后重试'
+            // 优先使用 HTTP 状态码对应的提示信息
+            const httpStatusMessage = getHttpStatusMessage(res.statusCode)
+
+            // 如果有对应的 HTTP 状态码提示，使用它；否则回退到业务错误码
+            let errorMessage = httpStatusMessage
+            if (httpStatusMessage === '未知错误') {
+              const errorCode = String(data.code)
+              errorMessage
+                = (ERROR_CODES as Record<string, string>)[errorCode]
+                  || data.msg
+                  || '网络错误，请稍后重试'
+            }
 
             toast.info(errorMessage)
           }
+
+          // 特殊处理 401 错误
+          if (res.statusCode === 401) {
+            // 401错误 -> 清理用户信息，跳转到登录页
+            // userStore.clearUserInfo()
+            // uni.navigateTo({ url: '/pages/login/login' })
+          }
+
           reject(res)
         }
       },

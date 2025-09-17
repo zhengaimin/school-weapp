@@ -4,13 +4,10 @@ import type { Ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { computed, inject, onMounted, ref, unref } from 'vue'
 import { array, bool, string } from 'vue-types'
-
 import DefaultBg from '@/components/common/default-bg/index.vue'
 import Loading from '@/components/common/loading/index.vue'
 import Navigation from '@/components/common/navigation/index.vue'
-
 import { ROLE_TYPE } from '@/constant/modules'
-
 import {
   LAUNCH_PATH,
   PARENT_STUDENT_BIND_PATH,
@@ -20,7 +17,6 @@ import {
 import { useBalance } from '@/hooks/useBalance'
 import { useParentStore } from '@/store/parent'
 import { useUserStore } from '@/store/user'
-
 import { currRoute } from '@/utils'
 import { isMpWeixin } from '@/utils/platform'
 // #endregion
@@ -174,7 +170,7 @@ async function otherEnvLogin() {
     userStore.setRole(ROLE_TYPE.PARENT)
     userStore.setPhone('15972227364')
     userStore.setToken(
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ3ZWNoYXRBY2NvdW50SWQiOjE1LCJjdXJyZW50VXNlcklkIjozNywidXNlcm5hbWUiOiJ3ZWNoYXRfdXNlcl8xNSIsImlkZW50aXRpZXMiOnsiMzciOnsidXNlcklkIjoyNSwicm9sZUlkIjo0LCJyb2xlQ29kZSI6InBhcmVudCIsInRlbmFudElkIjoyLCJ0ZW5hbnRDb2RlIjoidGVzdF90ZW5hbnRfMDAxIiwic2Nob29sSWQiOjEsInNjaG9vbENvZGUiOiJTQ0hPT0xfM18xNzU1NjE1NjYwIiwidXNlclR5cGUiOiJwYXJlbnQifX0sInVzZXJUeXBlIjoiVVNFUiIsImV4cCI6MTc1ODAxNjU4NiwibmJmIjoxNzU3OTMwMTg2LCJpYXQiOjE3NTc5MzAxODZ9.2LTd6MivBfppG-Q7VOKr-NR-GbQZzeWGrg2xhlhPjT0',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ3ZWNoYXRBY2NvdW50SWQiOjE1LCJjdXJyZW50VXNlcklkIjozNiwidXNlcm5hbWUiOiJ3ZWNoYXRfdXNlcl8xNSIsImlkZW50aXRpZXMiOnsiMzYiOnsidXNlcklkIjoyNCwicm9sZUlkIjo0LCJyb2xlQ29kZSI6InBhcmVudCIsInRlbmFudElkIjoyLCJ0ZW5hbnRDb2RlIjoidGVzdF90ZW5hbnRfMDAxIiwic2Nob29sSWQiOjEsInNjaG9vbENvZGUiOiJTQ0hPT0xfM18xNzU1NjE1NjYwIiwidXNlclR5cGUiOiJwYXJlbnQifX0sInVzZXJUeXBlIjoiVVNFUiIsImV4cCI6MTc1ODE1ODgxNSwibmJmIjoxNzU4MDcyNDE1LCJpYXQiOjE3NTgwNzI0MTV9.TpuRkQz5SJJXDzfqGYPnGXsZgw-GOYHfUSnZqxkAyEU',
     )
 
     if (unref(isFirstLaunch)) {
@@ -263,7 +259,3 @@ onMounted(async () => {
     <DefaultBg v-if="showBg" :colors="bgColors" />
   </view>
 </template>
-
-<style lang="scss" scoped>
-//
-</style>

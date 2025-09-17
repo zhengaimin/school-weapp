@@ -29,6 +29,7 @@ import { TABBAR_HOME_PATH } from '@/constant/router'
 import { useBalance } from '@/hooks/useBalance'
 import { useForm } from '@/hooks/useForm'
 import { usePage } from '@/hooks/usePage'
+import { useConfigStore } from '@/store/config'
 import { useParentStore } from '@/store/parent'
 import { useUserStore } from '@/store/user'
 import { sleep } from '@/utils'
@@ -50,6 +51,7 @@ const { needBind, studentsIdMap } = storeToRefs(parentStore)
 // #endregion
 
 // #region 使用 Hooks
+const configStore = useConfigStore()
 const { axiosGetUserBalanceApi } = useBalance()
 const { pageLoading, pageError, batchRequestHandler, onLoginFail, getContentHeight } = usePage()
 const { formRef, submitLoading, scrollIntoView, validate, scrollToFirstError }
@@ -290,7 +292,10 @@ async function handleConfirmBinding() {
       showStudentInfoModal.value = false
 
       await sleep(500)
-      await parentStore.axiosGetStudentListByParentApi()
+      await batchRequestHandler(
+        [parentStore.axiosGetStudentListByParentApi(), configStore.axiosGetSchoolModulesApi()],
+        { auto: false },
+      )
 
       // 重定向到首页
       uni.redirectTo({

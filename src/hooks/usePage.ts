@@ -3,6 +3,8 @@ import { ref } from 'vue'
 
 import { useAppStore } from '@/store/app'
 
+import { getLastPage } from '@/utils/index'
+
 export interface BatchRequestResult<T = { code?: number }> {
   allSuccess: boolean
   results: T[]
@@ -14,6 +16,7 @@ export type TBatchRequestList = BatchRequest[]
 export function usePage() {
   const appStore = useAppStore()
   const { navBarInfo } = storeToRefs(appStore)
+  const currentPage = getLastPage()
 
   const pageLoading = ref(true)
   const pageError = ref('')
@@ -76,6 +79,29 @@ export function usePage() {
       pageLoaded.value = true
     }
   }
+
+  // #ifdef MP-WEIXIN
+  // onShareAppMessage(() => {
+  //   return {
+  //     title: '鑫智生活',
+  //     path: LAUNCH_PATH,
+  //     // imageUrl: 'https://example.com/image.png', // 自定义分享图片
+  //   }
+  // })
+
+  // onShareTimeline(() => {
+  //   return {
+  //     title: '鑫智生活',
+  //     path: LAUNCH_PATH,
+  //     // imageUrl: 'https://example.com/image.png', // 自定义分享图片
+  //   }
+  // })
+
+  // wx.showShareMenu({
+  //   withShareTicket: true,
+  //   menus: ['shareAppMessage', 'shareTimeline'],
+  // })
+  // #endif
 
   return {
     pageLoading,

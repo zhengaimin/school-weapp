@@ -158,9 +158,16 @@ async function handleStudentChange(childId: number) {
       parentStore.setContactInfo(null)
 
       await nextTick()
-      await batchRequestHandler([axiosGetConsumptionStatisticsApi(), axiosGetCheckSelfApi()], {
-        auto: false,
-      })
+      await batchRequestHandler(
+        [
+          configStore.axiosGetSchoolModulesApi(),
+          axiosGetConsumptionStatisticsApi(),
+          axiosGetCheckSelfApi(),
+        ],
+        {
+          auto: false,
+        },
+      )
     }
   }
   catch (error) {
