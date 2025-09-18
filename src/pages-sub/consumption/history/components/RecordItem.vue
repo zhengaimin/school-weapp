@@ -3,8 +3,8 @@
 import type { User } from '@/api/interface/modules/user'
 import { computed } from 'vue'
 import WhiteCard from '@/components/common/white-card/index.vue'
-import { CONSUMPTION_SOURCE_I18N, SERVICE_TYPE, SERVICE_TYPE_I18N } from '@/constant/modules'
-import { formatTime } from '@/utils/time'
+import { CONSUMPTION_SOURCE_I18N, SERVICE_TYPE_I18N } from '@/constant/modules'
+import { formatTime } from '@/utils/format'
 // #endregion
 
 // #region 属性定义
@@ -21,21 +21,12 @@ const displayInfo = computed(() => {
   const consumptionSource = props.record.consumptionSource as keyof typeof CONSUMPTION_SOURCE_I18N
   const sourceText = CONSUMPTION_SOURCE_I18N[consumptionSource]
 
-  let detailsText = ''
-  if (serviceType === SERVICE_TYPE.CALL && props.record.usageDuration) {
-    const minutes = Math.ceil(props.record.usageDuration / 60)
-    detailsText = `通话时长: ${minutes}分钟`
-  }
-  else if (serviceType === SERVICE_TYPE.MESSAGE) {
-    detailsText = props.record.remark
-  }
-
   const parts = []
   if (sourceText) {
     parts.push(sourceText)
   }
-  if (detailsText) {
-    parts.push(detailsText)
+  if (props.record.remark) {
+    parts.push(props.record.remark)
   }
 
   let subtitle = parts.join('·')

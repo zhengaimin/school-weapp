@@ -23,8 +23,8 @@ import { FACE_STATUS } from '@/constant/modules'
 import { FACE_CAMERA_PATH } from '@/constant/router'
 import { usePage } from '@/hooks/usePage'
 import { useUserStore } from '@/store/user'
+import { uploadFilePromise, uploadFileUrl } from '@/utils/file'
 import { toast } from '@/utils/toast'
-import { uploadFilePromise, uploadFileUrl } from '@/utils/uploadFile'
 import { FACE_STATUS_CONFIG } from './utils/business'
 // #endregion
 

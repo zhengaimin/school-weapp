@@ -1,4 +1,4 @@
-import { toast } from './toast'
+import { toast } from '../toast'
 
 /**
  * 文件上传钩子函数使用示例
@@ -20,9 +20,8 @@ import { toast } from './toast'
  * 上传文件的URL配置
  */
 export const uploadFileUrl = {
-  /** 用户头像上传地址 */
-  USER_AVATAR: `${import.meta.env.VITE_SERVER_BASEURL}/user/avatar`,
   UPLOAD: `${import.meta.env.VITE_SERVER_BASEURL}/common/files/upload`,
+  UPLOAD_BASE64: `${import.meta.env.VITE_SERVER_BASEURL}/common/files/upload-base64`,
 }
 
 /**
@@ -351,5 +350,61 @@ export function uploadFilePromise<T = any>(
       },
     )
     run()
+  })
+}
+
+/**
+ * Base64文件上传工具
+ * @param fileData base64数据
+ * @param fileName 文件扩展名
+ * @param formData 表单数据
+ * @returns Promise<{ code: number, data: T }>
+ */
+export function uploadBase64Promise<T = any>(
+  fileData: string,
+  fileName: string,
+  formData: Record<string, any> = {},
+): Promise<{ code: number, data: T }> {
+  return new Promise<{ code: number, data: T }>((resolve, reject) => {
+    try {
+      // 创建上传请求
+      uni.request({
+        url: uploadFileUrl.UPLOAD_BASE64,
+        method: 'POST',
+        data: {
+          file: fileData,
+          fileName,
+          ...formData,
+        },
+        header: {
+          'Content-Type': 'application/json',
+        },
+        success: (res) => {
+          try {
+            console.log('Base64上传成功:', res)
+            const responseData = typeof res.data === 'string' ? JSON.parse(res.data) : res.data
+
+            if (responseData.code === 0) {
+              resolve({ code: 0, data: responseData.data as T })
+            }
+            else {
+              reject(new Error(responseData.message || '上传失败'))
+            }
+          }
+          catch (parseError) {
+            console.error('解析Base64上传响应失败:', parseError)
+            reject(new Error('上传响应解析失败'))
+          }
+        },
+        fail: (err) => {
+          console.error('Base64上传失败:', err)
+          reject(err)
+        },
+      })
+    }
+    catch (err) {
+      console.error('创建Base64上传请求失败:', err)
+      reject(new Error('创建上传请求失败'))
+    }
   })
 }

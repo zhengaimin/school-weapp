@@ -19,6 +19,7 @@ import WdButton from '@/uni_modules/wot-design-uni/components/wd-button/wd-butto
 import WdSignature from '@/uni_modules/wot-design-uni/components/wd-signature/wd-signature.vue'
 import { boundingClientRect } from '@/utils/dom'
 import { getPrevPageExposed } from '@/utils/index'
+import { toast } from '@/utils/toast'
 // #endregion
 
 // #region 使用 Hooks
@@ -47,10 +48,7 @@ function handleConfirm(result: SignatureResult) {
     uni.navigateBack()
   }
   else {
-    uni.showToast({
-      title: '获取签名失败',
-      icon: 'none',
-    })
+    toast.show('获取签名失败')
   }
 }
 // #endregion

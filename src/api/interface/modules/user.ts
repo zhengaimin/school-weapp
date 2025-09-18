@@ -119,6 +119,12 @@ export namespace User {
       status: number
       /** 最后登录时间 */
       lastLoginAt: string
+      /** 协议图片URL或内容 */
+      agreementUrl: string
+      /** 协议同意时间 */
+      agreementAcceptedAt: string
+      /** 是否关注微信服务号 */
+      wechatSubscribed: boolean
     }
 
     /** 获取微信绑定的手机号 */
@@ -378,6 +384,20 @@ export namespace User {
       totalPages: number
       /** 汇总信息 */
       summary?: IBalanceSummaryVo
+    }
+  }
+
+  export namespace Agreement {
+    /** 更新协议状态请求参数 */
+    export interface ReqPutAgreementApi {
+      /** 协议内容URL */
+      agreementUrl: string
+    }
+
+    /** 更新协议状态响应 */
+    export interface ResPutAgreementApi {
+      /** 更新结果消息 */
+      message: string
     }
   }
 }

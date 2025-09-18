@@ -19,6 +19,7 @@ import { getWxCode, postParentRegisterApi } from '@/api/modules/user'
 import TButton from '@/components/common/button/index.vue'
 import Page from '@/components/common/page/index.vue'
 import RoleAvatar from '@/components/common/role-avatar/index.vue'
+import StatusTip from '@/components/common/status-tip/index.vue'
 import WhiteCard from '@/components/common/white-card/index.vue'
 import Cell from '@/components/form/cell/index.vue'
 import Form from '@/components/form/index/index.vue'
@@ -411,8 +412,9 @@ async function onLoginSuccess() {
     <!-- 学生信息弹框 -->
     <BottomPopup v-model="showStudentInfoModal" title="学生列表" height="auto">
       <!-- 未找到学生 -->
-      <wd-status-tip
+      <StatusTip
         v-if="searchResult.type === 'notFound'"
+        url-prefix="https://xzsh.stufree.com/img/"
         image="content"
         tip="未找到匹配的学生信息"
         p="b-6!"
@@ -490,3 +492,5 @@ async function onLoginSuccess() {
     </BottomPopup>
   </Page>
 </template>
+
+

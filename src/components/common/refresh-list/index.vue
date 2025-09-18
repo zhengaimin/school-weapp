@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from 'vue'
+import StatusTip from '@/components/common/status-tip/index.vue'
 
 // 定义组件属性类型
 interface Props {
@@ -308,7 +309,7 @@ defineExpose({
 
       <!-- 空数据状态 -->
       <view v-if="!refreshLoading && !loading && loaded && empty" class="gap-text empty">
-        <wd-status-tip image="content" tip="暂无内容" />
+        <StatusTip image="content" tip="暂无内容" />
       </view>
 
       <!-- 已加载完所有数据（非空状态） -->

@@ -24,7 +24,7 @@ import { usePayment } from '@/pages-sub/balance/hooks/usePayment'
 import { useUserStore } from '@/store/user'
 import { currRoute } from '@/utils'
 import { useBalanceEmitter } from '@/utils/emit/balance'
-import { formatTime } from '@/utils/time'
+import { formatTime } from '@/utils/format'
 // #endregion
 
 // #region 组件选项配置

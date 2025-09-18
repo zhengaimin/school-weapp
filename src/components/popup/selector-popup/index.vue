@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import TButton from '@/components/common/button/index.vue'
+import StatusTip from '@/components/common/status-tip/index.vue'
 import Icon from '@/components/icon/index.vue'
 import BottomPopup from '@/components/popup/bottom-popup/index.vue'
 
@@ -108,7 +109,7 @@ function handleCancel() {
             />
           </view>
         </template>
-        <wd-status-tip v-else image="content" tip="暂无内容" />
+        <StatusTip v-else image="content" tip="暂无内容" />
       </scroll-view>
 
       <!-- 操作按钮 -->

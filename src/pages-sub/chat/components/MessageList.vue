@@ -5,8 +5,8 @@ import { computed, onMounted, onUnmounted, ref } from 'vue'
 import Loading from '@/components/common/loading/index.vue'
 import Icon from '@/components/icon/index.vue'
 import { useUserStore } from '@/store/user'
-import { useCachedMedia } from '@/utils/cache'
-import { formatTime } from '@/utils/time'
+import { useCachedMedia } from '@/utils/file'
+import { formatTime } from '@/utils/format'
 // #endregion
 
 // #region 类型定义

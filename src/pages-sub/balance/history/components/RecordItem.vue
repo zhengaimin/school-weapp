@@ -4,7 +4,7 @@ import TButton from '@/components/common/button/index.vue'
 import WhiteCard from '@/components/common/white-card/index.vue'
 import Icon from '@/components/icon/index.vue'
 import { useUserStore } from '@/store/user'
-import { formatTime } from '@/utils/time'
+import { formatTime } from '@/utils/format'
 
 import { getStatusConfig } from '../data'
 

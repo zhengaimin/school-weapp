@@ -54,30 +54,46 @@ const studentDetailItems = computed(() => [
     value: currentStudent.value?.schoolName || '',
     copyable: false,
   },
-  {
-    key: 'grade',
-    label: '年级',
-    value: currentStudent.value?.grade || '',
-    copyable: false,
-  },
-  {
-    key: 'department',
-    label: '级部',
-    value: currentStudent.value?.departmentName || '',
-    copyable: false,
-  },
-  {
-    key: 'class',
-    label: '班级',
-    value: currentStudent.value?.className || '',
-    copyable: false,
-  },
-  {
-    key: 'studentCode',
-    label: '学号',
-    value: currentStudent.value?.studentCode || '',
-    copyable: true,
-  },
+  ...(currentStudent.value?.grade
+    ? [
+        {
+          key: 'grade',
+          label: '年级',
+          value: currentStudent.value.grade,
+          copyable: false,
+        },
+      ]
+    : []),
+  ...(currentStudent.value?.departmentName
+    ? [
+        {
+          key: 'department',
+          label: '级部',
+          value: currentStudent.value.departmentName,
+          copyable: false,
+        },
+      ]
+    : []),
+  ...(currentStudent.value?.className
+    ? [
+        {
+          key: 'class',
+          label: '班级',
+          value: currentStudent.value.className,
+          copyable: false,
+        },
+      ]
+    : []),
+  ...(currentStudent.value?.studentCode
+    ? [
+        {
+          key: 'studentCode',
+          label: '学号',
+          value: currentStudent.value.studentCode,
+          copyable: true,
+        },
+      ]
+    : []),
   ...(currentStudent.value?.cardNumber
     ? [
         {
@@ -100,7 +116,7 @@ const studentDetailItems = computed(() => [
     : []),
   {
     key: 'uuid',
-    label: 'UUID',
+    label: '唯一号',
     value: currentStudent.value?.UUID || '',
     copyable: true,
   },

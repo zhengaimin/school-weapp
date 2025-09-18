@@ -9,13 +9,18 @@
 </route>
 
 <script lang="ts" setup>
+import { storeToRefs } from 'pinia'
 // #region 导入
 import { computed, ref } from 'vue'
+import { putAgreementApi } from '@/api/modules/user/common'
 import TButton from '@/components/common/button/index.vue'
 import Page from '@/components/common/page/index.vue'
 import WhiteCard from '@/components/common/white-card/index.vue'
-import { COMMON_SIGNATURE_PATH } from '@/constant/router'
+import { COMMON_SIGNATURE_PATH, FACE_COLLECTION_PATH } from '@/constant/router'
 import { usePage } from '@/hooks/usePage'
+import { useParentStore } from '@/store/parent'
+import { useUserStore } from '@/store/user'
+import { uploadBase64Promise, uploadFilePromise, uploadFileUrl } from '@/utils/file/upload'
 import { toast } from '@/utils/toast'
 // #endregion
 
@@ -31,8 +36,15 @@ defineOptions({
 const { pageLoading, pageError, onLoginSuccess, onLoginFail, getContentHeight } = usePage()
 // #endregion
 
+// #region 使用 Store
+const parentStore = useParentStore()
+const userStore = useUserStore()
+const { userInfo, currentStudent } = storeToRefs(userStore)
+// #endregion
+
 // #region 定义响应式数据
 const signatureImage = ref('')
+const submitLoading = ref(false)
 // #endregion
 
 // #region 定义计算属性
@@ -42,39 +54,115 @@ const contentStyle = computed(() => {
 })
 // #endregion
 
+// #region 接口请求函数
+async function axiosUploadSignatureImageApi(imageData: string): Promise<string> {
+  try {
+    // 生成文件名：用户id_学生id_时间戳+随机值.png
+    const timestamp = Date.now()
+    const randomValue = Math.random().toString(36).substring(2, 8)
+    const fileName = `${unref(userInfo).userId}_${unref(currentStudent)?.studentId}_${timestamp}_${randomValue}.png`
+
+    let uploadResult: { code: number, data: any }
+
+    // #ifdef H5
+    // H5 端使用 base64 上传
+    uploadResult = await uploadBase64Promise(imageData, fileName, {
+      bizType: 'signature', // 签名业务类型
+    })
+    // #endif
+
+    // #ifdef MP-WEIXIN
+    // 微信小程序使用文件上传
+    uploadResult = await uploadFilePromise(
+      uploadFileUrl.UPLOAD,
+      imageData, // 在小程序中，这里应该是文件路径
+      {
+        bizType: 'signature', // 签名业务类型
+      },
+    )
+    // #endif
+
+    if (uploadResult.code === 0 && uploadResult.data?.fileUrl) {
+      return import.meta.env.VITE_UPLOAD_BASEURL + uploadResult.data.fileUrl
+    }
+    else {
+      throw new Error(`上传失败：${uploadResult.data || '未知错误'}`)
+    }
+  }
+  catch (error) {
+    console.error('上传签名图片失败:', error)
+    throw error
+  }
+}
+
+async function axiosPutAgreementApi(agreementUrl: string) {
+  try {
+    const result = await putAgreementApi({
+      agreementUrl,
+    })
+    return result
+  }
+  catch (error) {
+    console.error('提交协议失败:', error)
+    throw error
+  }
+}
+// #endregion
+
 // #region 事件处理函数
-// 同意
-function handleAgree() {
+async function handleSubmitAgreement() {
   if (!hasSigned.value) {
     toast.show('请先签名')
     return
   }
-  // TODO: 跳转到人脸采集页面
-  console.log('同意')
+
+  try {
+    submitLoading.value = true
+
+    console.log(signatureImage.value)
+    // 先上传签名图片，获取服务器 URL
+    const signatureUrl = await axiosUploadSignatureImageApi(signatureImage.value)
+
+    // 调用更新用户协议状态接口，使用上传后的 URL
+    const result = await axiosPutAgreementApi(signatureUrl)
+
+    if (result.code === 0) {
+      toast.success('协议提交成功')
+
+      // 成功后跳转到人脸采集页面
+      uni.redirectTo({
+        url: FACE_COLLECTION_PATH,
+      })
+    }
+  }
+  catch (error) {
+    console.error('提交协议失败:', error)
+    toast.show('提交失败，请重试')
+  }
+  finally {
+    submitLoading.value = false
+  }
 }
 
-// 重签
 function handleClearSignature() {
   signatureImage.value = ''
   handleGoToSignature()
 }
 
-// 跳转到签名页面
 function handleGoToSignature() {
   uni.navigateTo({
     url: COMMON_SIGNATURE_PATH,
   })
 }
 
-// 暴露方法供其他页面调用
-function acceptParams(imgPath: string) {
+function handleAcceptParams(imgPath: string) {
   console.log(imgPath)
   signatureImage.value = imgPath
 }
 
 // 将方法暴露到全局，供页面间调用
 defineExpose({
-  acceptParams,
+  acceptParams: handleAcceptParams,
 })
 // #endregion
 </script>
@@ -135,13 +223,16 @@ defineExpose({
     </scroll-view>
 
     <view v-if="hasSigned" p="4" flex="~" gap="3">
-      <TButton type="primary" size="large" full flex="1" @click="handleAgree">
+      <TButton
+        type="primary"
+        size="large"
+        full
+        flex="1"
+        :loading="submitLoading"
+        @click="handleSubmitAgreement"
+      >
         提交
       </TButton>
     </view>
   </Page>
 </template>
-
-<style scoped lang="scss">
-// Page specific styles
-</style>

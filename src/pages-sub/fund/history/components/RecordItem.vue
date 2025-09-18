@@ -4,7 +4,7 @@ import type { User } from '@/api/interface/modules/user'
 import { computed } from 'vue'
 import WhiteCard from '@/components/common/white-card/index.vue'
 import Icon from '@/components/icon/index.vue'
-import { formatTime } from '@/utils/time'
+import { formatTime } from '@/utils/format'
 // #endregion
 
 // #region 组件选项配置

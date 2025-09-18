@@ -5,8 +5,8 @@ import { computed, inject, ref } from 'vue'
 import { postMessageApi } from '@/api/modules/message'
 import Icon from '@/components/icon/index.vue'
 import { FILE_TYPE } from '@/constant/modules'
+import { uploadFilePromise, uploadFileUrl } from '@/utils/file'
 import { toast } from '@/utils/toast'
-import { uploadFilePromise, uploadFileUrl } from '@/utils/uploadFile'
 import { voiceMessageDataKey } from '../provide'
 
 defineOptions({

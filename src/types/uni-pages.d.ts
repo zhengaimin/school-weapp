@@ -16,6 +16,7 @@ interface NavigateToOptions {
        "/pages-sub/balance/home/index" |
        "/pages-sub/balance/recharge/index" |
        "/pages-sub/balance/result/index" |
+       "/pages-sub/common/follow/index" |
        "/pages-sub/common/role-switch/index" |
        "/pages-sub/common/signature/index" |
        "/pages-sub/consumption/history/index" |

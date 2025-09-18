@@ -1,6 +1,5 @@
 import { pages, subPackages } from '@/pages.json'
 import { isMpWeixin } from './platform'
-import { toast } from './toast'
 
 export function getLastPage(): any {
   // getCurrentPages() 至少有1个元素，所以不再额外判断
@@ -22,8 +21,8 @@ export function getPrevPage() {
 }
 export function getPrevPageExposed(): { refresh?: any, acceptParams?: any } {
   const prevPage = getPrevPage()
-  console.log(prevPage?.$vm)
-  return prevPage?.$vm || prevPage?._.exposed || null
+
+  return isMpWeixin ? prevPage?.$vm : prevPage?._.exposed
 }
 
 /**

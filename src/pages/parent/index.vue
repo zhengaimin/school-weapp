@@ -18,9 +18,10 @@ import { getCheckSelfApi } from '@/api/modules/family/contacts'
 import { postParentSwitchChildApi } from '@/api/modules/students'
 import { getConsumptionStatisticsApi } from '@/api/modules/user/consumption'
 import TButton from '@/components/common/button/index.vue'
+import Notice from '@/components/common/notice/index.vue'
 import Page from '@/components/common/page/index.vue'
 import Icon from '@/components/icon/index.vue'
-import { BALANCE_RECHARGE_PATH } from '@/constant/router'
+import { BALANCE_RECHARGE_PATH, COMMON_FOLLOW_PATH, FACE_CONSENT_PATH } from '@/constant/router'
 import { useBalance } from '@/hooks/useBalance'
 import { usePage } from '@/hooks/usePage'
 import { useSchoolModules } from '@/hooks/useSchoolModules'
@@ -74,6 +75,29 @@ const headerInfoTop = computed(() => {
 const contentHeight = computed(() => {
   return getContentHeight('(260rpx - 48rpx)')
 })
+const showOfficialAccountNotice = computed(() => {
+  const info = unref(userInfo) as any
+
+  if (!info)
+    return false
+
+  // 检查微信公众号关注状态
+  const subscribed
+    = info?.wechatSubscribed
+      ?? info?.officialAccountSubscribed
+      ?? info?.isOfficialAccountSubscribed
+      ?? info?.wechatInfo?.officialAccountSubscribed
+      ?? info?.wechatInfo?.subscribeOfficialAccount
+      ?? info?.wechatInfo?.subscribedOfficialAccount
+
+  return subscribed === undefined ? true : !subscribed
+})
+
+// 检查是否已签名授权
+const hasAgreementSigned = computed(() => {
+  const info = unref(userInfo) as any
+  return !!(info?.agreementUrl)
+})
 // #endregion
 
 // #region 接口请求函数
@@ -122,6 +146,13 @@ async function axiosGetCheckSelfApi() {
 // #endregion
 
 // #region 事件处理函数
+// 关注公众号
+function handleGoToOfficialAccount() {
+  uni.navigateTo({
+    url: COMMON_FOLLOW_PATH,
+  })
+}
+
 // 页面跳转
 function handleNavigationToPath(path: string, item: any = null) {
   // 检查是否点击留言功能
@@ -130,14 +161,25 @@ function handleNavigationToPath(path: string, item: any = null) {
     return
   }
 
+  // 检查是否点击人脸采集功能
+  if (item && (item.id === 'face' || item.title === '人脸采集') && !hasAgreementSigned.value) {
+    // 如果没有签名授权，直接跳转到同意授权页面
+    uni.navigateTo({
+      url: FACE_CONSENT_PATH,
+    })
+    return
+  }
+
   uni.navigateTo({
     url: path,
   })
 }
+
 // 显示切换学生弹框
 function handleShowStudentSelector() {
   showStudentSelector.value = true
 }
+
 // 切换学生
 async function handleStudentChange(childId: number) {
   pageError.value = ''
@@ -194,6 +236,7 @@ async function handleLoginSuccess() {
 onShow(() => {
   if (unref(pageLoaded)) {
     batchRequestHandler([
+      userStore.getUserInfo(),
       axiosGetConsumptionStatisticsApi(),
       axiosGetCheckSelfApi(),
       axiosGetUserBalanceApi(),
@@ -276,6 +319,13 @@ onShow(() => {
       <view relative z-10 mt--6 border="rounded-t-2xl" bg="gray-50">
         <scroll-view scroll-y :style="contentHeight">
           <view flex="~ col" gap="4" p="4 t-6">
+            <Notice
+              v-if="showOfficialAccountNotice"
+              type="warning"
+              title="尚未关注公众号"
+              content="关注后可及时接收通知，点击前往关注"
+              @click="handleGoToOfficialAccount"
+            />
             <!-- 当前孩子账户信息 -->
             <view border="~ bg-muted solid rounded-2xl" bg="white" p="4">
               <!-- 当前孩子账户 -->

@@ -9,6 +9,7 @@ const USER_COMMON_API = {
   WX_BIND_PHONE: `${API}/public/wx/bind-phone`,
   BALANCE: `${API}/user/balance`,
   BALANCE_DETAILS: `${API}/user/balance/details`,
+  AGREEMENT: `${API}/user/agreement`,
 }
 
 /**
@@ -75,4 +76,13 @@ export function putMeInfoApi(data: User.Common.ReqPutMeInfoApi) {
  */
 export function getBalanceDetailsApi(params: User.Balance.ReqGetBalanceDetails) {
   return http.get<User.Balance.ResGetBalanceDetails>(USER_COMMON_API.BALANCE_DETAILS, params)
+}
+
+/**
+ * @description 更新用户协议状态
+ * @param {User.Agreement.ReqPutAgreementApi} params 协议参数
+ * @returns {Promise<User.Agreement.ResPutAgreementApi>}
+ */
+export function putAgreementApi(params: User.Agreement.ReqPutAgreementApi) {
+  return http.put<User.Agreement.ResPutAgreementApi>(USER_COMMON_API.AGREEMENT, params)
 }

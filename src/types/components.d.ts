@@ -31,6 +31,7 @@ declare module 'vue' {
     RefreshList: typeof import('./../components/common/refresh-list/index.vue')['default']
     RoleAvatar: typeof import('./../components/common/role-avatar/index.vue')['default']
     SelectorPopup: typeof import('./../components/popup/selector-popup/index.vue')['default']
+    StatusTip: typeof import('./../components/common/status-tip/index.vue')['default']
     Tab: typeof import('./../components/common/tab/index.vue')['default']
     WhiteCard: typeof import('./../components/common/white-card/index.vue')['default']
   }

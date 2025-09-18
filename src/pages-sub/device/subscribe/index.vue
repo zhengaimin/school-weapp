@@ -77,9 +77,9 @@ function getSubscribeUrl() {
   const { schoolId, schoolName, wechatInfo } = unref(userInfo) || {}
   const { id: userContactUuid } = unref(contactInfo) || {}
 
-  const basePath = getEnvBaseUrl()
+  const basePath = '/pages/otherGroupBind/index'
   const params = {
-    serverUrl: import.meta.env.VITE_SERVER_BASEURL,
+    serverUrl: getEnvBaseUrl(),
     bindingFlag: 'Y',
     openId: wechatInfo?.MiniOpenID || wechatInfo?.miniOpenID,
     depUuid: import.meta.env.VITE_APP_DEP_UUID,
@@ -96,11 +96,13 @@ function getSubscribeUrl() {
 // #region 事件处理函数
 // 跳转到订阅设备页面
 function handleGoToSubscribe() {
-  console.log(getSubscribeUrl())
-
   if (isMpWeixin) {
+    // console.log({
+    //   appId: import.meta.env.VITE_APP_VOIP_APPID,
+    //   path: getSubscribeUrl(),
+    // })
     uni.navigateToMiniProgram({
-      appId: import.meta.env.VITE_WX_APPID,
+      appId: import.meta.env.VITE_APP_VOIP_APPID,
       path: getSubscribeUrl(),
       success(res) {
         console.log('跳转成功', res)
@@ -120,9 +122,6 @@ function handleGoToSubscribe() {
 // #region 生命周期钩子
 // 登录成功后
 async function onLoginSuccess() {
-  console.log(import.meta.env.VITE_WX_APPID)
-  console.log(import.meta.env.VITE_APP_DEP_UUID)
-
   await batchRequestHandler([onRefreshList()])
 }
 

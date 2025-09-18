@@ -42,17 +42,3 @@ export function boundingClientRect(selector: string, content?: any) {
     query.exec()
   })
 }
-
-/**
- * 获取元素的宽度和高度
- * @param selector 元素选择器
- * @param content 可选的上下文
- * @returns Promise<{width: number, height: number}>
- */
-export async function getElementRect(selector: string, content?: any): Promise<{ width: number, height: number }> {
-  const rect = await boundingClientRect(selector, content) as UniApp.NodeInfo | null
-  if (rect) {
-    return { width: rect.width, height: rect.height }
-  }
-  return { width: 0, height: 0 }
-}

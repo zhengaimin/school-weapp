@@ -24,7 +24,7 @@ export const FACE_STATUS_CONFIG: Record<TFaceStatus, IFaceStatusConfig> = {
   [FACE_STATUS.COLLECTED]: {
     type: 'warning',
     title: '人脸认证状态',
-    content: '人脸信息已上传，请等待 1~5 分钟后查看结果',
+    content: '人脸信息已上传，请请耐心等待审核结果',
     ...typeConfig.warning,
   },
   [FACE_STATUS.AUDITING]: {

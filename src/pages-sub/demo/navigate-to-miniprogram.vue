@@ -24,8 +24,8 @@ function handleNavigate() {
   console.log('wx577bb6f100f10192')
 
   uni.navigateToMiniProgram({
-    appId: 'wx577bb6f100f10192',
-    path: fullPath,
+    appId: 'wxf86491ae0549468c',
+    path: '/pages/launch/index',
     envVersion: 'release', // 目标小程序的版本，支持 develop，trial，release； 如果小程序已经发布，则次参数无效，默认打开正式版
     success(res) {
       console.log('跳转成功', res)

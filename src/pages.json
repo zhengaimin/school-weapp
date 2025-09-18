@@ -127,6 +127,15 @@
           }
         },
         {
+          "path": "common/follow/index",
+          "type": "page",
+          "layout": "default",
+          "style": {
+            "navigationStyle": "custom",
+            "navigationBarTitleText": "关注公众号"
+          }
+        },
+        {
           "path": "common/role-switch/index",
           "type": "page",
           "layout": "default",

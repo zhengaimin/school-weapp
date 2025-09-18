@@ -13,7 +13,7 @@ import {
   PACKAGE_STATUS_CONFIGS,
   PACKAGE_TYPE_I18N,
 } from '@/constant/modules'
-import { formatTime } from '@/utils/time'
+import { formatTime } from '@/utils/format'
 // #endregion
 
 // #region 属性定义

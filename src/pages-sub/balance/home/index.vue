@@ -9,9 +9,9 @@
 </route>
 
 <script lang="ts" setup>
+// #region 导入
 import dayjs from 'dayjs'
 import { storeToRefs } from 'pinia'
-// #region 导入
 import { computed, ref } from 'vue'
 import { getConsumptionStatisticsApi } from '@/api/modules/user/consumption'
 import Page from '@/components/common/page/index.vue'
@@ -53,6 +53,17 @@ const consumptionStatistics = ref()
 // #region 定义计算属性
 const contentStyle = computed(() => {
   return getContentHeight('0')
+})
+
+/** 上次更新 */
+const lastUpdateTimeFormatted = computed(() => {
+  if (balanceInfo.value?.lastUpdateTime) {
+    return balanceInfo.value.lastUpdateTime
+  }
+  if (balanceInfo.value?.updatedAt) {
+    return dayjs(balanceInfo.value.updatedAt).format('YYYY-MM-DD HH:mm')
+  }
+  return '--'
 })
 // #endregion
 
@@ -107,12 +118,7 @@ async function onLoginSuccess() {
               </view>
             </view>
             <view text="xs text-secondary" m="t-2">
-              上次更新：{{
-                balanceInfo?.lastUpdateTime
-                  || (balanceInfo?.updatedAt
-                    ? dayjs(balanceInfo.updatedAt).format('YYYY-MM-DD HH:mm')
-                    : '--')
-              }}
+              上次更新：{{ lastUpdateTimeFormatted }}
             </view>
           </view>
         </WhiteCard>
@@ -151,7 +157,7 @@ async function onLoginSuccess() {
         </WhiteCard>
 
         <!-- 分块：套餐信息 -->
-        <ActivePackageCard :active-package="activePackage" />
+        <ActivePackageCard v-if="activePackage" :active-package="activePackage" />
       </view>
     </scroll-view>
   </Page>

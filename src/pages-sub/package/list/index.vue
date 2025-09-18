@@ -247,6 +247,7 @@ onPackageTransaction(() => {
 
           <!-- 当前使用套餐卡片 -->
           <ActivePackageCard
+            v-if="activePackage"
             :active-package="activePackage!"
             @show-details="handleShowActivePackageDetails"
           />

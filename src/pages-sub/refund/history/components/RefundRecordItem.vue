@@ -5,7 +5,7 @@ import TButton from '@/components/common/button/index.vue'
 import WhiteCard from '@/components/common/white-card/index.vue'
 import Icon from '@/components/icon/index.vue'
 import { REFUND_STATUS, REFUND_STATUS_CONFIGS } from '@/constant/modules'
-import { formatTime } from '@/utils/time'
+import { formatTime } from '@/utils/format'
 // #endregion
 
 // #region 属性定义

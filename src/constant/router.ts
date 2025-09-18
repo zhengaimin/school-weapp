@@ -63,6 +63,8 @@ export const BALANCE_RECHARGE_RESULT_PATH = '/pages-sub/balance/result/index'
 export const COMMON_ROLE_SWITCH_PATH = '/pages-sub/common/role-switch/index'
 // 签名
 export const COMMON_SIGNATURE_PATH = '/pages-sub/common/signature/index'
+// 关注公众号
+export const COMMON_FOLLOW_PATH = '/pages-sub/common/follow/index'
 
 /** 设备 */
 // 我的订阅

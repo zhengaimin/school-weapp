@@ -7,6 +7,7 @@ import { array, bool, string } from 'vue-types'
 import DefaultBg from '@/components/common/default-bg/index.vue'
 import Loading from '@/components/common/loading/index.vue'
 import Navigation from '@/components/common/navigation/index.vue'
+import StatusTip from '@/components/common/status-tip/index.vue'
 import { ROLE_TYPE } from '@/constant/modules'
 import {
   LAUNCH_PATH,
@@ -170,7 +171,7 @@ async function otherEnvLogin() {
     userStore.setRole(ROLE_TYPE.PARENT)
     userStore.setPhone('15972227364')
     userStore.setToken(
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ3ZWNoYXRBY2NvdW50SWQiOjE1LCJjdXJyZW50VXNlcklkIjozNiwidXNlcm5hbWUiOiJ3ZWNoYXRfdXNlcl8xNSIsImlkZW50aXRpZXMiOnsiMzYiOnsidXNlcklkIjoyNCwicm9sZUlkIjo0LCJyb2xlQ29kZSI6InBhcmVudCIsInRlbmFudElkIjoyLCJ0ZW5hbnRDb2RlIjoidGVzdF90ZW5hbnRfMDAxIiwic2Nob29sSWQiOjEsInNjaG9vbENvZGUiOiJTQ0hPT0xfM18xNzU1NjE1NjYwIiwidXNlclR5cGUiOiJwYXJlbnQifX0sInVzZXJUeXBlIjoiVVNFUiIsImV4cCI6MTc1ODE1ODgxNSwibmJmIjoxNzU4MDcyNDE1LCJpYXQiOjE3NTgwNzI0MTV9.TpuRkQz5SJJXDzfqGYPnGXsZgw-GOYHfUSnZqxkAyEU',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ3ZWNoYXRBY2NvdW50SWQiOjE1LCJjdXJyZW50VXNlcklkIjoyOSwidXNlcm5hbWUiOiJ3ZWNoYXRfdXNlcl8xNSIsImlkZW50aXRpZXMiOnsiMjkiOnsidXNlcklkIjoxNywicm9sZUlkIjo0LCJyb2xlQ29kZSI6InBhcmVudCIsInRlbmFudElkIjoyLCJ0ZW5hbnRDb2RlIjoidGVzdF90ZW5hbnRfMDAxIiwic2Nob29sSWQiOjEsInNjaG9vbENvZGUiOiJTQ0hPT0xfM18xNzU1NjE1NjYwIiwidXNlclR5cGUiOiJwYXJlbnQifX0sInVzZXJUeXBlIjoiVVNFUiIsImV4cCI6MTc1ODI1MTcyMiwibmJmIjoxNzU4MTY1MzIyLCJpYXQiOjE3NTgxNjUzMjJ9.qGV55RWe-xNN0u7tKIAQM_7lW2FXYtrpEeG1c926Amo',
     )
 
     if (unref(isFirstLaunch)) {
@@ -197,7 +198,7 @@ onMounted(async () => {
       await nextTick()
     }
 
-    !isFirstLaunch.value && (await axiosGetUserBalanceApi())
+    !isFirstLaunch.value && unref(token) && (await axiosGetUserBalanceApi())
     if (!isMpWeixin) {
       otherEnvLogin()
     }
@@ -240,7 +241,7 @@ onMounted(async () => {
       <!-- 错误区域 -->
       <view v-if="error" flex="~ 1" overflow-hidden :class="{ 'bottom-line-exclude': showTabbar }">
         <view flex="~ 1 items-center justify-center">
-          <wd-status-tip image="network" :tip="error" />
+          <StatusTip image="network" :tip="error" />
         </view>
       </view>
       <!-- 页面加载完毕且没有错误 -->

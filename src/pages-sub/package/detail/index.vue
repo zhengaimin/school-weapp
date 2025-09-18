@@ -18,6 +18,7 @@ import { getPackageDetailApi } from '@/api/modules/package/query'
 import TButton from '@/components/common/button/index.vue'
 import DetailBlock from '@/components/common/detail-block/index.vue'
 import Page from '@/components/common/page/index.vue'
+import StatusTip from '@/components/common/status-tip/index.vue'
 import { PACKAGE_TYPE, PACKAGE_TYPE_I18N, PAYMENT_METHOD } from '@/constant/modules'
 import { usePage } from '@/hooks/usePage'
 import { usePackageStore } from '@/store/package'
@@ -220,7 +221,7 @@ async function onLoginSuccess() {
   >
     <!-- 商品已下架提示 -->
     <view v-if="!packageDetail?.isPackageExists" h-full>
-      <wd-status-tip
+      <StatusTip
         custom-class="h-full flex flex-col items-center  justify-center"
         image="search"
         tip="商品已下架"
@@ -284,8 +285,3 @@ async function onLoginSuccess() {
     </template>
   </Page>
 </template>
-
-<style scoped lang="scss">
-:deep(.wd-status-tip) {
-}
-</style>
