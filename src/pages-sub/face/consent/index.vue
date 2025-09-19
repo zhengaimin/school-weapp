@@ -212,7 +212,7 @@ defineExpose({
               flex="~ items-center justify-center"
               @click="handleGoToSignature"
             >
-              <image v-if="signatureImage" :src="signatureImage" mode="aspectFit" h-full w-full />
+              <image v-if="signatureImage" :src="signatureImage" mode="aspectFit" h-full w-full style="transform: rotate(-90deg);" />
               <text v-else color="gray-400">
                 请在下方灰色框内进行签字
               </text>

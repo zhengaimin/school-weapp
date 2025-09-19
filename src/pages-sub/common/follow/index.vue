@@ -25,6 +25,10 @@ defineOptions({
 // #region 使用 Hooks
 const { pageLoading, pageError, onLoginSuccess, onLoginFail } = usePage()
 // #endregion
+
+// #region 定义响应式数据
+const imageBaseUrl = `${import.meta.env.VITE_IMAGE_BASEURL}qrcode.jpg`
+// #endregion
 </script>
 
 <template>
@@ -37,7 +41,7 @@ const { pageLoading, pageError, onLoginSuccess, onLoginFail } = usePage()
   >
     <view flex="~ col items-center justify-center" h-full>
       <view text-center>
-        <image src="/static/images/qr-code-placeholder.png" style="width: 200px; height: 200px;" />
+        <image :src="imageBaseUrl" style="width: 200px; height: 200px" show-menu-by-longpress />
         <view mt-4 text-lg text-gray-600>
           长按识别二维码，关注我们
         </view>
