@@ -96,6 +96,7 @@ export const useUserStore = defineStore(
       // 调用登录接口
       const result = await postWxLoginApi({ code })
       if (result.code === 0 && result.data.token) {
+        console.log(result.data.token)
         setToken(result.data.token)
       }
       return result

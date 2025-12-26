@@ -21,7 +21,12 @@ import TButton from '@/components/common/button/index.vue'
 import Notice from '@/components/common/notice/index.vue'
 import Page from '@/components/common/page/index.vue'
 import Icon from '@/components/icon/index.vue'
-import { BALANCE_RECHARGE_PATH, COMMON_FOLLOW_PATH, FACE_CONSENT_PATH } from '@/constant/router'
+import {
+  BALANCE_RECHARGE_PATH,
+  COMMON_FOLLOW_PATH,
+  COMMON_WEBVIEW_PATH,
+  FACE_CONSENT_PATH,
+} from '@/constant/router'
 import { useBalance } from '@/hooks/useBalance'
 import { usePage } from '@/hooks/usePage'
 import { useSchoolModules } from '@/hooks/useSchoolModules'
@@ -30,6 +35,7 @@ import { useConfigStore } from '@/store/config'
 import { useParentStore } from '@/store/parent'
 import { useUserStore } from '@/store/user'
 import { toast } from '@/utils/toast'
+
 import StudentSelect from './components/StudentSelect.vue'
 import { getGreeting } from './data'
 // #endregion
@@ -81,14 +87,8 @@ const showOfficialAccountNotice = computed(() => {
   if (!info)
     return false
 
-  // 检查微信公众号关注状态
-  const subscribed
-    = info?.wechatSubscribed
-      ?? info?.officialAccountSubscribed
-      ?? info?.isOfficialAccountSubscribed
-      ?? info?.wechatInfo?.officialAccountSubscribed
-      ?? info?.wechatInfo?.subscribeOfficialAccount
-      ?? info?.wechatInfo?.subscribedOfficialAccount
+  // 检查微信服务号关注状态
+  const subscribed = info?.wechatSubscribed
 
   return subscribed === undefined ? true : !subscribed
 })
@@ -96,7 +96,7 @@ const showOfficialAccountNotice = computed(() => {
 // 检查是否已签名授权
 const hasAgreementSigned = computed(() => {
   const info = unref(userInfo) as any
-  return !!(info?.agreementUrl)
+  return !!info?.agreementUrl
 })
 // #endregion
 
@@ -160,12 +160,24 @@ function handleNavigationToPath(path: string, item: any = null) {
     toast.show('您的手机号未在亲情号中，无法使用留言功能')
     return
   }
-
   // 检查是否点击人脸采集功能
   if (item && (item.id === 'face' || item.title === '人脸采集') && !hasAgreementSigned.value) {
     // 如果没有签名授权，直接跳转到同意授权页面
     uni.navigateTo({
       url: FACE_CONSENT_PATH,
+    })
+    return
+  }
+  // 跳转成绩页面 - 第三方
+  if (item && item.id === 'score') {
+    const { UUID } = unref(currentStudent)
+    const { scoreUrl, schoolName } = unref(userInfo)
+
+    const path = `${scoreUrl}?onlyCode=${UUID}&schoolName=${schoolName}`
+    // const path = `https://test.hainanxinyang.net/student/Account/WebLogin?onlyCode=250224&schoolName=测试学校`
+    uni.navigateTo({
+      // 不编码，webview 页面无法拿到 ? 后面的参数内容
+      url: `${COMMON_WEBVIEW_PATH}?path=${encodeURIComponent(path)}`,
     })
     return
   }
@@ -322,7 +334,7 @@ onShow(() => {
             <Notice
               v-if="showOfficialAccountNotice"
               type="warning"
-              title="尚未关注公众号"
+              title="尚未关注服务号"
               content="关注后可及时接收通知，点击前往关注"
               @click="handleGoToOfficialAccount"
             />
@@ -414,6 +426,7 @@ onShow(() => {
 
             <!-- 功能按钮网格 -->
             <view grid="~ cols-4 gap-4">
+              <!-- 其他菜单项 -->
               <view
                 v-for="(item, index) in filteredMenuList"
                 :key="index"
@@ -434,6 +447,22 @@ onShow(() => {
                   {{ item.title }}
                 </text>
               </view>
+              <!-- 成绩按钮 -->
+              <!-- <view flex="~ col items-center" @click="handleNavigationToWebview">
+                <view
+                  flex="~ col items-center justify-center"
+                  border="rounded-2xl"
+                  m="b-2"
+                  h-12
+                  w-12
+                  :style="{ backgroundColor: MENU_SCORE.bgColor }"
+                >
+                  <Icon :name="MENU_SCORE.icon" :icon-color="MENU_SCORE.color" icon-size="36rpx" />
+                </view>
+                <text text="xs gray-700" font="medium">
+                  {{ MENU_SCORE.title }}
+                </text>
+              </view> -->
             </view>
           </view>
         </scroll-view>

@@ -65,6 +65,10 @@ export const COMMON_ROLE_SWITCH_PATH = '/pages-sub/common/role-switch/index'
 export const COMMON_SIGNATURE_PATH = '/pages-sub/common/signature/index'
 // 关注公众号
 export const COMMON_FOLLOW_PATH = '/pages-sub/common/follow/index'
+// 图标展示
+export const COMMON_ICON_PATH = '/pages-sub/common/icon/index'
+// webview
+export const COMMON_WEBVIEW_PATH = '/pages-sub/common/webview/index'
 
 /** 设备 */
 // 我的订阅
@@ -87,3 +91,7 @@ export const CHAT_PATH = '/pages-sub/chat/index'
 export const DEMO_REFRESH_LIST_PATH = '/pages-sub/demo/refresh-list'
 // 时间选择器
 export const DEMO_DATETIME_PICKER_POPUP_PATH = '/pages-sub/demo/datetime-picker-popup'
+// StatusTip
+export const DEMO_STATUS_TIP_PATH = '/pages-sub/demo/status-tip'
+// 登录测试
+export const DEMO_LOGIN_TEST_PATH = '/pages-sub/demo/login-test/index'

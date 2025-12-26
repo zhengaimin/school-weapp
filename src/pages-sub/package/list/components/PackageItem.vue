@@ -1,7 +1,6 @@
 <script lang="ts" setup>
 // #region 导入
 import type { Pkg } from '@/api/interface/modules/package.ts'
-import WhiteCard from '@/components/common/white-card/index.vue'
 import { PACKAGE_TYPE_I18N } from '@/constant/modules'
 // #endregion
 
@@ -35,60 +34,49 @@ function handleClick() {
 </script>
 
 <template>
-  <WhiteCard v-if="pkg" @click="handleClick">
-    <view flex="~ col" gap="3">
-      <!-- 套餐头部信息 -->
-      <view flex="~ justify-between items-start">
-        <view flex="~ col" gap="1">
-          <view text="base gray-900" font="medium">
-            {{ getPackageTypeText(pkg.packageType) }}
-          </view>
-        </view>
-        <view text="right lg gray-900" font="bold">
-          {{ formatPrice(pkg.purchasePrice) }}
-        </view>
-      </view>
-
-      <!-- 套餐说明 | 使用规则 -->
-      <view
-        v-if="pkg.templateDescription || pkg.usageRules"
-        flex="~ col"
-        gap="2"
-        p="3"
-        bg="gray-50"
-        border="rounded-lg"
-      >
-        <!-- 套餐说明 -->
-        <view v-if="pkg.templateDescription" text="sm gray-600" line="clamp-2">
-          {{ pkg.templateDescription }}
-        </view>
-        <!-- 使用规则 -->
-        <view v-if="pkg.usageRules" text="sm gray-600" line="clamp-2">
-          {{ pkg.usageRules }}
+  <view
+    v-if="pkg"
+    flex="~ col"
+    gap="2"
+    p="3"
+    bg="gray-50"
+    rounded="lg"
+    @click="handleClick"
+  >
+    <!-- 套餐头部信息 -->
+    <view flex="~ justify-between items-center">
+      <view flex="~ row items-center" gap="2">
+        <text text="sm gray-800" font="medium">
+          {{ getPackageTypeText(pkg.packageType) }}
+        </text>
+        <view
+          v-if="isActive"
+          text="xs white"
+          bg="blue-500"
+          px="1.5"
+          py="0.5"
+          rounded="sm"
+        >
+          使用中
         </view>
       </view>
-
-      <!-- 固定套餐时间信息 -->
-      <view v-if="pkg.packageType === 'FIXED'" p="2" bg="blue-50" border="rounded">
-        <view text="xs blue-700">
-          固定套餐时间：{{ pkg.startTime }} 至 {{ pkg.endTime }}
-        </view>
-        <view v-if="pkg.monthlyDecrease" text="xs blue-600" m="t-1">
-          按月递减使用
-        </view>
-      </view>
-
-      <!-- 底部信息 -->
-      <view flex="~ items-center justify-between" text="xs gray-500">
-        <!-- 使用中 + 套餐类型 -->
-        <view flex="~ row items-center">
-          <text v-if="isActive" text="xs blue-700">
-            使用中
-          </text>
-        </view>
-        <!-- 有效期 -->
-        <text>有效期：{{ pkg.totalMonths }}个月</text>
-      </view>
+      <text text="base red-500" font="bold">
+        {{ formatPrice(pkg.purchasePrice) }}
+      </text>
     </view>
-  </WhiteCard>
+
+    <!-- 套餐说明 -->
+    <view v-if="pkg.templateDescription" text="xs gray-500" line="clamp-2">
+      {{ pkg.templateDescription }}
+    </view>
+
+    <!-- 底部信息 -->
+    <view flex="~ items-center justify-between" text="xs gray-400">
+      <text>有效期：{{ pkg.totalMonths }}个月</text>
+      <!-- 固定套餐时间 -->
+      <text v-if="pkg.packageType === 'FIXED'">
+        {{ pkg.startTime }} 至 {{ pkg.endTime }}
+      </text>
+    </view>
+  </view>
 </template>

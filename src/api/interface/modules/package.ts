@@ -48,6 +48,8 @@ export namespace Pkg {
       usageRules: string
       /** 套餐类型 */
       packageType: TPackageType
+      /** 设备类型 */
+      deviceType: string
       /** 套餐开始时间（固定套餐专用） */
       startTime: string
       /** 套餐结束时间（固定套餐专用） */

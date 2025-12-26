@@ -12,6 +12,7 @@
 // #region 导入
 import type { Payment } from '@/api/interface/modules/payment'
 import type { TPaymentStatus } from '@/constant/modules'
+import { onShareAppMessage } from '@dcloudio/uni-app'
 import { storeToRefs } from 'pinia'
 import { computed, ref, unref } from 'vue'
 import { getPaymentDetailApi } from '@/api/modules/payment/order'
@@ -53,7 +54,7 @@ const resultInfo = ref<
     status: TPaymentStatus
     amount: number
   })
-  | undefined
+    | undefined
     >(undefined)
 // #endregion
 
@@ -232,11 +233,27 @@ async function handleCancelOrder() {
   })
 }
 
+// #endregion
+
+// #region 生命周期钩子
 async function onLoginSuccess() {
   const { query } = currRoute()
   const orderId = Number(query.orderId)
   batchRequestHandler([axiosGetPaymentDetailApi(orderId)])
 }
+
+onShareAppMessage(() => {
+  if (!resultInfo.value) {
+    return {
+      title: '充值结果',
+      path: '/pages/index/index',
+    }
+  }
+  return {
+    title: '充值结果',
+    path: `/pages-sub/balance/result/index?orderId=${resultInfo.value.id}`,
+  }
+})
 // #endregion
 </script>
 

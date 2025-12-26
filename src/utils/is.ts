@@ -123,3 +123,10 @@ export function isNullOrUnDef(val: unknown): val is null | undefined {
 export function isHexColor(str: string) {
   return /^#?(?:[0-9A-F]{3}|[0-9A-F]{6})$/i.test(str)
 }
+
+/**
+ * @description: 是否为 URL
+ */
+export function isURL(url: string) {
+  return /^https?:/.test(url)
+}

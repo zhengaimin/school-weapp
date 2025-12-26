@@ -125,6 +125,8 @@ export namespace User {
       agreementAcceptedAt: string
       /** 是否关注微信服务号 */
       wechatSubscribed: boolean
+      /** 成绩h5页面地址 */
+      scoreUrl: string
     }
 
     /** 获取微信绑定的手机号 */

@@ -18,6 +18,7 @@ import {
   EDIT_LINE,
   ERROR_WARNING_LINE,
   FEEDBACK_LINE,
+  FILE_CHART_LINE,
   FILE_COPY_LINE,
   FILE_LIST_3_LINE,
   FORBID_LINE,
@@ -79,6 +80,7 @@ const svgMap = {
   'file-list-3-line': FILE_LIST_3_LINE,
   'file-copy-line': FILE_COPY_LINE,
   'bill-line': BILL_LINE,
+  'file-chart-line': FILE_CHART_LINE,
 
   // design
   'edit-line': EDIT_LINE,

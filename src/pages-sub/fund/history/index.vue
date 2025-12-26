@@ -131,7 +131,7 @@ function onLoginSuccess() {
 
 <template>
   <Page
-    title="余额明细"
+    title="充值明细"
     :loading="pageLoading"
     :error="pageError"
     :scroll-y="false"

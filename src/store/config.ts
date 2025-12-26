@@ -4,11 +4,7 @@ import { defineStore } from 'pinia'
 import { computed, ref, unref } from 'vue'
 import { getRelationshipOptionsApi } from '@/api/modules/family'
 import { getSchoolModulesApi } from '@/api/modules/schools'
-import {
-  MENU_LIST,
-  MINIAPP_MODULE_KEY_ACCOUNT_INFO,
-  MINIAPP_MODULE_KEY_RECHARGE,
-} from '@/constant/modules'
+import { MENU_LIST, MINIAPP_MODULE_KEY_FACE_COLLECTION } from '@/constant/modules'
 
 export const useConfigStore = defineStore(
   'config',
@@ -81,6 +77,11 @@ export const useConfigStore = defineStore(
 
       // 过滤出启用的菜单项并添加排序信息
       const enabledMenus = MENU_LIST.filter((menuItem) => {
+        // 过滤掉人脸采集模块
+        if (menuItem.id === MINIAPP_MODULE_KEY_FACE_COLLECTION) {
+          return false
+        }
+
         // 如果菜单项没有ID，则显示（兼容没有ID的菜单项）
         if (!menuItem.id) {
           return true
@@ -100,17 +101,6 @@ export const useConfigStore = defineStore(
 
       // 根据sort字段进行排序
       return enabledMenus.sort((a, b) => a.sortOrder - b.sortOrder)
-    })
-
-    // 是否存在账户模块
-    const hasAccountModules = computed(() => {
-      const { modules } = unref(schoolModules) || {}
-      return modules?.some(module => module.moduleKey === MINIAPP_MODULE_KEY_ACCOUNT_INFO) || false
-    })
-    // 是否存在充值模块
-    const hasRechargeModules = computed(() => {
-      const { modules } = unref(schoolModules) || {}
-      return modules?.some(module => module.moduleKey === MINIAPP_MODULE_KEY_RECHARGE) || false
     })
 
     return {

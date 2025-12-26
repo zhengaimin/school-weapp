@@ -91,6 +91,15 @@
           }
         },
         {
+          "path": "demo/status-tip",
+          "type": "page",
+          "layout": "default",
+          "style": {
+            "navigationStyle": "custom",
+            "navigationBarTitleText": "StatusTip 示例"
+          }
+        },
+        {
           "path": "balance/history/index",
           "type": "page",
           "layout": "default",
@@ -136,6 +145,15 @@
           }
         },
         {
+          "path": "common/icon/index",
+          "type": "page",
+          "layout": "default",
+          "style": {
+            "navigationStyle": "custom",
+            "navigationBarTitleText": "图标展示"
+          }
+        },
+        {
           "path": "common/role-switch/index",
           "type": "page",
           "layout": "default",
@@ -154,6 +172,15 @@
           }
         },
         {
+          "path": "common/webview/index",
+          "type": "page",
+          "layout": "default",
+          "style": {
+            "navigationStyle": "custom",
+            "navigationBarTitleText": ""
+          }
+        },
+        {
           "path": "consumption/history/index",
           "type": "page",
           "layout": "default",
@@ -163,39 +190,21 @@
           }
         },
         {
+          "path": "demo/login-test/index",
+          "type": "page",
+          "layout": "default",
+          "style": {
+            "navigationStyle": "custom",
+            "navigationBarTitleText": "登录测试"
+          }
+        },
+        {
           "path": "device/subscribe/index",
           "type": "page",
           "layout": "default",
           "style": {
             "navigationStyle": "custom",
             "navigationBarTitleText": "我的订阅"
-          }
-        },
-        {
-          "path": "face/camera/index",
-          "type": "page",
-          "layout": "default",
-          "style": {
-            "navigationStyle": "custom",
-            "navigationBarTitleText": "自动拍照"
-          }
-        },
-        {
-          "path": "face/collection/index",
-          "type": "page",
-          "layout": "default",
-          "style": {
-            "navigationStyle": "custom",
-            "navigationBarTitleText": "人脸采集"
-          }
-        },
-        {
-          "path": "face/consent/index",
-          "type": "page",
-          "layout": "default",
-          "style": {
-            "navigationStyle": "custom",
-            "navigationBarTitleText": "告知函"
           }
         },
         {
