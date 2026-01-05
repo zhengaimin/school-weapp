@@ -49,8 +49,9 @@ export function postCancelRefundApplicationApi(id: number | string) {
 
 /**
  * @description 检查是否存在待审核的退款申请
+ * @param {Refund.Application.ReqGetPendingApi} params
  * @returns {Promise<Refund.Application.ResGetPendingApi>}
  */
-export function getPendingRefundApi() {
-  return http.get<Refund.Application.ResGetPendingApi>(REFUND_API.PENDING)
+export function getPendingRefundApi(params?: Refund.Application.ReqGetPendingApi) {
+  return http.get<Refund.Application.ResGetPendingApi>(REFUND_API.PENDING, params)
 }

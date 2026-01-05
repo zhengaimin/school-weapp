@@ -30,16 +30,18 @@ interface NavigateToOptions {
        "/pages-sub/fund/balance/index" |
        "/pages-sub/fund/history/index" |
        "/pages-sub/package/detail/index" |
-       "/pages-sub/package/history/index" |
        "/pages-sub/package/list/index" |
        "/pages-sub/profile/edit/index" |
-       "/pages-sub/refund/apply/index" |
-       "/pages-sub/refund/history/index" |
-       "/pages-sub/refund/result/index" |
        "/pages-sub/service/privacy/index" |
        "/pages-sub/service/protocol/index" |
        "/pages-sub/service/purchase/index" |
+       "/pages-sub/balance/refund/apply/index" |
+       "/pages-sub/balance/refund/history/index" |
+       "/pages-sub/balance/refund/result/index" |
+       "/pages-sub/package/history/home/index" |
+       "/pages-sub/package/history/result/index" |
        "/pages-sub/package/refund/history/index" |
+       "/pages-sub/package/refund/result/index" |
        "/pages-sub/parent/student/bind/index" |
        "/pages-sub/parent/student/detail/index";
 }

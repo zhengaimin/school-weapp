@@ -1,97 +1,66 @@
-/** tabbar 路径 */
+// ==================== Tabbar ====================
 export const TABBAR_HOME_PATH = '/pages/parent/index'
 export const TABBAR_PROFILE_PATH = '/pages/profile/index'
-// 启动页
+
+// ==================== 启动/欢迎 ====================
 export const LAUNCH_PATH = '/pages/launch/index'
-// 欢迎页面
 export const WELCOME_PATH = '/pages/welcome/index'
 
-/** 我的 */
-// 个人编辑
+// ==================== 个人 (profile) ====================
 export const PROFILE_EDIT_PATH = '/pages-sub/profile/edit/index'
 
-/** 家长端页面 */
-// 学生管理
-export const PARENT_STUDENT_MANAGE_PATH = '/pages-sub/parent/student/manage/index'
-// 学生详情
-export const PARENT_STUDENT_DETAIL_PATH = '/pages-sub/parent/student/detail/index'
-// 绑定学生
-export const PARENT_STUDENT_BIND_PATH = '/pages-sub/parent/student/bind/index'
-// 消费 - 历史
-export const PARENT_CONSUMPTION_HISTORY_PATH = '/pages-sub/consumption/history/index'
+// ==================== 学生管理 (student) ====================
+export const STUDENT_MANAGE_PATH = '/pages-sub/parent/student/manage/index'
+export const STUDENT_DETAIL_PATH = '/pages-sub/parent/student/detail/index'
+export const STUDENT_BIND_PATH = '/pages-sub/parent/student/bind/index'
 
-/** 套餐 */
-// 套餐 - 列表页
+// ==================== 套餐 (package) ====================
 export const PACKAGE_LIST_PATH = '/pages-sub/package/list/index'
-// 套餐 - 购买历史记录（分设备模块）
-export const PACKAGE_HISTORY_PATH = '/pages-sub/package/history/index'
-// 套餐 - 详情
 export const PACKAGE_DETAIL_PATH = '/pages-sub/package/detail/index'
-// 套餐 - 退款历史
+export const PACKAGE_HISTORY_PATH = '/pages-sub/package/history/home/index'
+export const PACKAGE_HISTORY_RESULT_PATH = '/pages-sub/package/history/result/index'
+// 套餐退款
 export const PACKAGE_REFUND_HISTORY_PATH = '/pages-sub/package/refund/history/index'
+export const PACKAGE_REFUND_RESULT_PATH = '/pages-sub/package/refund/result/index'
 
-/** 退款 */
-// 退款 - 申请
-export const REFUND_APPLY_PATH = '/pages-sub/refund/apply/index'
-// 退款 - 历史
-export const REFUND_HISTORY_PATH = '/pages-sub/refund/history/index'
-// 退款 - 结果
-export const REFUND_RESULT_PATH = '/pages-sub/refund/result/index'
+// ==================== 余额 (balance) ====================
+export const BALANCE_HOME_PATH = '/pages-sub/balance/home/index'
+export const BALANCE_RECHARGE_PATH = '/pages-sub/balance/recharge/index'
+export const BALANCE_RECHARGE_HISTORY_PATH = '/pages-sub/balance/history/index'
+export const BALANCE_RECHARGE_RESULT_PATH = '/pages-sub/balance/result/index'
+// 余额退款
+export const BALANCE_REFUND_APPLY_PATH = '/pages-sub/balance/refund/apply/index'
+export const BALANCE_REFUND_HISTORY_PATH = '/pages-sub/balance/refund/history/index'
+export const BALANCE_REFUND_RESULT_PATH = '/pages-sub/balance/refund/result/index'
 
-/** 亲情号 */
-// 亲情号 - 管理
+// ==================== 记录 (history) ====================
+export const CONSUMPTION_HISTORY_PATH = '/pages-sub/consumption/history/index'
+export const FUND_HISTORY_PATH = '/pages-sub/fund/history/index'
+
+// ==================== 亲情号 (family) ====================
 export const FAMILY_MANAGE_PATH = '/pages-sub/family/manage/index'
-// 亲情号 - 编辑
 export const FAMILY_EDIT_PATH = '/pages-sub/family/edit/index'
 
-/** 金融 - 金钱相关 */
-// 资金流水明细
-export const FUND_BALANCE_HISTORY_PATH = '/pages-sub/fund/history/index'
-
-/** 余额 */
-// 余额 - 查询
-export const BALANCE_HOME_PATH = '/pages-sub/balance/home/index'
-// 余额 - 充值
-export const BALANCE_RECHARGE_PATH = '/pages-sub/balance/recharge/index'
-// 余额 - 充值记录
-export const BALANCE_RECHARGE_HISTORY_PATH = '/pages-sub/balance/history/index'
-// 充值 - 结果页
-export const BALANCE_RECHARGE_RESULT_PATH = '/pages-sub/balance/result/index'
-
-/** common */
-// 角色切换
-export const COMMON_ROLE_SWITCH_PATH = '/pages-sub/common/role-switch/index'
-// 签名
-export const COMMON_SIGNATURE_PATH = '/pages-sub/common/signature/index'
-// 关注公众号
-export const COMMON_FOLLOW_PATH = '/pages-sub/common/follow/index'
-// 图标展示
-export const COMMON_ICON_PATH = '/pages-sub/common/icon/index'
-// webview
-export const COMMON_WEBVIEW_PATH = '/pages-sub/common/webview/index'
-
-/** 设备 */
-// 我的订阅
+// ==================== 设备 (device) ====================
 export const DEVICE_SUBSCRIBE_PATH = '/pages-sub/device/subscribe/index'
 
-/** 人脸 */
-// 人脸采集
+// ==================== 人脸 (face) ====================
 export const FACE_COLLECTION_PATH = '/pages-sub/face/collection/index'
-// 自动拍照
 export const FACE_CAMERA_PATH = '/pages-sub/face/camera/index'
-// 人脸识别同意书
 export const FACE_CONSENT_PATH = '/pages-sub/face/consent/index'
 
-/** 聊天 */
-// 聊天页面
+// ==================== 聊天 (chat) ====================
 export const CHAT_PATH = '/pages-sub/chat/index'
 
-/** demo页面 */
-// 刷新列表
+// ==================== 公共 (common) ====================
+export const COMMON_ROLE_SWITCH_PATH = '/pages-sub/common/role-switch/index'
+export const COMMON_SIGNATURE_PATH = '/pages-sub/common/signature/index'
+export const COMMON_FOLLOW_PATH = '/pages-sub/common/follow/index'
+export const COMMON_ICON_PATH = '/pages-sub/common/icon/index'
+export const COMMON_WEBVIEW_PATH = '/pages-sub/common/webview/index'
+
+// ==================== Demo ====================
 export const DEMO_REFRESH_LIST_PATH = '/pages-sub/demo/refresh-list'
-// 时间选择器
 export const DEMO_DATETIME_PICKER_POPUP_PATH = '/pages-sub/demo/datetime-picker-popup'
-// StatusTip
 export const DEMO_STATUS_TIP_PATH = '/pages-sub/demo/status-tip'
-// 登录测试
 export const DEMO_LOGIN_TEST_PATH = '/pages-sub/demo/login-test/index'

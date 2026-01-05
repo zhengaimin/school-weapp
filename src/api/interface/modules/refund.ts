@@ -55,6 +55,8 @@ export namespace Refund {
   export namespace Application {
     /** 申请退款 - 请求 */
     export interface ReqPostApplyApi {
+      /** 设备类型：VIDEO-视频话机，DRYER-吹风机，不传默认VIDEO */
+      deviceType?: 'VIDEO' | 'DRYER'
       /** 退款类型: FULL-全额退款, SINGLE-单笔退款 */
       refundType: 'FULL' | 'SINGLE'
       /** 充值订单ID（单笔退款时必填） */
@@ -108,6 +110,12 @@ export namespace Refund {
       message: string
       /** 退款申请ID */
       refundApplicationId: number
+    }
+
+    /** 检查待审核退款申请 - 请求 */
+    export interface ReqGetPendingApi {
+      /** 设备类型：VIDEO-视频话机，DRYER-吹风机 */
+      deviceType?: 'VIDEO' | 'DRYER'
     }
 
     /** 检查待审核退款申请 - 响应 */

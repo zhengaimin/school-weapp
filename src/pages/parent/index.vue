@@ -9,8 +9,9 @@
 </route>
 
 <script setup lang="ts">
-// #region 导入
 import type { User } from '@/api/interface/modules/user'
+import type { TDeviceType } from '@/constant/modules/business/package/common'
+
 import dayjs from 'dayjs'
 import { storeToRefs } from 'pinia'
 import { computed, nextTick, ref, unref } from 'vue'
@@ -21,6 +22,7 @@ import TButton from '@/components/common/button/index.vue'
 import Notice from '@/components/common/notice/index.vue'
 import Page from '@/components/common/page/index.vue'
 import Icon from '@/components/icon/index.vue'
+import { DEVICE_TYPE_I18N } from '@/constant/modules'
 import {
   BALANCE_RECHARGE_PATH,
   COMMON_FOLLOW_PATH,
@@ -32,46 +34,39 @@ import { usePage } from '@/hooks/usePage'
 import { useSchoolModules } from '@/hooks/useSchoolModules'
 import { useAppStore } from '@/store/app'
 import { useConfigStore } from '@/store/config'
-import { useParentStore } from '@/store/parent'
+import { useParentStore } from '@/store/auth/parent'
+import { useCurrentStudentStore } from '@/store/business/currentStudent'
 import { useUserStore } from '@/store/user'
 import { toast } from '@/utils/toast'
 
 import StudentSelect from './components/StudentSelect.vue'
 import { getGreeting } from './data'
-// #endregion
 
-// #region 组件选项配置
 defineOptions({
   options: {
     styleIsolation: 'apply-shared',
   },
 })
-// #endregion
 
-// #region 使用 Hooks
 const { pageLoading, pageError, pageLoaded, getContentHeight, batchRequestHandler, onLoginFail }
   = usePage()
 const { axiosGetUserBalanceApi } = useBalance()
 const { hasAccountModules, hasRechargeModules } = useSchoolModules()
-// #endregion
 
-// #region 使用 Store
 const userStore = useUserStore()
 const parentStore = useParentStore()
+const currentStudentStore = useCurrentStudentStore()
 const configStore = useConfigStore()
-const { currentStudent, userInfo, phone } = storeToRefs(userStore)
-const { balanceInfo } = storeToRefs(parentStore)
+const { userInfo, phone } = storeToRefs(userStore)
+const { currentStudent } = storeToRefs(parentStore)
+const { balanceInfo, deviceType } = storeToRefs(currentStudentStore)
 const { navBarInfo } = storeToRefs(useAppStore())
 const { filteredMenuList } = storeToRefs(configStore)
-// #endregion
 
-// #region 定义响应式数据
 const showStudentSelector = ref(false)
 const consumptionStats = ref<User.Consumption.IConsumptionStatisticsVo>()
 const isInFamilyContact = ref<boolean>(false)
-// #endregion
 
-// #region 定义计算属性
 const headerHeight = computed(() => {
   return `calc(260rpx + ${navBarInfo.value.navBarHeight}px)`
 })
@@ -93,15 +88,23 @@ const showOfficialAccountNotice = computed(() => {
   return subscribed === undefined ? true : !subscribed
 })
 
-// 检查是否已签名授权
 const hasAgreementSigned = computed(() => {
   const info = unref(userInfo) as any
   return !!info?.agreementUrl
 })
-// #endregion
 
-// #region 接口请求函数
-// 获取统计数据
+const displayStudentName = computed(() => {
+  const studentName = currentStudent.value?.name || ''
+  if (deviceType.value) {
+    const deviceName = DEVICE_TYPE_I18N[deviceType.value]
+    if (deviceName) {
+      return `${deviceName}·${studentName}`
+    }
+  }
+  return studentName
+})
+
+/** 获取统计数据 */
 async function axiosGetConsumptionStatisticsApi() {
   try {
     const result = await getConsumptionStatisticsApi()
@@ -118,7 +121,7 @@ async function axiosGetConsumptionStatisticsApi() {
   }
 }
 
-// 查询手机号是否存在于亲情号列表中
+/** 查询手机号是否存在于亲情号列表中 */
 async function axiosGetCheckSelfApi() {
   try {
     const result = await getCheckSelfApi({ phone: unref(phone) || unref(userInfo).phone })
@@ -130,7 +133,7 @@ async function axiosGetCheckSelfApi() {
 
       // 如果存在亲情号信息，则存储到 store
       if (exists && selfContactInfo) {
-        parentStore.setContactInfo(selfContactInfo)
+        currentStudentStore.setContactInfo(selfContactInfo)
       }
     }
 
@@ -143,17 +146,14 @@ async function axiosGetCheckSelfApi() {
   }
 }
 
-// #endregion
-
-// #region 事件处理函数
-// 关注公众号
+/** 关注公众号 */
 function handleGoToOfficialAccount() {
   uni.navigateTo({
     url: COMMON_FOLLOW_PATH,
   })
 }
 
-// 页面跳转
+/** 页面跳转 */
 function handleNavigationToPath(path: string, item: any = null) {
   // 检查是否点击留言功能
   if (item && item.id === 'message' && !isInFamilyContact.value) {
@@ -187,20 +187,30 @@ function handleNavigationToPath(path: string, item: any = null) {
   })
 }
 
-// 显示切换学生弹框
+/** 显示切换学生弹框 */
 function handleShowStudentSelector() {
   showStudentSelector.value = true
 }
 
-// 切换学生
-async function handleStudentChange(childId: number) {
+/** 切换学生和设备 */
+async function handleStudentChange(childId: number, deviceType: TDeviceType) {
   pageError.value = ''
   pageLoading.value = true
 
   try {
+    const previousStudentId = parentStore.currentStudentId
     const result = await postParentSwitchChildApi({ childUserId: childId })
 
     if (result.code === 0) {
+      // 如果切换到不同的学生，清空旧学生的业务数据
+      if (previousStudentId !== childId) {
+        currentStudentStore.clearStudentData()
+      }
+
+      // 设置新的学生ID和设备类型
+      parentStore.setCurrentStudentId(childId)
+      currentStudentStore.setDeviceType(deviceType)
+
       const { token } = result.data
 
       if (token) {
@@ -208,8 +218,6 @@ async function handleStudentChange(childId: number) {
         await userStore.getUserInfo()
         await axiosGetUserBalanceApi()
       }
-      // 切换学生成功后，清除亲情号信息
-      parentStore.setContactInfo(null)
 
       await nextTick()
       await batchRequestHandler(
@@ -232,16 +240,15 @@ async function handleStudentChange(childId: number) {
     pageLoading.value = false
   }
 }
-// #endregion
 
-// #region 生命周期钩子
-// 登录成功处理
+/** 登录成功处理 */
 async function handleLoginSuccess() {
   // 批量处理其他接口
   await batchRequestHandler([
     configStore.axiosGetSchoolModulesApi(),
     axiosGetConsumptionStatisticsApi(),
     axiosGetCheckSelfApi(),
+    axiosGetUserBalanceApi(),
   ])
 }
 
@@ -255,7 +262,6 @@ onShow(() => {
     ])
   }
 })
-// #endregion
 </script>
 
 <template>
@@ -287,7 +293,7 @@ onShow(() => {
             <!-- 孩子切换区域 - 绝对定位在右上角 -->
             <view relative flex="~ items-center" @click="handleShowStudentSelector">
               <text text="sm white" font="medium">
-                {{ currentStudent?.studentName }}
+                {{ displayStudentName }}
               </text>
               <view m="l-1" h-5 w-5 flex="~ items-center justify-center" border="rounded-full">
                 <Icon name="arrow-left-right-fill" icon-color="#ffffff" icon-size="36rpx" />
@@ -338,13 +344,14 @@ onShow(() => {
               content="关注后可及时接收通知，点击前往关注"
               @click="handleGoToOfficialAccount"
             />
+
             <!-- 当前孩子账户信息 -->
             <view border="~ bg-muted solid rounded-2xl" bg="white" p="4">
               <!-- 当前孩子账户 -->
               <view flex="~ items-center justify-between" m="b-3">
                 <view flex="1">
                   <view text="sm gray-900" font="medium">
-                    {{ currentStudent?.studentName }}
+                    {{ currentStudent?.name }}
                   </view>
                   <view text="xs gray-500">
                     {{ currentStudent?.fullClassName }}

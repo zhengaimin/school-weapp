@@ -9,7 +9,6 @@
 </route>
 
 <script lang="ts" setup>
-// #region 导入
 import type { Refund } from '@/api/interface/modules/refund'
 import { storeToRefs } from 'pinia'
 import { computed, onUnmounted, ref, unref } from 'vue'
@@ -25,25 +24,22 @@ import Cell from '@/components/form/cell/index.vue'
 import Form from '@/components/form/index/index.vue'
 import Radio from '@/components/form/radio/index.vue'
 import { REFUND_TYPE, REFUND_TYPE_OPTIONS } from '@/constant/modules'
-import { REFUND_HISTORY_PATH, REFUND_RESULT_PATH } from '@/constant/router'
+import { BALANCE_REFUND_HISTORY_PATH, BALANCE_REFUND_RESULT_PATH } from '@/constant/router'
 import { useBalance } from '@/hooks/useBalance'
 import { useForm } from '@/hooks/useForm'
 import { usePage } from '@/hooks/usePage'
-import { useParentStore } from '@/store/parent'
+import { useParentStore } from '@/store/auth/parent'
+import { useCurrentStudentStore } from '@/store/business/currentStudent'
 import { useUserStore } from '@/store/user'
 import { useRefundEmitter } from '@/utils/emit/refund'
 import { toast } from '@/utils/toast'
-// #endregion
 
-// #region 组件选项配置
 defineOptions({
   options: {
     styleIsolation: 'apply-shared',
   },
 })
-// #endregion
 
-// #region 使用 Hooks
 const { pageLoading, pageError, pageLoaded, batchRequestHandler, onLoginFail, getContentHeight }
   = usePage()
 const { formRef, validate, submitLoading, scrollToFirstError, scrollIntoView }
@@ -51,27 +47,19 @@ const { formRef, validate, submitLoading, scrollToFirstError, scrollIntoView }
 const message = useMessage()
 const { axiosGetUserBalanceApi } = useBalance()
 const { onRefundSuccess } = useRefundEmitter()
-// #endregion
 
-// #region 使用 Store
 const userStore = useUserStore()
 const parentStore = useParentStore()
-const { currentStudent } = storeToRefs(userStore)
-const { balanceInfo } = storeToRefs(parentStore)
-// #endregion
+const currentStudentStore = useCurrentStudentStore()
+const { currentStudent } = storeToRefs(parentStore)
+const { balanceInfo, deviceType } = storeToRefs(currentStudentStore)
 
-// #region 定义响应式数据
-// 待审核的退款申请信息
 const pendingRefundInfo = ref<Refund.Application.ResGetPendingApi | null>(null)
-// 表单数据
 const formData = ref({
   refundType: REFUND_TYPE.FULL,
   reason: '',
 })
-// #endregion
 
-// #region 定义计算属性
-// 当前可用余额
 const availableBalance = computed(() => +balanceInfo.value?.availableBalance || 0)
 const availableBalanceText = computed(() => `¥${Number(availableBalance.value).toFixed(2)}`)
 const refundTypeOptions = computed(() => {
@@ -80,13 +68,8 @@ const refundTypeOptions = computed(() => {
     suffix: availableBalanceText.value,
   }))
 })
-// 是否存在待处理的退款申请
 const hasPendingRefund = computed(() => !!pendingRefundInfo.value?.hasPending)
-
-// 是否余额不足
 const hasInsufficientBalance = computed(() => Number(availableBalance.value) <= 0)
-
-// 是否可以提交申请
 const cannotSubmit = computed(
   () =>
     hasPendingRefund.value
@@ -97,9 +80,7 @@ const cannotSubmit = computed(
 const contentHeight = computed(() => {
   return getContentHeight('164rpx')
 })
-// #endregion
 
-// #region 定义验证规则
 const rules = {
   refundType: [{ required: true, message: '请选择退费金额' }],
   reason: [
@@ -107,12 +88,13 @@ const rules = {
     { min: 5, max: 200, message: '退费原因应为5-200个字符' },
   ],
 }
-// #endregion
 
-// #region 接口请求函数
+/** 获取待处理退款信息 */
 async function axiosGetPendingRefundApi() {
   try {
-    const result = await getPendingRefundApi()
+    const result = await getPendingRefundApi({
+      deviceType: deviceType.value,
+    })
     if (result.code === 0) {
       pendingRefundInfo.value = result.data
     }
@@ -126,34 +108,24 @@ async function axiosGetPendingRefundApi() {
     pageLoading.value = false
   }
 }
-// #endregion
 
-// #region 方法定义
+/** 刷新页面数据 */
 async function refresh() {
   batchRequestHandler([axiosGetPendingRefundApi()])
 }
-// #endregion
 
-// #region 事件处理函数
-// 跳转到退费记录页面
-function goToRefundHistory() {
-  uni.navigateTo({
-    url: REFUND_HISTORY_PATH,
-  })
-}
-
-// 取消待处理的退款申请
+/** 取消待处理的退款申请 */
 function handleCancelPendingRefund() {
   if (!pendingRefundInfo.value?.applicationId) {
     toast.show('未找到待处理的退款申请')
     return
   }
   uni.navigateTo({
-    url: `${REFUND_RESULT_PATH}?id=${pendingRefundInfo.value.applicationId}`,
+    url: `${BALANCE_REFUND_RESULT_PATH}?id=${pendingRefundInfo.value.applicationId}`,
   })
 }
 
-// 提交退费申请
+/** 提交退费申请 */
 async function handleSubmitRefund() {
   try {
     const { valid } = await validate(['refundType', 'reason'])
@@ -163,8 +135,8 @@ async function handleSubmitRefund() {
     }
     submitLoading.value = true
     const { reason, refundType } = unref(formData)
-    // 构建提交数据，匹配API接口要求
     const submissionData = {
+      deviceType: deviceType.value,
       refundType,
       applyReason: reason,
     }
@@ -184,14 +156,13 @@ async function handleSubmitRefund() {
         closeOnClickModal: false,
       })
 
-      // 跳转到结果页
       if (
         pendingResult.code === 0
         && 'data' in pendingResult
         && pendingResult?.data?.applicationId
       ) {
         uni.navigateTo({
-          url: `${REFUND_RESULT_PATH}?id=${pendingResult.data.applicationId}`,
+          url: `${BALANCE_REFUND_RESULT_PATH}?id=${pendingResult.data.applicationId}`,
         })
       }
     }
@@ -204,21 +175,17 @@ async function handleSubmitRefund() {
     submitLoading.value = false
   }
 }
-// #endregion
 
-// #region 生命周期钩子
+/** 登录成功处理 */
 async function onLoginSuccess() {
   batchRequestHandler([axiosGetPendingRefundApi()])
 }
 
-// 监听退款成功事件
 const unsubscribeRefund = onRefundSuccess((data) => {
   console.log('监听到退款成功事件:', data)
-  // 刷新余额和退款状态
   batchRequestHandler([axiosGetPendingRefundApi(), axiosGetUserBalanceApi()])
 })
 
-// 组件卸载时取消监听
 onUnmounted(() => {
   unsubscribeRefund()
 })
@@ -232,7 +199,6 @@ onShow(() => {
 defineExpose({
   refresh,
 })
-// #endregion
 </script>
 
 <template>
@@ -340,7 +306,7 @@ defineExpose({
 
   <!-- 悬浮操作按钮 -->
   <FabActions
-    :actions="[{ text: '历史记录', path: REFUND_HISTORY_PATH }]"
+    :actions="[{ text: '历史记录', path: BALANCE_REFUND_HISTORY_PATH }]"
     :z-index="100"
     :bottom="164"
   />

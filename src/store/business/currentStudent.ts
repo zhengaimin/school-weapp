@@ -1,42 +1,49 @@
+/**
+ * 当前操作的学生业务数据 Store
+ * 用于存储当前正在操作的学生的业务数据
+ * - 学生基本信息（从 profile 接口的 roleInfo.currentChild 获取）
+ * - 余额信息
+ * - 亲情号信息
+ * - 设备类型选择
+ *
+ * 注意：
+ * 1. 这不是"学生角色"的 store，而是"当前操作的学生数据"
+ * 2. 在家长模式下，数据来自 parent.currentStudentId 对应的学生
+ * 3. 在学生模式下，数据来自登录学生本人
+ * 4. 切换学生时需要调用 clearStudentData() 清空旧数据
+ */
 import type { Family } from '@/api/interface/modules/family'
-import type { Students } from '@/api/interface/modules/students'
 import type { User } from '@/api/interface/modules/user'
+import type { TDeviceType } from '@/constant/modules'
+
 import dayjs from 'dayjs'
-
-import { defineStore, storeToRefs } from 'pinia'
+import { defineStore } from 'pinia'
 import { getFamilyContactsApi } from '@/api/modules/family/contacts'
-import { getStudentListByParentApi } from '@/api/modules/students'
-import { useUserStore } from './user'
+import { DEVICE_TYPE } from '@/constant/modules'
 
-type IBalanceInfo = User.Common.IStudentBalanceVo & {
+type IBalanceInfo = User.Common.IStudentBalanceInfoVo & {
   availableBalanceFormatted: string
   lastUpdateTime: string
 }
 
-export const useParentStore = defineStore(
-  'parent',
+export const useCurrentStudentStore = defineStore(
+  'currentStudent',
   () => {
-    const userStore = useUserStore()
-    const { userInfo } = storeToRefs(userStore)
-
-    const students = ref<Students.IStudentVo[]>([])
-
-    // 是否需要绑定学生
-    const needBind = ref<boolean>(true)
+    // 学生基本信息（从 profile 接口的 roleInfo.currentChild 获取）
+    const studentInfo = ref<User.Common.ICurrentChildVo | null>(null)
     // 余额信息
     const balanceInfo = ref<IBalanceInfo | null>(null)
     // 亲情号信息
     const contactInfo = ref<Family.Contact.ISelfContactVo | null>(null)
     // 亲情号列表缓存
     const familyContacts = ref<Family.Contact.ResGetFamilyContactsApi[]>([])
+    // 选中的设备类型
+    const deviceType = ref<TDeviceType>(DEVICE_TYPE.VIDEO)
 
-    const setStudents = (list: Students.IStudentVo[]) => {
-      students.value = list
+    const setStudentInfo = (info: User.Common.ICurrentChildVo | null) => {
+      studentInfo.value = info
     }
-    const setNeedBind = (val: boolean) => {
-      needBind.value = val
-    }
-    const setBalanceInfo = (info: User.Common.IStudentBalanceVo) => {
+    const setBalanceInfo = (info: User.Common.IStudentBalanceInfoVo) => {
       balanceInfo.value = {
         ...info,
         availableBalanceFormatted: Number(info.availableBalance).toFixed(2),
@@ -49,14 +56,10 @@ export const useParentStore = defineStore(
     const setFamilyContacts = (contacts: Family.Contact.ResGetFamilyContactsApi[]) => {
       familyContacts.value = contacts
     }
+    const setDeviceType = (type: TDeviceType) => {
+      deviceType.value = type
+    }
 
-    const studentsIdMap = computed(() => {
-      const map: Record<number, Students.IStudentVo> = {}
-      students.value.forEach((student) => {
-        map[student.id] = student
-      })
-      return map
-    })
     // 亲情号关系 map：根据 relationship 字段创建 map 结构
     const familyContactsRelationshipMap = computed(() => {
       const map: Record<number, Family.Contact.ResGetFamilyContactsApi> = {}
@@ -68,19 +71,6 @@ export const useParentStore = defineStore(
       return map
     })
 
-    const axiosGetStudentListByParentApi = async () => {
-      const result = await getStudentListByParentApi()
-
-      if (result.code === 0 && result.data.students?.length) {
-        const list = result.data.students
-        setStudents(list)
-
-        await nextTick()
-      }
-
-      return result
-    }
-
     const axiosGetFamilyContactsApi = async () => {
       const result = await getFamilyContactsApi({})
 
@@ -91,23 +81,34 @@ export const useParentStore = defineStore(
       return result
     }
 
+    /**
+     * 清空学生数据
+     * 在切换学生时调用，清空旧学生的业务数据
+     */
+    const clearStudentData = () => {
+      studentInfo.value = null
+      balanceInfo.value = null
+      contactInfo.value = null
+      familyContacts.value = []
+      deviceType.value = DEVICE_TYPE.VIDEO
+    }
+
     return {
-      needBind,
-      students,
+      studentInfo,
       balanceInfo,
       contactInfo,
       familyContacts,
-      setStudents,
-      setNeedBind,
+      deviceType,
+      setStudentInfo,
       setBalanceInfo,
       setContactInfo,
       setFamilyContacts,
+      setDeviceType,
 
-      studentsIdMap,
       familyContactsRelationshipMap,
 
-      axiosGetStudentListByParentApi,
       axiosGetFamilyContactsApi,
+      clearStudentData,
     }
   },
   {

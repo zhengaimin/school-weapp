@@ -1,8 +1,6 @@
 <script lang="ts" setup>
 import type { Pkg } from '@/api/interface/modules/package'
 import type { TPackageStatus } from '@/constant/modules'
-// #region 导入
-import dayjs from 'dayjs'
 import { computed } from 'vue'
 import TButton from '@/components/common/button/index.vue'
 import WhiteCard from '@/components/common/white-card/index.vue'
@@ -14,13 +12,13 @@ import {
   PACKAGE_TYPE_I18N,
 } from '@/constant/modules'
 import { formatTime } from '@/utils/format'
-// #endregion
+import { canShowRefundButton } from '../../../utils'
 
-// #region 属性定义
 const props = defineProps<{
   record: Pkg.Query.IPackagePurchaseVo
   hasPendingRefund?: boolean
 }>()
+
 const emit = defineEmits<{
   click: [event: Event, record: Pkg.Query.IPackagePurchaseVo]
   cancel: [record: Pkg.Query.IPackagePurchaseVo]
@@ -28,89 +26,69 @@ const emit = defineEmits<{
   refund: [record: Pkg.Query.IPackagePurchaseVo]
   cancelRefund: [record: Pkg.Query.IPackagePurchaseVo]
 }>()
-// #endregion
 
-// #region 定义计算属性
-// 判断记录是否是待审核的退款记录
+/** 判断是否为待审核的退款记录 */
 const isPendingRefund = computed(() => {
   return props.record.status === PACKAGE_BUY_STATUS.REFUND_PENDING
 })
 
+/** 判断是否为待支付状态 */
 const isUnpaid = computed(() => {
   return props.record.status === PACKAGE_STATUS.PENDING
 })
 
-// 是否显示退款按钮
+/** 是否显示退款按钮 */
 const showRefundButton = computed(() => {
-  // 如果存在待审核的退款申请，且当前记录不是申请退款中状态，则不显示退款按钮
-  if (props.hasPendingRefund && props.record.status !== PACKAGE_BUY_STATUS.REFUND_PENDING) {
-    return false
-  }
-
-  // 待激活套餐可以退款
-  if (props.record.status === PACKAGE_STATUS.WAITING_ACTIVE) {
-    return true
-  }
-
-  // 有效/已激活套餐需要判断结束日期和当前日期不是一个月
-  if (props.record.status === PACKAGE_STATUS.ACTIVE && props.record.endDate) {
-    const endDate = dayjs(props.record.endDate)
-    const currentDate = dayjs()
-    // 计算当前日期和结束日期的月份差异
-    const monthsDiff = endDate.diff(currentDate, 'month', true)
-    // 如果结束日期距离当前时间超过一个月，可以退款
-    return monthsDiff > 1
-  }
-
-  return false
+  return canShowRefundButton({
+    status: props.record.status,
+    endDate: props.record.endDate,
+    hasPendingRefund: props.hasPendingRefund,
+  })
 })
 
+/** 获取状态配置 */
 const statusConfig = computed(() => {
   return PACKAGE_STATUS_CONFIGS[props.record.status as TPackageStatus]
 })
 
-const iconName = computed(() => {
-  return statusConfig.value.icon
-})
+/** 获取图标名称 */
+const iconName = computed(() => statusConfig.value.icon)
 
-const iconColor = computed(() => {
-  return statusConfig.value.iconColor
-})
+/** 获取图标颜色 */
+const iconColor = computed(() => statusConfig.value.iconColor)
 
-const statusLabel = computed(() => {
-  return statusConfig.value.label
-})
+/** 获取状态标签 */
+const statusLabel = computed(() => statusConfig.value.label)
 
+/** 获取套餐类型标签 */
 const packageTypeLabel = computed(() => {
   return PACKAGE_TYPE_I18N[props.record.snapshotInfo.packageType]
 })
-// #endregion
 
-// #region 方法
+/** 处理点击事件 */
 function handleClick(event: Event) {
   emit('click', event, props.record)
 }
 
-// 取消订单
+/** 取消订单 */
 function handleCancel() {
   emit('cancel', props.record)
 }
 
-// 支付订单
+/** 支付订单 */
 function handlePay() {
   emit('pay', props.record)
 }
 
-// 申请退款
+/** 申请退款 */
 function handleRefund() {
   emit('refund', props.record)
 }
 
-// 取消退款
+/** 取消退款 */
 function handleCancelRefund() {
   emit('cancelRefund', props.record)
 }
-// #endregion
 </script>
 
 <template>
@@ -184,7 +162,7 @@ function handleCancelRefund() {
             plain
             @click.stop="handleRefund"
           >
-            申请退款
+            申请退费
           </TButton>
         </view>
       </view>

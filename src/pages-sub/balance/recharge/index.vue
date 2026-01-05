@@ -14,7 +14,7 @@ import type { Payment } from '@/api/interface/modules/payment'
 import { onShow } from '@dcloudio/uni-app'
 import { storeToRefs } from 'pinia'
 import { computed, ref, unref } from 'vue'
-import { getPaymentConfigApi, getPendingPaymentApi } from '@/api/modules/payment'
+import { getPaymentConfigApi, getPendingBalancePaymentApi } from '@/api/modules/payment'
 import TButton from '@/components/common/button/index.vue'
 import FabActions from '@/components/common/fab-actions/index.vue'
 import Notice from '@/components/common/notice/index.vue'
@@ -31,7 +31,8 @@ import { useForm } from '@/hooks/useForm'
 import { usePage } from '@/hooks/usePage'
 import { useSchoolModules } from '@/hooks/useSchoolModules'
 import { usePayment } from '@/pages-sub/balance/hooks/usePayment'
-import { useParentStore } from '@/store/parent'
+import { useParentStore } from '@/store/auth/parent'
+import { useCurrentStudentStore } from '@/store/business/currentStudent'
 import { useUserStore } from '@/store/user'
 import { toast } from '@/utils/toast'
 // #endregion
@@ -57,8 +58,10 @@ const { hasSelectRechargeAmountModules, hasInputRechargeAmountModules } = useSch
 // #region 使用 Store
 const userStore = useUserStore()
 const parentStore = useParentStore()
-const { balanceInfo } = storeToRefs(parentStore)
-const { currentStudent } = storeToRefs(userStore)
+const currentStudentStore = useCurrentStudentStore()
+const { balanceInfo } = storeToRefs(currentStudentStore)
+const { deviceType } = storeToRefs(currentStudentStore)
+const { currentStudent } = storeToRefs(parentStore)
 // #endregion
 
 // #region 定义响应式数据
@@ -102,21 +105,16 @@ const fabActions = [
 // #endregion
 
 // #region 定义验证规则
-const rules = computed(() => ({
-  customAmount: [
-    {
-      required: false,
-      message: '请输入有效的充值金额',
-    },
-  ],
-}))
+const rules = {
+  customAmount: [{ required: false, message: '请输入有效的充值金额' }],
+}
 // #endregion
 
 // #region 接口请求函数
 // 检查待支付订单
 async function axiosCheckPendingOrderApi() {
   try {
-    const result = await getPendingPaymentApi()
+    const result = await getPendingBalancePaymentApi()
     if (result.code === 0) {
       const { hasPending } = result.data
       hasPendingOrder.value = hasPending
@@ -142,10 +140,14 @@ async function axiosGetPaymentConfigApi() {
       if (fixedAmounts) {
         amountOptions.value = fixedAmounts
           .split(',')
-          .map((amountStr) => Number(amountStr))
-          .filter((amount) => !Number.isNaN(amount))
-          .filter((amount) => (minAmount === null || amount >= minAmount) && (maxAmount === null || amount <= maxAmount))
-          .map((amount) => ({
+          .map(amountStr => Number(amountStr))
+          .filter(amount => !Number.isNaN(amount))
+          .filter(
+            amount =>
+              (minAmount === null || amount >= minAmount)
+              && (maxAmount === null || amount <= maxAmount),
+          )
+          .map(amount => ({
             value: amount,
             label: `${amount}元`,
             selected: false,
@@ -171,7 +173,7 @@ function clearAmount() {
   amountOptions.value.forEach((option) => {
     option.selected = false
   })
-  // 清空自定义金额
+  // 重置表单数据
   formData.value.customAmount = ''
   // 清空当前金额
   currentAmount.value = 0
@@ -271,9 +273,9 @@ async function handleConfirmRecharge() {
   }
 
   const amountToPay = Number(currentAmount.value.toFixed(2))
-  const paymentMethod = PAYMENT_METHOD.WECHAT // 可以根据需要修改支付方式
+  const paymentMethod = PAYMENT_METHOD.WECHAT
 
-  await axiosPostRechargeApi(amountToPay, paymentMethod, {
+  await axiosPostRechargeApi(amountToPay, paymentMethod, deviceType.value, {
     async onSuccess(data) {
       const { orderNo, id } = data
 
@@ -358,50 +360,53 @@ onShow(() => {
           </view>
         </WhiteCard>
 
-        <!-- 充值金额选择 -->
+        <!-- 充值选项 -->
         <WhiteCard v-if="showRechargeModules" :disabled="hasPendingOrder">
-          <view v-if="hasSelectRechargeAmountModules">
-            <view text="sm text-primary" font="medium" m="b-3">
-              选择充值金额
-            </view>
-            <view grid="~ cols-3" gap="3" m="b-4">
-              <view
-                v-for="option in amountOptions"
-                :key="option.value"
-                flex="~ items-center justify-center"
-                p="3"
-                border="~ solid rounded-md"
-                :class="
-                  option.selected ? 'border-primary bg-primary bg-opacity-5' : 'border-bg-muted'
-                "
-                transition-colors
-                @click="selectAmount(option.value)"
-              >
-                <text text="sm" :class="option.selected ? 'text-primary' : 'text-primary'">
-                  {{ option.label }}
-                </text>
+          <Form ref="formRef" :model="formData" :rules="rules">
+            <view flex="~ col" gap="2.5">
+              <!-- 充值金额选择 -->
+              <view v-if="hasSelectRechargeAmountModules">
+                <view text="sm text-primary" font="medium" m="b-3">
+                  选择充值金额
+                </view>
+                <view grid="~ cols-3" gap="3">
+                  <view
+                    v-for="option in amountOptions"
+                    :key="option.value"
+                    flex="~ items-center justify-center"
+                    p="3"
+                    border="~ solid rounded-md"
+                    :class="
+                      option.selected ? 'border-primary bg-primary bg-opacity-5' : 'border-bg-muted'
+                    "
+                    transition-colors
+                    @click="selectAmount(option.value)"
+                  >
+                    <text text="sm" :class="option.selected ? 'text-primary' : 'text-primary'">
+                      {{ option.label }}
+                    </text>
+                  </view>
+                </view>
               </view>
-            </view>
-          </view>
 
-          <!-- 自定义金额表单 -->
-          <Form v-if="hasInputRechargeAmountModules" ref="formRef" :model="formData" :rules="rules">
-            <Cell
-              id="customAmount"
-              prop="customAmount"
-              p="x-0!"
-              label="自定义金额"
-              label-position="top"
-            >
-              <InputNumber
-                v-model="formData.customAmount"
-                placeholder="请输入充值金额"
-                allow-null
-                :min="paymentConfig.minAmount"
-                :max="paymentConfig.maxAmount"
-                @change="handleCustomAmountChange"
-              />
-            </Cell>
+              <!-- 自定义金额 -->
+              <Cell
+                v-if="hasInputRechargeAmountModules"
+                id="customAmount"
+                prop="customAmount"
+                label="自定义金额"
+                label-position="top"
+              >
+                <InputNumber
+                  v-model="formData.customAmount"
+                  placeholder="请输入充值金额"
+                  allow-null
+                  :min="paymentConfig.minAmount"
+                  :max="paymentConfig.maxAmount"
+                  @change="handleCustomAmountChange"
+                />
+              </Cell>
+            </view>
           </Form>
         </WhiteCard>
       </view>

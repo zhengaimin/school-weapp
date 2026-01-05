@@ -20,6 +20,8 @@ import Page from '@/components/common/page/index.vue'
 import RefreshList from '@/components/common/refresh-list/index.vue'
 import { usePage } from '@/hooks/usePage'
 import { useRefresh } from '@/hooks/useRefresh'
+import { useParentStore } from '@/store/auth/parent'
+import { useCurrentStudentStore } from '@/store/business/currentStudent'
 import RecordItem from './components/RecordItem.vue'
 // #endregion
 
@@ -33,6 +35,8 @@ defineOptions({
 
 // #region Hooks
 const { pageLoading, pageError, batchRequestHandler, onLoginFail, getContentHeight } = usePage()
+const parentStore = useParentStore()
+const currentStudentStore = useCurrentStudentStore()
 const {
   loading,
   refreshLoading,
@@ -91,6 +95,7 @@ function onFilterChange(key: string, value: string | number | number[] | [number
 async function onLoginSuccess() {
   const daterange = filters.value[0] as [number, number]
   const [startTime, endTime] = daterange
+  query.value.deviceType = currentStudentStore.deviceType
   query.value.startDate = dayjs(startTime).format('YYYY-MM-DD')
   query.value.endDate = dayjs(endTime).format('YYYY-MM-DD')
 

@@ -9,7 +9,7 @@
 <script lang="ts" setup>
 import { storeToRefs } from 'pinia'
 
-import { useParentStore } from '@/store/parent'
+import { useParentStore } from '@/store/auth/parent'
 import { useUserStore } from '@/store/user'
 
 const userStore = useUserStore()

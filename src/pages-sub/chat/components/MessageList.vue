@@ -4,7 +4,7 @@ import { storeToRefs } from 'pinia'
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import Loading from '@/components/common/loading/index.vue'
 import Icon from '@/components/icon/index.vue'
-import { useUserStore } from '@/store/user'
+import { useCurrentStudentStore } from '@/store/business/currentStudent'
 import { useCachedMedia } from '@/utils/file'
 import { formatTime } from '@/utils/format'
 // #endregion
@@ -42,8 +42,8 @@ const emit = defineEmits<{
 }>()
 // #endregion
 
-const userStore = useUserStore()
-const { currentStudent } = storeToRefs(userStore)
+const currentStudentStore = useCurrentStudentStore()
+const { studentInfo } = storeToRefs(currentStudentStore)
 
 // #region 响应式数据
 const showVideoPlayer = ref(false)
@@ -182,8 +182,8 @@ onUnmounted(() => {
               bg-gray-200
             >
               <image
-                v-if="currentStudent.faceImageUrl"
-                :src="currentStudent.faceImageUrl"
+                v-if="studentInfo?.faceImageUrl"
+                :src="studentInfo.faceImageUrl"
                 mode="aspectFill"
                 lazy-load
                 h-full
@@ -197,8 +197,8 @@ onUnmounted(() => {
             <!-- 消息内容区域 -->
             <view flex flex-col items-start>
               <!-- 用户名 -->
-              <text v-if="currentStudent.studentName" mb-1 text-xs text-gray-500>
-                {{ currentStudent.studentName }}
+              <text v-if="studentInfo?.studentName" mb-1 text-xs text-gray-500>
+                {{ studentInfo.studentName }}
               </text>
 
               <!-- 消息内容 -->

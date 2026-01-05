@@ -22,6 +22,8 @@ import BottomPopup from '@/components/popup/bottom-popup/index.vue'
 import { FACE_STATUS } from '@/constant/modules'
 import { FACE_CAMERA_PATH } from '@/constant/router'
 import { usePage } from '@/hooks/usePage'
+import { useParentStore } from '@/store/auth/parent'
+import { useCurrentStudentStore } from '@/store/business/currentStudent'
 import { useUserStore } from '@/store/user'
 import { uploadFilePromise, uploadFileUrl } from '@/utils/file'
 import { toast } from '@/utils/toast'
@@ -39,7 +41,9 @@ defineOptions({
 // #region 使用 Hooks
 const { pageLoading, pageError, pageLoaded, batchRequestHandler, onLoginFail } = usePage()
 const userStore = useUserStore()
-const { currentStudent } = storeToRefs(userStore)
+const parentStore = useParentStore()
+const currentStudentStore = useCurrentStudentStore()
+const { studentInfo } = storeToRefs(currentStudentStore)
 // #endregion
 
 // #region 定义响应式数据
@@ -57,7 +61,7 @@ const externalImageUrl = ref('')
 // #region 定义计算属性
 // 人脸状态公告配置
 const noticeConfig = computed(() => {
-  const faceStatus = currentStudent.value?.faceStatus ?? FACE_STATUS.NOT_COLLECTED
+  const faceStatus = studentInfo.value?.faceStatus ?? FACE_STATUS.NOT_COLLECTED
   return FACE_STATUS_CONFIG[faceStatus]
 })
 // #endregion
@@ -105,6 +109,7 @@ async function handleSubmitExternalImage() {
 
         // 重新获取个人信息
         await userStore.getUserInfo()
+        await parentStore.axiosGetStudentListByParentApi()
       }
     }
     else {
@@ -201,6 +206,7 @@ async function confirmSubmitImage() {
 
       // 重新获取个人信息
       await userStore.getUserInfo()
+      await parentStore.axiosGetStudentListByParentApi()
     }
   }
   catch (error) {

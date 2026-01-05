@@ -4,6 +4,72 @@
 import type { FilterOption } from '@/components/common/filter-selector/index.vue'
 import type { TI18NMap, TOptions, TStatusConfigMap } from '@/types'
 
+// #region 退款申请状态
+// Types
+export const REFUND_APPLICATION_STATUS = {
+  /** 待审核 */
+  PENDING: 0,
+  /** 审核通过 */
+  APPROVED: 1,
+  /** 审核拒绝 */
+  REJECTED: 2,
+  /** 退款完成 */
+  COMPLETED: 3,
+} as const
+
+export type TRefundApplicationStatus = (typeof REFUND_APPLICATION_STATUS)[keyof typeof REFUND_APPLICATION_STATUS]
+
+// I18N
+export const REFUND_APPLICATION_STATUS_I18N: TI18NMap<TRefundApplicationStatus> = {
+  [REFUND_APPLICATION_STATUS.PENDING]: '待审核',
+  [REFUND_APPLICATION_STATUS.APPROVED]: '审核通过',
+  [REFUND_APPLICATION_STATUS.REJECTED]: '审核拒绝',
+  [REFUND_APPLICATION_STATUS.COMPLETED]: '退款完成',
+}
+
+// Options
+export const REFUND_APPLICATION_STATUS_OPTIONS: TOptions<TRefundApplicationStatus> = [
+  { label: REFUND_APPLICATION_STATUS_I18N[REFUND_APPLICATION_STATUS.PENDING], value: REFUND_APPLICATION_STATUS.PENDING },
+  { label: REFUND_APPLICATION_STATUS_I18N[REFUND_APPLICATION_STATUS.APPROVED], value: REFUND_APPLICATION_STATUS.APPROVED },
+  { label: REFUND_APPLICATION_STATUS_I18N[REFUND_APPLICATION_STATUS.REJECTED], value: REFUND_APPLICATION_STATUS.REJECTED },
+  { label: REFUND_APPLICATION_STATUS_I18N[REFUND_APPLICATION_STATUS.COMPLETED], value: REFUND_APPLICATION_STATUS.COMPLETED },
+]
+
+/**
+ * 退款申请状态配置映射
+ */
+export const REFUND_APPLICATION_STATUS_CONFIGS: TStatusConfigMap<TRefundApplicationStatus> = {
+  [REFUND_APPLICATION_STATUS.PENDING]: {
+    label: REFUND_APPLICATION_STATUS_I18N[REFUND_APPLICATION_STATUS.PENDING],
+    class: 'label-info',
+    icon: 'search-line',
+    iconColor: '#3b82f6',
+    bgColor: '#dbeafe',
+  },
+  [REFUND_APPLICATION_STATUS.APPROVED]: {
+    label: REFUND_APPLICATION_STATUS_I18N[REFUND_APPLICATION_STATUS.APPROVED],
+    class: 'label-success',
+    icon: 'shield-check-line',
+    iconColor: '#10b981',
+    bgColor: '#d1fae5',
+  },
+  [REFUND_APPLICATION_STATUS.REJECTED]: {
+    label: REFUND_APPLICATION_STATUS_I18N[REFUND_APPLICATION_STATUS.REJECTED],
+    class: 'label-error',
+    icon: 'close-circle-line',
+    iconColor: '#ef4444',
+    bgColor: '#fee2e2',
+  },
+  [REFUND_APPLICATION_STATUS.COMPLETED]: {
+    label: REFUND_APPLICATION_STATUS_I18N[REFUND_APPLICATION_STATUS.COMPLETED],
+    class: 'label-success',
+    icon: 'checkbox-circle-line',
+    iconColor: '#10b981',
+    bgColor: '#d1fae5',
+  },
+}
+// #endregion
+
 // #region 退款类型
 // Types
 export const REFUND_TYPE = {

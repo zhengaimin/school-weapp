@@ -21,7 +21,7 @@ import Icon from '@/components/icon/index.vue'
 import { NAVIGATION_SUFFIX_COLOR, NAVIGATION_SUFFIX_SIZE } from '@/constant/modules'
 import { BALANCE_RECHARGE_HISTORY_PATH, BALANCE_RECHARGE_PATH } from '@/constant/router'
 import { usePage } from '@/hooks/usePage'
-import { useParentStore } from '@/store/parent'
+import { useParentStore } from '@/store/auth/parent'
 import { useUserStore } from '@/store/user'
 // #endregion
 

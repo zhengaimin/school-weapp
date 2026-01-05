@@ -9,124 +9,95 @@
 </route>
 
 <script lang="ts" setup>
-// #region 导入
 import type { Pkg } from '@/api/interface/modules/package'
-import dayjs from 'dayjs'
-import { storeToRefs } from 'pinia'
-import { computed, ref, unref } from 'vue'
+
+import { computed, ref } from 'vue'
 import { getPackageDetailApi } from '@/api/modules/package/query'
+import { postCancelPackageRefundApi } from '@/api/modules/package/refund'
 import TButton from '@/components/common/button/index.vue'
-import DetailBlock from '@/components/common/detail-block/index.vue'
 import Page from '@/components/common/page/index.vue'
 import StatusTip from '@/components/common/status-tip/index.vue'
-import { PACKAGE_TYPE, PACKAGE_TYPE_I18N, PAYMENT_METHOD } from '@/constant/modules'
+import WhiteCard from '@/components/common/white-card/index.vue'
+import { DEVICE_TYPE, PACKAGE_TYPE, PACKAGE_TYPE_I18N, PAYMENT_METHOD } from '@/constant/modules'
+import { PACKAGE_HISTORY_RESULT_PATH } from '@/constant/router'
 import { usePage } from '@/hooks/usePage'
-import { usePackageStore } from '@/store/package'
 import { currRoute } from '@/utils'
 import { usePackageEmitter } from '@/utils/emit/package'
 import { toast } from '@/utils/toast'
+import RefundModal from '../components/RefundModal.vue'
+import { usePackage } from '../hooks/usePackage'
 import { usePayment } from '../hooks/usePayment'
-// #endregion
+import { canShowRefundButton } from '../utils'
 
-// #region 组件选项配置
 defineOptions({
   options: {
     styleIsolation: 'apply-shared',
   },
 })
-// #endregion
 
-// #region 使用 Hooks
 const { pageLoading, pageError, batchRequestHandler, onLoginFail, getContentHeight } = usePage()
-const packageStore = usePackageStore()
-const { activePackage, pendingPayment, hasPendingRefund } = storeToRefs(packageStore)
-const { emitPackageTransaction } = usePackageEmitter()
-// #endregion
+const { emitPackageTransaction, emitPackageRefund, onPackageRefund } = usePackageEmitter()
 
-// #region 定义响应式数据
 const packageDetail = ref<Pkg.Query.ResGetPackageDetailApi>()
+const refundModalVisible = ref(false)
+const cancelRefundLoading = ref(false)
 
-// #endregion
+const isVideoDevice = computed(() => packageDetail.value?.deviceType === DEVICE_TYPE.VIDEO)
 
-// #region 使用 Payment Hook
-const { axiosPostPurchasePackageApi, purchaseLoading } = usePayment()
-// #endregion
+const {
+  activePackage,
+  pendingPayment,
+  hasPendingRefund,
+  pendingRefundInfo,
+  allPurchasedPackages,
+  axiosGetStudentActivePackageApi,
+  axiosGetCheckPendingApi,
+  axiosGetPendingPaymentApi,
+} = usePackage()
 
-// #region 定义计算属性
-const packageDetails = computed(() => {
-  const info = unref(packageDetail)
+const {
+  axiosPostPurchasePackageApi,
+  axiosPostCancelPaymentApi,
+  axiosPostContinuePaymentApi,
+  purchaseLoading,
+  cancelLoading,
+  continueLoading,
+  message,
+} = usePayment()
 
-  if (!info) {
-    return {
-      basicInfo: [],
-      contentInfo: [],
-      otherInfo: [],
-      templateDescription: '',
-      usageRules: '',
-    }
-  }
+/** 获取当前套餐对应的已购买记录 */
+const purchasedPackageRecord = computed(() => {
+  if (pageLoading.value)
+    return null
 
-  // 构建基本信息数组，包含有效期（如果是固定套餐）
-  const basicInfo = [
-    { key: 'type', label: '套餐类型', value: PACKAGE_TYPE_I18N[info.packageType] },
-    { key: 'price', label: '购买价格', value: `¥${info.purchasePrice}` },
-  ]
+  const { query } = currRoute()
+  const routeId = query.id ? +query.id : null
 
-  // 当套餐类型为固定套餐时，添加有效期信息到基本信息中
-  if (info.packageType === PACKAGE_TYPE.FIXED) {
-    basicInfo.push({
-      key: 'validity',
-      label: '有效期',
-      value: `${dayjs(info.startDate).format('YYYY-MM-DD')} 至 ${dayjs(info.endDate).format('YYYY-MM-DD')}`,
-    })
-  }
+  if (!routeId)
+    return null
 
-  basicInfo.push({
-    key: 'totalMonths',
-    label: '总时长',
-    value: `${info.totalMonths}个月`,
-  })
-
-  return {
-    basicInfo,
-    contentInfo: [
-      {
-        key: 'minutes',
-        label: '视频通话分钟数',
-        value: `${info.packageContent.videoCallMinutes}分钟`,
-      },
-      {
-        key: 'messages',
-        label: '留言条数',
-        value:
-          info.packageContent.messageCount === -1
-            ? '不限额'
-            : `${info.packageContent.messageCount}条`,
-      },
-    ],
-    templateDescription: info.templateDescription,
-    usageRules: info.usageRules,
-  }
+  return allPurchasedPackages.value.find(pkg => pkg.packageId === routeId) ?? null
 })
-
-// 是否显示待支付订单
+/** 当前套餐是否已购买 */
+const isPurchased = computed(() => !!purchasedPackageRecord.value)
+/** 是否显示待支付订单 */
 const hasPendingPayment = computed(() => {
   return pendingPayment.value?.hasPending
 })
-
-// 是否显示购买按钮
+/** 是否显示购买按钮 */
 const showPurchaseButton = computed(() => {
-  // 1. 当前存在待支付或待审的套餐，不显示购买按钮
+  if (isPurchased.value) {
+    return false
+  }
+
   if (hasPendingPayment.value || hasPendingRefund.value) {
     return false
   }
 
-  // 2. 不存在活跃中套餐，可以显示按钮
   if (!activePackage.value) {
     return true
   }
 
-  // 3. 存在活跃中套餐，需要判断活跃套餐类型、当前套餐类型都为通用套餐才能显示按钮
   if (activePackage.value && packageDetail.value) {
     return (
       activePackage.value.snapshotInfo.packageType === PACKAGE_TYPE.GENERAL
@@ -136,23 +107,38 @@ const showPurchaseButton = computed(() => {
 
   return false
 })
-
-// 是否应该显示正常内容（套餐存在时）
+/** 是否显示退费按钮 */
+const showRefundButton = computed(() => {
+  if (!purchasedPackageRecord.value) {
+    return false
+  }
+  return canShowRefundButton({
+    status: purchasedPackageRecord.value.status,
+    endDate: purchasedPackageRecord.value.endDate,
+    hasPendingRefund: hasPendingRefund.value,
+  })
+})
+/** 是否应该显示正常内容（套餐存在时） */
 const shouldShowContent = computed(() => {
   return packageDetail.value?.isPackageExists !== false
 })
-
-// 计算内容区域高度
-const contentHeight = computed(() => {
-  // 只有显示购买按钮时才需要预留底部按钮区域高度（约164rpx）
-  const needButtonArea = showPurchaseButton.value && shouldShowContent.value
-  return getContentHeight(needButtonArea ? '164rpx' : '0')
+/** 是否需要显示底部按钮区域 */
+const showButtonArea = computed(() => {
+  if (!shouldShowContent.value)
+    return false
+  return (
+    showPurchaseButton.value
+    || showRefundButton.value
+    || hasPendingPayment.value
+    || hasPendingRefund.value
+  )
 })
-// #region 定义验证规则
-// #endregion
+/** 计算内容区域高度 */
+const contentHeight = computed(() => {
+  return getContentHeight(showButtonArea.value ? '164rpx' : '0')
+})
 
-// #region 接口请求函数
-// 获取套餐详情
+/** 获取套餐详情 */
 async function axiosGetPackageDetailApi(id: number) {
   try {
     const result = await getPackageDetailApi(id)
@@ -167,10 +153,7 @@ async function axiosGetPackageDetailApi(id: number) {
   }
 }
 
-// #endregion
-
-// #region 事件处理函数
-// 购买套餐
+/** 购买套餐 */
 async function handleGoToPurchase() {
   if (!packageDetail.value?.packageTemplateId) {
     toast.show('套餐信息不完整')
@@ -183,31 +166,108 @@ async function handleGoToPurchase() {
       paymentMethod: PAYMENT_METHOD.WECHAT,
     },
     {
-      onSuccess: () => {
-        // 发送套餐交易事件
+      onSuccess: (orderId) => {
         emitPackageTransaction()
-
-        setTimeout(() => {
-          uni.navigateBack()
-        }, 500)
+        uni.redirectTo({ url: `${PACKAGE_HISTORY_RESULT_PATH}?orderNo=${orderId}` })
       },
       onError: (error) => {
         console.error('购买套餐失败:', error)
-        // 发送套餐交易事件
         emitPackageTransaction()
       },
     },
   )
 }
-// #endregion
+/** 申请退费 */
+function handleGoToRefund() {
+  if (!packageDetail.value?.id) {
+    return
+  }
+  refundModalVisible.value = true
+}
+/** 取消待支付订单 */
+async function handleCancelPayment() {
+  if (!pendingPayment.value?.orderNo)
+    return
 
-// #region 生命周期钩子
-async function onLoginSuccess() {
+  await axiosPostCancelPaymentApi(
+    { orderNo: pendingPayment.value.orderNo },
+    {
+      onSuccess: () => {
+        emitPackageTransaction()
+        refreshPageData()
+      },
+    },
+  )
+}
+/** 继续支付 */
+async function handleContinuePayment() {
+  if (!pendingPayment.value?.orderNo)
+    return
+
+  await axiosPostContinuePaymentApi(
+    { orderNo: pendingPayment.value.orderNo, paymentMethod: PAYMENT_METHOD.WECHAT },
+    {
+      onSuccess: (orderId) => {
+        emitPackageTransaction()
+        uni.redirectTo({ url: `${PACKAGE_HISTORY_RESULT_PATH}?type=purchase&orderNo=${orderId}` })
+      },
+    },
+  )
+}
+/** 取消退款申请 */
+async function handleCancelRefund() {
+  const { refundApplicationId } = unref(pendingRefundInfo)
+  if (!refundApplicationId)
+    return
+
+  try {
+    await message.confirm({
+      title: '撤销申请',
+      msg: '确定要撤销该退费申请吗？',
+    })
+  }
+  catch {
+    return
+  }
+
+  cancelRefundLoading.value = true
+  try {
+    const result = await postCancelPackageRefundApi(refundApplicationId)
+    if (result.code === 0) {
+      toast.show('已撤销申请')
+      emitPackageRefund()
+      refreshPageData()
+    }
+  }
+  catch (error) {
+    console.error('撤销退费申请失败:', error)
+  }
+  finally {
+    cancelRefundLoading.value = false
+  }
+}
+/** 刷新页面数据 */
+function refreshPageData() {
   const { query } = currRoute()
 
-  batchRequestHandler([axiosGetPackageDetailApi(+query.id)])
+  if (query.id) {
+    batchRequestHandler([
+      axiosGetPackageDetailApi(+query.id),
+      axiosGetStudentActivePackageApi(),
+      axiosGetCheckPendingApi(),
+      axiosGetPendingPaymentApi(),
+    ])
+  }
 }
-// #endregion
+
+/** 登录成功处理 */
+async function onLoginSuccess() {
+  refreshPageData()
+}
+/** 监听退费事件，刷新页面数据 */
+onPackageRefund(() => {
+  refreshPageData()
+})
 </script>
 
 <template>
@@ -220,62 +280,188 @@ async function onLoginSuccess() {
     @login:fail="onLoginFail"
   >
     <!-- 商品已下架提示 -->
-    <view v-if="!packageDetail?.isPackageExists" h-full>
+    <view v-if="packageDetail?.isPackageExists === false" h-full>
       <StatusTip
-        custom-class="h-full flex flex-col items-center  justify-center"
+        custom-class="h-full flex flex-col items-center justify-center"
         image="search"
         tip="商品已下架"
       />
     </view>
 
-    <template v-else>
+    <template v-else-if="packageDetail">
       <!-- 内容区域 -->
       <scroll-view scroll-y :enhanced="true" :show-scrollbar="false" :style="contentHeight">
         <view p="4 t-2!" flex="~ col" gap="3">
-          <!-- 套餐基本信息 -->
-          <DetailBlock title="基本信息" :items="packageDetails.basicInfo" />
-          <!-- 套餐内容信息 -->
-          <DetailBlock title="套餐内容" :items="packageDetails.contentInfo" />
+          <!-- 套餐信息 -->
+          <view flex="~ col" gap="3">
+            <view bg="white" rounded="xl" p="4" shadow="sm" flex="~ col" gap="4">
+              <!-- 类型与价格 -->
+              <view flex="~ row justify-between items-center">
+                <view
+                  :bg="packageDetail.packageType === PACKAGE_TYPE.GENERAL ? 'blue-50' : 'purple-50'"
+                  :text="
+                    packageDetail.packageType === PACKAGE_TYPE.GENERAL
+                      ? 'xs blue-600'
+                      : 'xs purple-600'
+                  "
+                  px="2.5"
+                  py="1"
+                  rounded="md"
+                  font="bold"
+                >
+                  {{ PACKAGE_TYPE_I18N[packageDetail.packageType] }}
+                </view>
 
-          <!-- 套餐描述 -->
-          <view
-            v-if="packageDetails.templateDescription"
-            bg="white"
-            border="~ gray-100 solid rounded-xl"
-            p="4"
-          >
-            <view text="sm gray-900" font="medium" m="b-3">
-              套餐描述
-            </view>
-            <view text="sm gray-600" leading="relaxed" whitespace="pre-wrap">
-              {{ packageDetails.templateDescription }}
+                <view flex="~ row items-baseline" text="red-500">
+                  <text text="sm" font="bold" mb="1" mr="1">
+                    ¥
+                  </text>
+                  <text text="3xl" font="bold" lh="none">
+                    {{ packageDetail.purchasePrice }}
+                  </text>
+                </view>
+              </view>
+
+              <!-- 核心权益网格 -->
+              <view flex="~ row justify-around" bg="gray-50" rounded="lg" p="y-3">
+                <!-- 话机：通话分钟 -->
+                <view v-if="isVideoDevice" flex="~ col items-center justify-center" gap="1">
+                  <text text="lg gray-800" font="bold" lh="none">
+                    {{ packageDetail.packageContent?.videoCallMinutes ?? '-' }}
+                  </text>
+                  <text text="xs gray-400">
+                    通话分钟
+                  </text>
+                </view>
+                <!-- 话机：留言条数 -->
+                <view v-if="isVideoDevice" flex="~ col items-center justify-center" gap="1">
+                  <text text="lg gray-800" font="bold" lh="none">
+                    {{
+                      packageDetail.packageContent?.messageCount === -1
+                        ? '∞'
+                        : (packageDetail.packageContent?.messageCount ?? '-')
+                    }}
+                  </text>
+                  <text text="xs gray-400">
+                    留言条数
+                  </text>
+                </view>
+                <!-- 吹风机：吹风时长 -->
+                <view v-if="!isVideoDevice" flex="~ col items-center justify-center" gap="1">
+                  <text text="lg gray-800" font="bold" lh="none">
+                    {{ packageDetail.packageContent?.dryerMinutes ?? '-' }}
+                  </text>
+                  <text text="xs gray-400">
+                    吹风时长
+                  </text>
+                </view>
+                <!-- 套餐月数 -->
+                <view flex="~ col items-center justify-center" gap="1">
+                  <text text="lg gray-800" font="bold" lh="none">
+                    {{ packageDetail.totalMonths ?? '-' }}
+                  </text>
+                  <text text="xs gray-400">
+                    套餐月数
+                  </text>
+                </view>
+              </view>
+
+              <!-- 有效期（仅固定套餐） -->
+              <text v-if="packageDetail.packageType === PACKAGE_TYPE.FIXED" text="xs gray-400">
+                有效期：{{ packageDetail.startDate?.slice(0, 10) }} 至
+                {{ packageDetail.endDate?.slice(0, 10) }}
+              </text>
             </view>
           </view>
 
+          <!-- 套餐说明 -->
+          <view v-if="packageDetail.templateDescription" flex="~ col" gap="3">
+            <view flex="~ row items-center" px="1">
+              <view w="3px" h="14px" bg="primary" rounded-full mr="2" />
+              <text text="sm gray-800" font="bold">
+                套餐说明
+              </text>
+            </view>
+            <WhiteCard :show-border="false">
+              <text text="sm gray-600" leading="relaxed">
+                {{ packageDetail.templateDescription }}
+              </text>
+            </WhiteCard>
+          </view>
+
           <!-- 使用规则 -->
-          <view
-            v-if="packageDetails.usageRules"
-            bg="white"
-            border="~ gray-100 solid rounded-xl"
-            p="4"
-          >
-            <view text="sm gray-900" font="medium" m="b-3">
-              使用规则
+          <view v-if="packageDetail.usageRules" flex="~ col" gap="3">
+            <view flex="~ row items-center" px="1">
+              <view w="3px" h="14px" bg="orange-500" rounded-full mr="2" />
+              <text text="sm gray-800" font="bold">
+                使用规则
+              </text>
             </view>
-            <view text="sm gray-600" leading="relaxed" whitespace="pre-wrap">
-              {{ packageDetails.usageRules }}
-            </view>
+            <WhiteCard :show-border="false">
+              <text text="sm orange-700" leading="relaxed">
+                {{ packageDetail.usageRules }}
+              </text>
+            </WhiteCard>
           </view>
         </view>
       </scroll-view>
 
-      <!-- 购买按钮 -->
-      <view v-if="showPurchaseButton && shouldShowContent" p="4">
+      <!-- 底部按钮区域 -->
+      <view v-if="showButtonArea" p="x-4 y-3" flex gap="4" border="t gray-100">
+        <!-- 取消待支付订单 -->
         <TButton
+          v-if="hasPendingPayment"
+          type="warning"
+          size="large"
+          full
+          flex-1
+          :loading="cancelLoading"
+          @click="handleCancelPayment"
+        >
+          取消支付
+        </TButton>
+        <!-- 继续支付 -->
+        <TButton
+          v-if="hasPendingPayment"
           type="primary"
           size="large"
           full
-          flex="1"
+          flex-1
+          :loading="continueLoading"
+          @click="handleContinuePayment"
+        >
+          继续支付
+        </TButton>
+        <!-- 撤销退费申请 -->
+        <TButton
+          v-if="hasPendingRefund"
+          type="warning"
+          size="large"
+          full
+          flex-1
+          :loading="cancelRefundLoading"
+          @click="handleCancelRefund"
+        >
+          撤销退费申请
+        </TButton>
+        <!-- 申请退费 -->
+        <TButton
+          v-if="showRefundButton"
+          type="primary"
+          size="large"
+          full
+          flex-1
+          @click="handleGoToRefund"
+        >
+          申请退费
+        </TButton>
+        <!-- 立即购买 -->
+        <TButton
+          v-if="showPurchaseButton"
+          type="primary"
+          size="large"
+          full
+          flex-1
           :loading="purchaseLoading"
           @click="handleGoToPurchase"
         >
@@ -283,5 +469,12 @@ async function onLoginSuccess() {
         </TButton>
       </view>
     </template>
+
+    <!-- 退费弹窗 -->
+    <RefundModal
+      :id="purchasedPackageRecord?.id"
+      v-model:visible="refundModalVisible"
+      @success="refreshPageData"
+    />
   </Page>
 </template>

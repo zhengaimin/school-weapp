@@ -123,6 +123,7 @@ export function usePayment() {
   async function axiosPostRechargeApi(
     amount: number,
     paymentMethod: string,
+    deviceType: string,
     callback: {
       onSuccess?: (data: Payment.Status.ResGetPaymentStatusApi) => void
       onError?: (error: any) => void
@@ -155,7 +156,7 @@ export function usePayment() {
       const result = await postRechargeApi({
         amount: String(amount),
         paymentMethod,
-        studentId,
+        deviceType,
       })
 
       if (result.code !== 0 || !result.data) {

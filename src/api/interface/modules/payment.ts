@@ -3,14 +3,14 @@ export namespace Payment {
     export interface ReqPostRechargeApi {
       /** 充值金额（元） */
       amount: string
-      /** 客户端IP地址（可选，系统自动获取） */
-      clientIp?: string
       /** 支付方式: MOCK | WECHAT */
       paymentMethod: string
+      /** 设备类型: VIDEO-视频话机, DRYER-吹风机，不传默认VIDEO */
+      deviceType?: string
+      /** 客户端IP地址（可选，系统自动获取） */
+      clientIp?: string
       /** 备注 */
       remark?: string
-      /** 学生ID */
-      studentId: number
     }
     export interface ResPostRechargeApi {
       /** 订单号 */

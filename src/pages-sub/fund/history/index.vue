@@ -21,6 +21,7 @@ import RefreshList from '@/components/common/refresh-list/index.vue'
 import { ALL, AMOUNT_TYPE_OPTIONS } from '@/constant/modules'
 import { usePage } from '@/hooks/usePage'
 import { useRefresh } from '@/hooks/useRefresh'
+import { useCurrentStudentStore } from '@/store/business/currentStudent'
 import RecordItem from './components/RecordItem.vue'
 // #endregion
 
@@ -34,6 +35,7 @@ defineOptions({
 
 // #region 使用 Hooks
 const { pageLoading, pageError, getContentHeight, batchRequestHandler, onLoginFail } = usePage()
+const currentStudentStore = useCurrentStudentStore()
 // #endregion
 
 // #region 定义响应式数据
@@ -78,7 +80,7 @@ const {
   onRefreshList,
   onLoadMore,
 } = useRefresh<User.Balance.IBalanceDetailRecordVo>({
-  get: params => getBalanceDetailsApi(params),
+  get: params => getBalanceDetailsApi({ ...params, deviceType: currentStudentStore.deviceType }),
   listField: 'records',
   immediate: false,
 })

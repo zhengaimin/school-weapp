@@ -7,6 +7,7 @@ const PACKAGE_PAYMENT_API = {
   CONTINUE_PAYMENT: `${API}/packages/payment/continue`,
   CANCEL_PAYMENT: `${API}/packages/payment/cancel`,
   PENDING_PAYMENT: `${API}/packages/payment/pending`,
+  ORDER_DETAIL: `${API}/packages/order/detail`,
 }
 
 /**
@@ -24,7 +25,10 @@ export function postPurchasePackageApi(params: Pkg.Payment.ReqPostPurchaseApi) {
  * @returns {Promise<Pkg.Payment.ResPostContinuePaymentApi>}
  */
 export function postContinuePaymentApi(params: Pkg.Payment.ReqPostContinuePaymentApi) {
-  return http.post<Pkg.Payment.ResPostContinuePaymentApi>(PACKAGE_PAYMENT_API.CONTINUE_PAYMENT, params)
+  return http.post<Pkg.Payment.ResPostContinuePaymentApi>(
+    PACKAGE_PAYMENT_API.CONTINUE_PAYMENT,
+    params,
+  )
 }
 
 /**
@@ -38,8 +42,18 @@ export function postCancelPaymentApi(params: Pkg.Payment.ReqPostCancelPaymentApi
 
 /**
  * @description 检查是否存在待支付的套餐订单
+ * @param {Pkg.Payment.ReqGetPendingPaymentApi} params
  * @returns {Promise<Pkg.Payment.ResGetPendingPaymentApi>}
  */
-export function getPendingPaymentApi() {
-  return http.get<Pkg.Payment.ResGetPendingPaymentApi>(PACKAGE_PAYMENT_API.PENDING_PAYMENT)
+export function getPendingPackagePaymentApi(params: Pkg.Payment.ReqGetPendingPaymentApi) {
+  return http.get<Pkg.Payment.ResGetPendingPaymentApi>(PACKAGE_PAYMENT_API.PENDING_PAYMENT, params)
+}
+
+/**
+ * @description 获取套餐订单详情
+ * @param {Pkg.Payment.ReqGetOrderDetailApi} params
+ * @returns {Promise<Pkg.Payment.ResGetOrderDetailApi>}
+ */
+export function getPackageOrderDetailApi(params: Pkg.Payment.ReqGetOrderDetailApi) {
+  return http.get<Pkg.Payment.ResGetOrderDetailApi>(PACKAGE_PAYMENT_API.ORDER_DETAIL, params)
 }

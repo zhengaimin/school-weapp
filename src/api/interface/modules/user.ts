@@ -1,4 +1,10 @@
-import type { TConsumptionSource, TFaceStatus, TServiceType, TUserType } from '@/constant/modules'
+import type {
+  TConsumptionSource,
+  TDeviceType,
+  TFaceStatus,
+  TServiceType,
+  TUserType,
+} from '@/constant/modules'
 
 export namespace User {
   export namespace Common {
@@ -162,58 +168,48 @@ export namespace User {
     }
 
     // #region 获取用户余额
-    /** 获取用户余额 */
-    export interface IStudentBalanceVo {
-      /** 学生ID */
-      studentId: number
-      /** 学生姓名 */
-      studentName: string
-      /** 学号 */
-      studentCode: string
-      /** 年级 */
-      grade: string | null
-      /** 班级名称 */
-      className: string | null
-      /** 院系/部门（可选） */
-      departmentName?: string | null
+    /** 获取用户余额 - 请求参数 */
+    export interface ReqGetBalanceApi {
+      /** 设备类型：VIDEO-视频话机，DRYER-吹风机 */
+      deviceType: TDeviceType
+    }
 
-      /** 总余额（字符串，保留两位小数） */
-      totalBalance: string | null
+    /** 用户余额接口返回的设备类型 */
+    export type UserBalanceDeviceType = 'phone' | 'hair_dryer'
+
+    /** 学生余额信息 */
+    export interface IStudentBalanceInfoVo {
       /** 可用余额 */
-      availableBalance: string | null
+      availableBalance?: string
+      /** 班级名称 */
+      className?: string
       /** 冻结余额 */
-      frozenBalance: string | null
-
-      /** 累计充值 */
-      totalRecharge: string | null
+      frozenBalance?: string
+      /** 年级 */
+      grade?: string
+      /** 余额状态：1-正常，0-冻结 */
+      status?: number
+      /** 学号 */
+      studentCode?: string
+      /** 学生ID */
+      studentId?: number
+      /** 学生姓名 */
+      studentName?: string
+      /** 总余额 */
+      totalBalance?: string
       /** 累计消费 */
-      totalConsumption: string | null
+      totalConsumption?: string
+      /** 累计充值 */
+      totalRecharge?: string
       /** 累计退款 */
-      totalRefund: string | null
-
-      /** 套餐分钟数（可选） */
-      packageMinutes?: number
-      /** 已使用套餐分钟（可选） */
-      packageMinutesUsed?: number
-      /** 套餐消息数（可选） */
-      packageMessageCount?: number
-      /** 已使用套餐消息数（可选） */
-      packageMessageCountUsed?: number
-
-      /** 赠送分钟（可选） */
-      giftMinutes?: number
-      /** 已使用赠送分钟（可选） */
-      giftMinutesUsed?: number
-      /** 最后清零日期（可选） */
-      lastClearDate?: string | null
-
-      /** 状态：1-正常，0-冻结 */
-      status: number
-      /** 更新时间 */
-      updatedAt: string | null
-
+      totalRefund?: string
+      /** 余额更新时间 */
+      updatedAt?: string
       [property: string]: any
     }
+
+    /** 获取用户余额响应 */
+    export type ResGetBalanceApi = IStudentBalanceInfoVo
     // #endregion
   }
 
@@ -232,7 +228,7 @@ export namespace User {
       hasRegistered: boolean
       token: string
     }
-    export interface IBalanceInfo extends Common.IStudentBalanceVo {
+    export interface IBalanceInfo extends Common.IStudentBalanceInfoVo {
       availableBalanceFormatted: string
       lastUpdateTime: string
     }
@@ -262,22 +258,24 @@ export namespace User {
     }
 
     export interface ReqGetConsumptionRecords {
-      /**
-       * 结束日期 (YYYY-MM-DD格式)
-       */
-      endDate?: string
-      /**
-       * 页码，从1开始
-       */
-      page: number
-      /**
-       * 每页数量，最大100
-       */
-      pageSize: number
-      /**
-       * 开始日期 (YYYY-MM-DD格式)
-       */
+      /** 设备类型（VIDEO-话机，DRYER-吹风机） */
+      deviceType: TDeviceType
+      /** 开始日期 (YYYY-MM-DD格式) */
       startDate?: string
+      /** 结束日期 (YYYY-MM-DD格式) */
+      endDate?: string
+      /** 服务类型 */
+      serviceType?: 'call' | 'message'
+      /** 最小金额 */
+      minAmount?: string
+      /** 最大金额 */
+      maxAmount?: string
+      /** 是否使用套餐 (true-套餐消费, false-余额消费) */
+      isPackageUsage?: boolean
+      /** 页码，从1开始 */
+      page: number
+      /** 每页数量，最大100 */
+      pageSize: number
     }
 
     export interface IConsumptionRecordVo {
@@ -312,6 +310,8 @@ export namespace User {
   export namespace Balance {
     /** 资金流水明细请求参数 */
     export interface ReqGetBalanceDetails {
+      /** 设备类型 */
+      deviceType: TDeviceType
       /** 开始日期 (YYYY-MM-DD格式) */
       startDate?: string
       /** 结束日期 (YYYY-MM-DD格式) */

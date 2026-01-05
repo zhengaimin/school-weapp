@@ -68,7 +68,7 @@ function handleClick(event: Event) {
         backgroundColor: bgColor,
       }"
     >
-      <view h-6 flex="~ items-center justify-center">
+      <view h-4 flex="~ items-center justify-center">
         <Icon :name="iconName" :icon-color="iconColor" icon-size="40rpx" />
       </view>
       <view flex="1 ~ col" gap="1">

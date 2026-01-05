@@ -9,7 +9,6 @@
 </route>
 
 <script lang="ts" setup>
-// #region 导入
 import type { Pkg } from '@/api/interface/modules/package'
 import type { FilterConfig } from '@/components/common/filter-group/index.vue'
 import dayjs from 'dayjs'
@@ -23,32 +22,22 @@ import { usePage } from '@/hooks/usePage'
 import { useRefresh } from '@/hooks/useRefresh'
 import { usePackageEmitter } from '@/utils/emit/package'
 import RefundHistoryItem from './components/RefundHistoryItem.vue'
-// #endregion
 
-// #region 组件选项配置
 defineOptions({
   options: {
     styleIsolation: 'apply-shared',
   },
 })
-// #endregion
 
-// #region 使用 Hooks
 const { pageLoading, pageError, getContentHeight, batchRequestHandler, onLoginFail } = usePage()
 const { emitPackageRefund } = usePackageEmitter()
-// #endregion
 
-// #region 定义响应式数据
-// 筛选条件：默认获取这一年的数据，选择全部状态
 type FilterValue = string | number | number[] | [number, number]
 const filters = ref<FilterValue[]>([
   [dayjs().subtract(1, 'year').valueOf(), dayjs().valueOf()],
-  ALL, // 默认选择全部状态
+  ALL,
 ])
-// #endregion
 
-// #region 定义计算属性
-// 筛选器配置
 const filterConfigs = computed<FilterConfig[]>(() => [
   {
     key: 'daterange',
@@ -68,9 +57,7 @@ const filterConfigs = computed<FilterConfig[]>(() => [
 const contentStyle = computed(() => {
   return getContentHeight('140rpx')
 })
-// #endregion
 
-// #region 接口请求函数
 const {
   query,
   list: recordsList,
@@ -85,10 +72,8 @@ const {
   listField: 'list',
   immediate: false,
 })
-// #endregion
 
-// #region 事件处理函数
-// 筛选条件变化
+/** 筛选条件变化 */
 function onFilterChange(key: string, value: [number, number] | string | number) {
   if (key === 'daterange') {
     const [startTime, endTime] = value as [number, number]
@@ -103,21 +88,18 @@ function onFilterChange(key: string, value: [number, number] | string | number) 
   onRefreshList()
 }
 
-// 处理取消申请成功
+/** 处理取消申请成功 */
 function handleCancelSuccess(record: Pkg.Refund.IRefundApplicationRecord) {
-  // 根据 record.id 找到对应的 item，修改状态为已取消
   const targetRecord = recordsList.value.find(item => item.id === record.id)
   if (targetRecord) {
     targetRecord.status = REFUND_STATUS.CANCELLED
     targetRecord.statusText = REFUND_STATUS_I18N[REFUND_STATUS.CANCELLED]
   }
 
-  // 调用退款分发事件
   emitPackageRefund()
 }
-// #endregion
 
-// #region 生命周期钩子
+/** 登录成功处理 */
 function handleLoginSuccess() {
   const daterange = filters.value[0] as [number, number]
   const [startTime, endTime] = daterange
@@ -128,7 +110,6 @@ function handleLoginSuccess() {
 
   batchRequestHandler([onRefreshList()])
 }
-// #endregion
 </script>
 
 <template>

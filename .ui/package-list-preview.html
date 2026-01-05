@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>套餐列表 · 话机</title>
+    <style>
+        :root {
+            --primary-color: #3269dd;
+            --success-color: #10b981;
+            --error-color: #ef4444;
+            --gray-800: #1f2937;
+            --gray-500: #6b7280;
+            --gray-400: #9ca3af;
+            --gray-100: #f3f4f6;
+            --gray-50: #f9fafb;
+            --gray-200: #e5e7eb;
+
+            --border-radius-card: 12px;
+            --spacing-sm: 8px;
+            --spacing-md: 12px;
+            --spacing-lg: 16px;
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            margin: 0;
+            background-color: #e5e5e5;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 375px;
+            background-color: var(--gray-50);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+
+        .nav-bar {
+            height: 44px;
+            background: white;
+            display: flex;
+            align-items: center;
+            padding: 0 12px;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            border-bottom: 0.5px solid rgba(0,0,0,0.1);
+        }
+
+        .nav-back {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        .nav-title {
+            flex: 1;
+            text-align: center;
+            font-size: 17px;
+            font-weight: 600;
+            color: var(--gray-800);
+            margin-right: 24px;
+        }
+
+        .content {
+            flex: 1;
+            padding: var(--spacing-lg);
+            overflow-y: auto;
+        }
+
+        .card {
+            background: white;
+            border-radius: var(--border-radius-card);
+            padding: var(--spacing-lg);
+            margin-bottom: var(--spacing-lg);
+            position: relative;
+            border: 1px solid var(--gray-100);
+            transition: border-color 0.2s ease;
+        }
+
+        .card:hover {
+            border-color: var(--primary-color);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .package-name {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--gray-800);
+        }
+
+        .tag {
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+        .tag.fixed {
+            background-color: rgba(50, 105, 221, 0.1);
+            color: var(--primary-color);
+        }
+        .tag.flexible {
+            background-color: rgba(16, 185, 129, 0.1);
+            color: var(--success-color);
+        }
+
+        .price-action-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 4px;
+            padding-top: 16px;
+            border-top: 1px dashed var(--gray-200);
+        }
+
+        .price-section {
+            display: flex;
+            align-items: baseline;
+        }
+
+        .price-symbol {
+            font-size: 14px;
+            color: var(--error-color);
+            font-weight: 600;
+        }
+
+        .price-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--error-color);
+            line-height: 1;
+        }
+
+        .divider {
+            height: 1px;
+            background-color: var(--gray-100);
+            margin: var(--spacing-md) 0;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .metric-item {
+            text-align: center;
+        }
+
+        .metric-value {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--gray-800);
+            margin-bottom: 2px;
+        }
+
+        .metric-label {
+            font-size: 11px;
+            color: var(--gray-500);
+        }
+
+        .info-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .info-item {
+            font-size: 13px;
+            padding: 8px 12px;
+            border-radius: 6px;
+            line-height: 1.5;
+        }
+
+        .info-item.desc {
+            background-color: var(--gray-50);
+            color: var(--gray-500);
+        }
+
+        .info-item.rules {
+            background-color: rgba(50, 105, 221, 0.06);
+            color: var(--primary-color);
+        }
+
+        .info-label {
+            font-weight: 600;
+            font-size: 12px;
+            margin-bottom: 2px;
+            opacity: 0.9;
+            display: block;
+        }
+
+        .period-info {
+            font-size: 12px;
+            color: var(--gray-400);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+        }
+        .period-info svg {
+            width: 14px;
+            height: 14px;
+            margin-right: 4px;
+            fill: currentColor;
+        }
+
+        .buy-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 999px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .buy-btn:active {
+            opacity: 0.9;
+        }
+
+        /* Modal Overlay */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            z-index: 100;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s;
+        }
+
+        .modal-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            width: 100%;
+            max-width: 375px;
+            background: white;
+            border-radius: 16px 16px 0 0;
+            padding: 20px;
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+        }
+
+        .modal-overlay.show .modal-content {
+            transform: translateY(0);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--gray-100);
+        }
+
+        .modal-title {
+            font-size: 17px;
+            font-weight: 600;
+            color: var(--gray-800);
+        }
+
+        .modal-close {
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--gray-500);
+        }
+
+        .modal-body {
+            margin-bottom: 20px;
+        }
+
+        .modal-package-name {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--gray-800);
+            margin-bottom: 8px;
+        }
+
+        .modal-price {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--error-color);
+            margin-bottom: 16px;
+        }
+
+        .modal-info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--gray-100);
+            font-size: 14px;
+        }
+
+        .modal-info-label {
+            color: var(--gray-500);
+        }
+
+        .modal-info-value {
+            color: var(--gray-800);
+            font-weight: 500;
+        }
+
+        .modal-confirm-btn {
+            width: 100%;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 999px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 16px;
+        }
+
+        .modal-confirm-btn:active {
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <div class="nav-bar">
+        <div class="nav-back">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 24px; height: 24px; color: #1f2937;">
+                <path d="M15 18l-6-6 6-6"/>
+            </svg>
+        </div>
+        <div class="nav-title">套餐列表 · 话机</div>
+    </div>
+
+    <div class="content" id="package-list"></div>
+</div>
+
+<!-- Purchase Modal -->
+<div class="modal-overlay" id="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <div class="modal-title">确认购买</div>
+            <div class="modal-close" onclick="closeModal()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px;">
+                    <path d="M18 6L6 18M6 6l12 12"/>
+                </svg>
+            </div>
+        </div>
+        <div class="modal-body">
+            <div class="modal-package-name" id="modal-name"></div>
+            <div class="modal-price" id="modal-price"></div>
+            <div class="modal-info-row">
+                <span class="modal-info-label">通话分钟</span>
+                <span class="modal-info-value" id="modal-minutes"></span>
+            </div>
+            <div class="modal-info-row">
+                <span class="modal-info-label">留言条数</span>
+                <span class="modal-info-value" id="modal-messages"></span>
+            </div>
+            <div class="modal-info-row">
+                <span class="modal-info-label">套餐时长</span>
+                <span class="modal-info-value" id="modal-months"></span>
+            </div>
+            <div class="modal-info-row" id="modal-period-row" style="display: none;">
+                <span class="modal-info-label">有效期</span>
+                <span class="modal-info-value" id="modal-period"></span>
+            </div>
+        </div>
+        <button class="modal-confirm-btn" onclick="confirmPurchase()">确认购买</button>
+    </div>
+</div>
+
+<script>
+    const packages = [
+      {
+        id: 1,
+        packageName: '基础月套餐',
+        packageType: 'FLEXIBLE',
+        purchasePrice: 30,
+        totalMonths: 1,
+        packageContent: { videoCallMinutes: 60, messageCount: 30 },
+        templateDescription: '适合日常通话需求，每月自动续费',
+        usageRules: '',
+      },
+      {
+        id: 2,
+        packageName: '学期套餐',
+        packageType: 'FIXED',
+        purchasePrice: 150,
+        totalMonths: 6,
+        packageContent: { videoCallMinutes: 400, messageCount: 200 },
+        templateDescription: '一次购买，整学期无忧使用',
+        usageRules: '仅限校内亲情电话机使用',
+        startTime: '2025-03-01',
+        endTime: '2025-08-31',
+      },
+      {
+        id: 3,
+        packageName: '年度尊享套餐',
+        packageType: 'FIXED',
+        purchasePrice: 268,
+        totalMonths: 12,
+        packageContent: { videoCallMinutes: 1000, messageCount: 500 },
+        templateDescription: '',
+        usageRules: '不可退款，仅限本人使用',
+        startTime: '2025-01-01',
+        endTime: '2025-12-31',
+      },
+    ];
+
+    const container = document.getElementById('package-list');
+
+    packages.forEach(pkg => {
+        const isFixed = pkg.packageType === 'FIXED';
+        const tagText = isFixed ? '固定' : '灵活';
+        const tagClass = isFixed ? 'fixed' : 'flexible';
+
+        let periodHtml = '';
+        if (isFixed && pkg.startTime && pkg.endTime) {
+            periodHtml = `
+                <div class="period-info">
+                    <svg viewBox="0 0 24 24"><path d="M19,4H18V2H16V4H8V2H6V4H5A2,2 0 0,0 3,6V20A2,2 0 0,0 5,22H19A2,2 0 0,0 21,20V6A2,2 0 0,0 19,4M19,20H5V10H19V20M19,8H5V6H19V8Z" /></svg>
+                    <span>有效期：${pkg.startTime} 至 ${pkg.endTime}</span>
+                </div>
+            `;
+        }
+
+        let infoHtml = '';
+        if (pkg.templateDescription || pkg.usageRules) {
+            infoHtml += '<div class="info-group">';
+            if (pkg.templateDescription) {
+                infoHtml += `<div class="info-item desc">${pkg.templateDescription}</div>`;
+            }
+            if (pkg.usageRules) {
+                infoHtml += `<div class="info-item rules"><span class="info-label">使用规则</span>${pkg.usageRules}</div>`;
+            }
+            infoHtml += '</div>';
+        }
+
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = `
+            <div class="card-header">
+                <div class="package-name">${pkg.packageName}</div>
+                <div class="tag ${tagClass}">${tagText}</div>
+            </div>
+
+            <div class="metrics-grid">
+                <div class="metric-item">
+                    <div class="metric-value">${pkg.packageContent.videoCallMinutes}</div>
+                    <div class="metric-label">通话分钟</div>
+                </div>
+                <div class="metric-item">
+                    <div class="metric-value">${pkg.packageContent.messageCount}</div>
+                    <div class="metric-label">留言条数</div>
+                </div>
+                <div class="metric-item">
+                    <div class="metric-value">${pkg.totalMonths}</div>
+                    <div class="metric-label">套餐月数</div>
+                </div>
+            </div>
+
+            ${infoHtml}
+
+            ${periodHtml}
+
+            <div class="price-action-row">
+                <div class="price-section">
+                    <span class="price-symbol">¥</span>
+                    <span class="price-value">${pkg.purchasePrice}</span>
+                </div>
+                <button class="buy-btn" onclick="openModal(${pkg.id})">购买</button>
+            </div>
+        `;
+
+        container.appendChild(card);
+    });
+
+    let currentPackage = null;
+
+    function openModal(pkgId) {
+        currentPackage = packages.find(p => p.id === pkgId);
+        if (!currentPackage) return;
+
+        document.getElementById('modal-name').textContent = currentPackage.packageName;
+        document.getElementById('modal-price').textContent = '¥' + currentPackage.purchasePrice;
+        document.getElementById('modal-minutes').textContent = currentPackage.packageContent.videoCallMinutes + ' 分钟';
+        document.getElementById('modal-messages').textContent = currentPackage.packageContent.messageCount + ' 条';
+        document.getElementById('modal-months').textContent = currentPackage.totalMonths + ' 个月';
+
+        const periodRow = document.getElementById('modal-period-row');
+        if (currentPackage.packageType === 'FIXED' && currentPackage.startTime) {
+            periodRow.style.display = 'flex';
+            document.getElementById('modal-period').textContent = currentPackage.startTime + ' 至 ' + currentPackage.endTime;
+        } else {
+            periodRow.style.display = 'none';
+        }
+
+        document.getElementById('modal').classList.add('show');
+    }
+
+    function closeModal() {
+        document.getElementById('modal').classList.remove('show');
+        currentPackage = null;
+    }
+
+    function confirmPurchase() {
+        if (currentPackage) {
+            alert('购买成功：' + currentPackage.packageName);
+            closeModal();
+        }
+    }
+
+    // Click overlay to close
+    document.getElementById('modal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeModal();
+        }
+    });
+</script>
+
+</body>
+</html>

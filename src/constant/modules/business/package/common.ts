@@ -2,23 +2,20 @@ import type { TI18NMap, TOptions, TStatusConfigMap } from '@/types'
 
 // #region 设备类型
 export const DEVICE_TYPE = {
-  PHONE: 'PHONE',
+  VIDEO: 'VIDEO',
   DRYER: 'DRYER',
-  WASHER: 'WASHER',
 } as const
 
 export type TDeviceType = (typeof DEVICE_TYPE)[keyof typeof DEVICE_TYPE]
 
 export const DEVICE_TYPE_I18N: TI18NMap<TDeviceType> = {
-  [DEVICE_TYPE.PHONE]: '话机',
+  [DEVICE_TYPE.VIDEO]: '视频话机',
   [DEVICE_TYPE.DRYER]: '吹风机',
-  [DEVICE_TYPE.WASHER]: '洗衣机',
 }
 
 export const DEVICE_TYPE_OPTIONS: TOptions<TDeviceType> = [
-  { label: DEVICE_TYPE_I18N[DEVICE_TYPE.PHONE], value: DEVICE_TYPE.PHONE },
+  { label: DEVICE_TYPE_I18N[DEVICE_TYPE.VIDEO], value: DEVICE_TYPE.VIDEO },
   { label: DEVICE_TYPE_I18N[DEVICE_TYPE.DRYER], value: DEVICE_TYPE.DRYER },
-  { label: DEVICE_TYPE_I18N[DEVICE_TYPE.WASHER], value: DEVICE_TYPE.WASHER },
 ]
 // #endregion
 

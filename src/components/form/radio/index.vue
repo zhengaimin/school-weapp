@@ -55,21 +55,13 @@ function selectOption(option: RadioOption) {
 function isSelected(option: RadioOption): boolean {
   return modelValue.value === option.value
 }
-
-// 计算选项的样式
-const optionFlexBasis = computed(() => {
-  if (props.columns > 0) {
-    return `calc(${(1 / props.columns) * 100}% - ${((props.columns - 1) / props.columns) * 0.75}rem)`
-  }
-  return '100%'
-})
 </script>
 
 <template>
   <view
     class="t-radio"
-    flex="~ wrap"
-    :class="[props.columns > 0 ? 'gap-3' : 'flex-col gap-y-3']"
+    :class="[props.columns > 0 ? 'grid gap-3' : 'flex flex-col gap-y-3']"
+    :style="props.columns > 0 ? { gridTemplateColumns: `repeat(${props.columns}, 1fr)` } : {}"
   >
     <view
       v-for="option in options"
@@ -78,7 +70,6 @@ const optionFlexBasis = computed(() => {
       p="3"
       border="~ gray-200 solid rounded-md"
       transition="colors"
-      :style="{ flexBasis: optionFlexBasis }"
       :class="{
         '!border-primary !bg-primary !bg-opacity-5': isSelected(option),
         'opacity-50 cursor-not-allowed': props.disabled || option.disabled,

@@ -1,14 +1,16 @@
 import { storeToRefs } from 'pinia'
 import { getUserBalanceApi } from '@/api/modules/user'
-import { useParentStore } from '@/store/parent'
+import { useParentStore } from '@/store/auth/parent'
+import { useCurrentStudentStore } from '@/store/business/currentStudent'
 import { useUserStore } from '@/store/user'
 
 export function useBalance() {
+  const currentStudentStore = useCurrentStudentStore()
   const parentStore = useParentStore()
   const userStore = useUserStore()
 
   const { token } = storeToRefs(userStore)
-  const { currentStudent } = storeToRefs(userStore)
+  const { currentStudent } = storeToRefs(parentStore)
 
   /**
    * 获取余额
@@ -20,10 +22,14 @@ export function useBalance() {
     }
 
     try {
-      const result = await getUserBalanceApi()
+      // 获取当前选择的设备类型
+      const deviceType = currentStudentStore.deviceType
+
+      // 调用 API 并传递设备类型参数
+      const result = await getUserBalanceApi({ deviceType })
 
       if (result.code === 0) {
-        parentStore.setBalanceInfo(result.data)
+        currentStudentStore.setBalanceInfo(result.data)
       }
 
       return result

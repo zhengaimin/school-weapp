@@ -25,7 +25,8 @@ import { usePage } from '@/hooks/usePage'
 import { useRefresh } from '@/hooks/useRefresh'
 import { MessageCache } from '@/pages-sub/chat/utils/cache'
 import { useConfigStore } from '@/store/config'
-import { useParentStore } from '@/store/parent'
+import { useParentStore } from '@/store/auth/parent'
+import { useCurrentStudentStore } from '@/store/business/currentStudent'
 import { useUserStore } from '@/store/user'
 import { useFamily } from '@/utils/emit/family'
 // #endregion
@@ -48,8 +49,9 @@ const { onRefreshFamilyList } = useFamily()
 const configStore = useConfigStore()
 const userStore = useUserStore()
 const parentStore = useParentStore()
+const currentStudentStore = useCurrentStudentStore()
 const { relationshipValueMap } = storeToRefs(configStore)
-const { currentStudent } = storeToRefs(userStore)
+const { currentStudent } = storeToRefs(parentStore)
 // #endregion
 
 // #region 定义响应式数据
@@ -82,16 +84,16 @@ async function axiosDeleteFamilyContactApi(id: number) {
       uni.showToast({ title: '删除成功', icon: 'none' })
       list.value = list.value.filter(item => item.id !== id)
       // 更新 store 中的亲情号列表缓存
-      parentStore.setFamilyContacts(list.value)
+      currentStudentStore.setFamilyContacts(list.value)
 
-      // 如果删除的亲情号手机号和当前用户手机号一致，清除 parent store 中的 contactInfo
+      // 如果删除的亲情号手机号和当前用户手机号一致，清除 student store 中的 contactInfo
       if (contactToDelete?.phone && contactToDelete.phone === userStore.phone) {
-        parentStore.setContactInfo(null)
+        currentStudentStore.setContactInfo(null)
       }
       // 清空当前学生的聊天记录缓存
-      if (currentStudent.value?.studentId) {
-        console.log(currentStudent.value.studentId)
-        MessageCache.clearCachedMessages(currentStudent.value.studentId)
+      if (currentStudent.value?.id) {
+        console.log(currentStudent.value.id)
+        MessageCache.clearCachedMessages(currentStudent.value.id)
       }
 
       await nextTick()

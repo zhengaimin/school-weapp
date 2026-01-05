@@ -18,7 +18,8 @@ import WhiteCard from '@/components/common/white-card/index.vue'
 import Icon from '@/components/icon/index.vue'
 import { FACE_STATUS_I18N } from '@/constant/modules/business'
 import { usePage } from '@/hooks/usePage'
-import { useUserStore } from '@/store/user'
+import { useParentStore } from '@/store/auth/parent'
+import { useCurrentStudentStore } from '@/store/business/currentStudent'
 import { copyToClipboard } from '@/utils/clipboard'
 // #endregion
 
@@ -35,15 +36,17 @@ const { pageLoading, pageError, onLoginFail } = usePage()
 // #endregion
 
 // #region 使用 Store
-const userStore = useUserStore()
-const { currentStudent } = storeToRefs(userStore)
+const parentStore = useParentStore()
+const currentStudentStore = useCurrentStudentStore()
+const { currentStudent } = storeToRefs(parentStore)
+const { studentInfo } = storeToRefs(currentStudentStore)
 // #endregion
 
 // #region 定义计算属性
 const faceStatusText = computed(() => {
-  if (!currentStudent.value || currentStudent.value.faceStatus === null)
+  if (!studentInfo.value || studentInfo.value.faceStatus === null)
     return '未知'
-  return FACE_STATUS_I18N[currentStudent.value.faceStatus] || '未知'
+  return FACE_STATUS_I18N[studentInfo.value.faceStatus] || '未知'
 })
 
 // 学生详细信息配置
@@ -84,40 +87,40 @@ const studentDetailItems = computed(() => [
         },
       ]
     : []),
-  ...(currentStudent.value?.studentCode
+  ...(studentInfo.value?.studentCode
     ? [
         {
           key: 'studentCode',
           label: '学号',
-          value: currentStudent.value.studentCode,
+          value: studentInfo.value.studentCode,
           copyable: true,
         },
       ]
     : []),
-  ...(currentStudent.value?.cardNumber
+  ...(studentInfo.value?.cardNumber
     ? [
         {
           key: 'cardNumber',
           label: '卡号',
-          value: currentStudent.value.cardNumber,
+          value: studentInfo.value.cardNumber,
           copyable: true,
         },
       ]
     : []),
-  ...(currentStudent.value?.idCard
+  ...(studentInfo.value?.idCard
     ? [
         {
           key: 'idCard',
           label: '身份证',
-          value: currentStudent.value.idCard,
+          value: studentInfo.value.idCard,
           copyable: true,
         },
       ]
     : []),
   {
-    key: 'uuid',
+    key: 'UUID',
     label: '唯一号',
-    value: currentStudent.value?.UUID || '',
+    value: studentInfo.value?.UUID || '',
     copyable: true,
   },
   {
@@ -137,8 +140,8 @@ const studentDetailItems = computed(() => [
  * @param label 显示标签，如 '学号', '卡号' 等
  */
 function handleCopyStudentInfo(field: string, label: string) {
-  if (currentStudent.value && currentStudent.value[field as keyof typeof currentStudent.value]) {
-    const value = currentStudent.value[field as keyof typeof currentStudent.value]
+  if (studentInfo.value && studentInfo.value[field as keyof typeof studentInfo.value]) {
+    const value = studentInfo.value[field as keyof typeof studentInfo.value]
     if (value) {
       copyToClipboard(String(value), label)
     }
@@ -175,10 +178,10 @@ function onLoginSuccess() {
           <RoleAvatar type="student" size="large" />
           <view flex="1" space="y-2">
             <view text="xl gray-900" font="bold">
-              {{ currentStudent.studentName }}
+              {{ studentInfo?.studentName }}
             </view>
             <view text="sm gray-500">
-              {{ currentStudent.fullClassName }}
+              {{ currentStudent?.fullClassName }}
             </view>
           </view>
         </view>

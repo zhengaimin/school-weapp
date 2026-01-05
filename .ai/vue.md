@@ -1,4 +1,94 @@
-# 页面开发规范
+# Vue 开发规范
+
+本文档包含 Vue 组件和页面的开发规范，涵盖代码组织、命名规范、样式规范等内容。
+
+---
+
+# 组件开发规范
+
+## Template 点击事件规范
+如果 template 中只有一个根节点，需要添加标准的点击事件处理：
+
+### 事件处理规范
+1. 添加 `@click.stop="e => emit('click', e)"` 事件
+2. 确保在 `defineEmits` 中定义了正确的 `click` 事件类型
+3. 事件类型必须为 `click: [event: Event]`
+
+### 示例
+```vue
+<script lang="ts" setup>
+import type { DataType } from '@/types'
+
+const props = defineProps<{
+  data: DataType
+}>()
+
+const emit = defineEmits<{
+  click: [event: Event]
+  action: [data: DataType]
+}>()
+
+/** 处理操作事件 */
+function handleAction() {
+  emit('action', props.data)
+}
+</script>
+
+<template>
+  <view class="component-wrapper" @click.stop="e => emit('click', e)">
+    <!-- 组件内容 -->
+    <view>{{ data.title }}</view>
+    <button @click.stop="handleAction">操作</button>
+  </view>
+</template>
+```
+
+## 注意事项
+1. 点击事件的事件参数类型必须为 `Event`
+2. 使用 `@click.stop` 防止事件冒泡
+3. 确保 TypeScript 类型定义正确
+4. 所有方法定义必须在函数上方添加简短的单行 JSDoc 注释（使用 /** */ 格式），说明函数目的与行为，便于阅读与维护
+5. 间距使用规范：在组件模板中，应避免直接使用 space="y-<n>" 这类垂直间距原子类，建议使用弹性布局配合 gap 来控制垂直间距。示例：
+```vue
+<!-- 不推荐 -->
+<view p="4" space="y-3">
+  ...
+</view>
+
+<!-- 推荐：使用 flex + gap -->
+<view p="4" flex="~ col" gap="3">
+  ...
+</view>
+```
+此规则适用于所有组件模板，确保布局语义清晰且与项目的 UnoCSS/Attributify 风格保持一致。
+6. 禁止使用 `// #region` 和 `// #endregion` 注释进行代码折叠，代码组织应通过合理的结构和 JSDoc 注释来体现
+
+## Icon 组件使用规范
+
+Icon 组件使用 `icon-color` 和 `icon-size` 属性，而不是 `color` 和 `size` 字段：
+
+```vue
+<Icon name="history-line" :icon-color="NAVIGATION_SUFFIX_COLOR" :icon-size="NAVIGATION_SUFFIX_SIZE" />
+```
+
+## 帮助弹框组件使用规范
+
+使用 BottomPopup 组件创建帮助弹框：
+
+```vue
+<BottomPopup v-model="showHelpModal" title="绑定说明" height="auto">
+  <view p="4 b-6" text-sm color-text-secondary space-y-2>
+    <view v-for="(item, index) in helpContent" :key="index" flex="~">
+      <text mr-2>
+        ·
+      </text>
+      <text flex-1>
+        {{ item }}
+      </text>
+    </view>
+  </view>
+</BottomPopup>
+```# 页面开发规范
 
 ## 通用开发规范
 1. 始终使用中文回复。不要进行测试、不要写文档
@@ -306,7 +396,6 @@ import type { Refund } from '@/api/interface/modules/refund'
 
 ```vue
 <script lang="ts" setup>
-// #region 导入
 import type { Refund } from '@/api/interface/modules/refund'
 import { computed, onMounted, ref } from 'vue'
 import { getPendingRefundApi, postApplyRefundApi } from '@/api/modules/refund'
@@ -317,51 +406,38 @@ import { useForm } from '@/hooks/useForm'
 import { usePage } from '@/hooks/usePage'
 import { useParentStore } from '@/store/parent'
 import { refundNotices, refundProcessSteps, refundRules } from './data'
-// #endregion
 
-// #region 组件选项配置
 defineOptions({
   options: {
     styleIsolation: 'apply-shared',
   },
 })
-// #endregion
 
-// #region 使用 Hooks
 const { pageLoading, pageError, batchRequestHandler, onLoginFail, getContentHeight } = usePage()
 const { formRef, validate, submitLoading, scrollToFirstError, scrollIntoView } = useForm('.apply-scroll')
-// #endregion
 
-// #region 使用 Store
 const parentStore = useParentStore()
-// #endregion
 
-// #region 定义响应式数据
 const formData = ref({
   refundType: 'FULL',
   reason: '',
 })
-// #endregion
 
-// #region 定义计算属性
 const refundTypeOptions = computed(() => {
   return REFUND_TYPE_OPTIONS.map(option => ({
     ...option,
     suffix: currentBalanceText.value,
   }))
 })
-// #endregion
 
-// #region 定义验证规则
 const rules = {
   reason: [
     { required: true, message: '请输入退费原因', trigger: 'blur' },
     { min: 5, max: 200, message: '退费原因应为5-200个字符', trigger: 'blur' },
   ],
 }
-// #endregion
 
-// #region 接口请求函数
+/** 获取待处理退款信息 */
 async function axiosGetPendingRefundApi() {
   try {
     const result = await getPendingRefundApi()
@@ -375,9 +451,8 @@ async function axiosGetPendingRefundApi() {
     throw error
   }
 }
-// #endregion
 
-// #region 事件处理函数
+/** 提交退费申请 */
 async function handleSubmitRefund() {
   try {
     const { valid } = await validate(['reason'])
@@ -408,9 +483,8 @@ async function handleSubmitRefund() {
     submitLoading.value = false
   }
 }
-// #endregion
 
-// #region 生命周期钩子
+/** 登录成功处理 */
 async function onLoginSuccess() {
   batchRequestHandler([axiosGetPendingRefundApi()])
 }
@@ -418,83 +492,62 @@ async function onLoginSuccess() {
 onMounted(() => {
   // 页面初始化逻辑
 })
-// #endregion
 </script>
 ```
 
-#### 代码块折叠
+#### 代码组织规范
 
-为了提高代码的可读性，**必须使用** `// #region` 和 `// #endregion` 对相关的代码块进行折叠。**特别是所有导入语句都必须放在一个统一的 region 中**。
+为了提高代码的可读性，建议按以下顺序组织代码：
 
-##### region 组织规范
-
-**所有导入语句必须放在一个统一的 `// #region 导入` 中**，按以下顺序组织：
-
-1. 类型定义导入（import type）
-2. Vue 相关函数
-3. 接口函数
-4. 组件
-5. 常量
-6. Hooks
-7. Store
-8. 本地数据/组件
-
-其他代码块也应该使用 region 组织：
-
-**标准 region 组织顺序：**
-
-1. `// #region 导入` - 所有导入语句
-2. `// #region 组件选项配置` - defineOptions 等配置
-3. `// #region 使用 Hooks` - Hook 函数调用
-4. `// #region 使用 Store` - Store 相关调用
-5. `// #region 定义响应式数据` - ref、reactive 等响应式数据
-6. `// #region 定义计算属性` - computed 计算属性
-7. `// #region 定义验证规则` - 表单验证规则
-8. `// #region 接口请求函数` - API 请求函数
-9. `// #region 方法定义` - 通用方法函数（如 refreshPage 等）
-10. `// #region 事件处理函数` - 用户交互事件处理
-11. `// #region 生命周期钩子` - Vue 生命周期函数（含 onLoginSuccess、onShow 等）
+1. **类型定义导入**（import type）
+2. **Vue 相关函数**
+3. **接口函数**
+4. **组件**
+5. **常量**
+6. **Hooks**
+7. **Store**
+8. **本地数据/组件**
+9. **组件选项配置**（defineOptions）
+10. **Hook 函数调用**
+11. **Store 相关调用**
+12. **响应式数据**（ref、reactive）
+13. **计算属性**（computed）
+14. **验证规则**
+15. **接口请求函数**（与后端API交互的函数）
+16. **方法定义**（通用方法函数，如 refreshPage 等）
+17. **事件处理函数**（用户交互事件处理）
+18. **生命周期钩子**（Vue 生命周期函数及 onLoginSuccess、onShow 等）
 
 #### 重要说明
 
-- **接口请求函数区域**：专门用于存放与后端API交互的函数，如获取数据、提交数据等请求函数
-- **方法定义区域**：包含通用的方法函数，如页面刷新方法、数据处理方法、工具方法等
-  - 规则：所有方法定义必须在函数上方添加简短的单行注释，使用 // 开头，说明函数的主要作用与行为（例如：// 刷新页面数据）。
-- **事件处理函数区域**：专门处理用户交互事件的函数，如按钮点击、表单提交等
-- **生命周期钩子区域**：包含所有 Vue 生命周期函数（onMounted、onUnmounted 等）以及页面相关的生命周期函数（onLoginSuccess、onShow 等）
+- **接口请求函数**：专门用于存放与后端API交互的函数，如获取数据、提交数据等请求函数
+- **方法定义**：包含通用的方法函数，如页面刷新方法、数据处理方法、工具方法等
+  - 规则：所有方法定义必须在函数上方添加简短的单行 JSDoc 注释（使用 /** */ 格式），说明函数的主要作用与行为
+- **事件处理函数**：专门处理用户交互事件的函数，如按钮点击、表单提交等
+- **生命周期钩子**：包含所有 Vue 生命周期函数（onMounted、onUnmounted 等）以及页面相关的生命周期函数（onLoginSuccess、onShow 等）
 
 ```vue
 <script lang="ts" setup>
-// #region 导入
 import type { Refund } from '@/api/interface/modules/refund'
 import { computed, onMounted, ref } from 'vue'
 import { getPendingRefundApi, postApplyRefundApi } from '@/api/modules/refund'
 import Page from '@/components/common/page/index.vue'
 import { REFUND_HISTORY_PATH } from '@/constant/router'
 import { usePage } from '@/hooks/usePage'
-// #endregion
 
-// #region 组件选项配置
 defineOptions({
   options: {
     styleIsolation: 'apply-shared',
   },
 })
-// #endregion
 
-// #region 使用 Hooks
 const { pageLoading, pageError, batchRequestHandler, onLoginFail } = usePage()
-// #endregion
 
-// #region 定义响应式数据
 const pendingRefund = ref<Refund.PendingRefundInfo>()
-// #endregion
 
-// #region 定义计算属性
 const hasPendingRefund = computed(() => !!pendingRefund.value)
-// #endregion
 
-// #region 接口请求函数
+/** 获取待处理退款信息 */
 async function axiosGetPendingRefundApi() {
   try {
     const result = await getPendingRefundApi()
@@ -509,6 +562,7 @@ async function axiosGetPendingRefundApi() {
   }
 }
 
+/** 提交退款申请 */
 async function axiosPostRefundApi(params: Refund.ApplyRefundReq) {
   try {
     const result = await postApplyRefundApi(params)
@@ -522,21 +576,19 @@ async function axiosPostRefundApi(params: Refund.ApplyRefundReq) {
     throw error
   }
 }
-// #endregion
 
-// #region 方法定义
+/** 刷新页面数据 */
 async function refreshPage() {
-  // 页面刷新逻辑
   await batchRequestHandler([axiosGetPendingRefundApi()])
 }
 
+/** 格式化金额显示 */
 function formatAmount(amount: number): string {
-  // 格式化金额显示
   return `¥${amount.toFixed(2)}`
 }
 
+/** 根据状态获取显示文本 */
 function getStatusText(status: string): string {
-  // 根据状态获取显示文本
   const statusMap: Record<string, string> = {
     PENDING: '待处理',
     APPROVED: '已通过',
@@ -544,13 +596,13 @@ function getStatusText(status: string): string {
   }
   return statusMap[status] || '未知状态'
 }
-// #endregion
 
-// #region 事件处理函数
+/** 跳转到详情页 */
 function handleGoToDetail() {
   uni.navigateTo({ url: REFUND_HISTORY_PATH })
 }
 
+/** 提交退费申请 */
 async function handleSubmitRefund() {
   try {
     await axiosPostRefundApi({
@@ -569,9 +621,8 @@ async function handleSubmitRefund() {
     })
   }
 }
-// #endregion
 
-// #region 生命周期钩子
+/** 登录成功处理 */
 async function onLoginSuccess() {
   batchRequestHandler([axiosGetPendingRefundApi()])
 }
@@ -583,26 +634,25 @@ onMounted(() => {
 onShow(() => {
   // 页面显示时的逻辑
 })
-// #endregion
 </script>
 ```
 
 #### 重要说明
 
-- **接口请求函数区域**：专门用于存放与后端API交互的函数，如获取数据、提交数据等请求函数
+- **接口请求函数**：专门用于存放与后端API交互的函数，如获取数据、提交数据等请求函数
   - 示例：`axiosGetPendingRefundApi()`、`axiosPostRefundApi()`
-- **方法定义区域**：包含通用的方法函数，如页面刷新方法、数据处理方法、工具方法等
+- **方法定义**：包含通用的方法函数，如页面刷新方法、数据处理方法、工具方法等
   - 示例：`refreshPage()`、`formatAmount()`、`getStatusText()`
-- **事件处理函数区域**：专门处理用户交互事件的函数，如按钮点击、表单提交等
+- **事件处理函数**：专门处理用户交互事件的函数，如按钮点击、表单提交等
   - 示例：`handleGoToDetail()`、`handleSubmitRefund()`
-- **生命周期钩子区域**：包含所有 Vue 生命周期函数（onMounted、onUnmounted 等）以及页面相关的生命周期函数（onLoginSuccess、onShow 等）
+- **生命周期钩子**：包含所有 Vue 生命周期函数（onMounted、onUnmounted 等）以及页面相关的生命周期函数（onLoginSuccess、onShow 等）
 ## 5. 组件导入和使用规范
 
 组件导入和使用遵循统一规范，确保代码的一致性和可维护性。
 
 ### 5.1 导入规范
 
-**所有组件导入必须放在一个统一的 `// #region 导入` 中**，按照以下顺序进行：
+按照以下顺序进行导入：
 
 1. **类型定义导入**（import type）
 2. **Vue 相关函数**
@@ -615,7 +665,6 @@ onShow(() => {
 
 示例：
 ```ts
-// #region 导入
 import type { Refund } from '@/api/interface/modules/refund'
 import { computed, onMounted, ref } from 'vue'
 import { getPendingRefundApi, postApplyRefundApi } from '@/api/modules/refund'
@@ -626,7 +675,6 @@ import { useForm } from '@/hooks/useForm'
 import { usePage } from '@/hooks/usePage'
 import { useParentStore } from '@/store/parent'
 import { refundNotices, refundProcessSteps, refundRules } from './data'
-// #endregion
 ```
 
 ### 5.2 组件使用
@@ -721,7 +769,6 @@ import { refundNotices, refundProcessSteps, refundRules } from './data'
 
 <script lang="ts" setup>
 import Page from '@/components/common/page/index.vue'
-
 import { usePage } from '@/hooks/usePage'
 
 defineOptions({
@@ -871,7 +918,7 @@ import { useForm } from '@/hooks/useForm'
 const { formRef, validate, submitLoading, scrollToFirstError, scrollIntoView }
   = useForm('.apply-scroll')
 
-// 提交退费申请
+/** 提交退费申请 */
 async function handleSubmitRefund() {
   try {
     // 动态验证规则：根据表单状态验证不同字段
@@ -1216,7 +1263,6 @@ const rules = {
 </route>
 
 <script lang="ts" setup>
-// #region 导入
 import type { Refund } from '@/api/interface/modules/refund'
 import { computed, ref } from 'vue'
 import { getPendingRefundApi, postApplyRefundApi } from '@/api/modules/refund'
@@ -1229,35 +1275,25 @@ import { REFUND_HISTORY_PATH } from '@/constant/router'
 import { useForm } from '@/hooks/useForm'
 import { usePage } from '@/hooks/usePage'
 import { toast } from '@/utils/toast'
-// #endregion
 
-// #region 组件选项配置
 defineOptions({
   options: {
     styleIsolation: 'apply-shared',
   },
 })
-// #endregion
 
-// #region 使用 Hooks
 const { pageLoading, pageError, batchRequestHandler, onLoginFail, getContentHeight } = usePage()
 const { formRef, validate, submitLoading, scrollToFirstError, scrollIntoView } = useForm('.page-scroll')
-// #endregion
 
-// #region 定义响应式数据
 const formData = ref({
   refundType: 'FULL',
   reason: '',
 })
-// #endregion
 
-// #region 定义计算属性
 const contentHeight = computed(() => {
   return getContentHeight('164rpx')
 })
-// #endregion
 
-// #region 定义验证规则
 const rules = {
   refundType: [{ required: true, message: '请选择退费金额' }],
   reason: [
@@ -1265,9 +1301,8 @@ const rules = {
     { min: 5, max: 200, message: '退费原因应为5-200个字符', trigger: 'blur' },
   ],
 }
-// #endregion
 
-// #region 接口请求函数
+/** 获取待处理退款信息 */
 async function axiosGetPendingRefundApi() {
   try {
     return await getPendingRefundApi()
@@ -1278,6 +1313,7 @@ async function axiosGetPendingRefundApi() {
   }
 }
 
+/** 提交退款申请 */
 async function axiosPostRefundApi(params: {refundType: string, applyReason: string}) {
   try {
     return await postApplyRefundApi(params)
@@ -1287,16 +1323,13 @@ async function axiosPostRefundApi(params: {refundType: string, applyReason: stri
     throw error
   }
 }
-// #endregion
 
-// #region 方法定义
+/** 格式化金额显示 */
 function formatAmount(amount: number): string {
-  // 格式化金额显示
   return `¥${amount.toFixed(2)}`
 }
-// #endregion
 
-// #region 事件处理函数
+/** 提交表单 */
 async function handleSubmit() {
   try {
     const { valid } = await validate(['refundType', 'reason'])
@@ -1327,9 +1360,8 @@ async function handleSubmit() {
     submitLoading.value = false
   }
 }
-// #endregion
 
-// #region 生命周期钩子
+/** 登录成功处理 */
 async function onLoginSuccess() {
   batchRequestHandler([axiosGetPendingRefundApi()])
 }
@@ -1337,7 +1369,6 @@ async function onLoginSuccess() {
 onMounted(() => {
   // 页面初始化逻辑
 })
-// #endregion
 </script>
 
 <template>

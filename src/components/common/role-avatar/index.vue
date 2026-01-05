@@ -3,7 +3,7 @@ import type { AvatarProps, AvatarSize, AvatarType } from './types'
 import { storeToRefs } from 'pinia'
 import { computed } from 'vue'
 import Icon from '@/components/icon/index.vue'
-import { useUserStore } from '@/store/user'
+import { useCurrentStudentStore } from '@/store/business/currentStudent'
 
 // 组件属性
 const props = withDefaults(defineProps<AvatarProps>(), {
@@ -14,8 +14,8 @@ const props = withDefaults(defineProps<AvatarProps>(), {
   customStyle: '',
   customClass: '',
 })
-const userStore = useUserStore()
-const { currentStudent } = storeToRefs(userStore)
+const currentStudentStore = useCurrentStudentStore()
+const { studentInfo } = storeToRefs(currentStudentStore)
 
 // 默认头像配置
 const defaultAvatars: Record<AvatarType, { icon: string, bgColor: string, iconColor: string }> = {
@@ -74,8 +74,8 @@ const defaultAvatar = computed(() => {
 <template>
   <view :class="containerClass" :style="customStyle">
     <image
-      v-if="props.faceImg && currentStudent.faceImageUrl"
-      :src="currentStudent.faceImageUrl"
+      v-if="props.faceImg && studentInfo?.faceImageUrl"
+      :src="studentInfo.faceImageUrl"
       class="h-full w-full"
       mode="aspectFill"
     />

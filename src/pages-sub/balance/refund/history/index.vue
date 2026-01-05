@@ -20,7 +20,7 @@ import FilterGroup from '@/components/common/filter-group/index.vue'
 import Page from '@/components/common/page/index.vue'
 import RefreshList from '@/components/common/refresh-list/index.vue'
 import { ALL, REFUND_STATUS, REFUND_STATUS_I18N, REFUND_STATUS_OPTIONS } from '@/constant/modules'
-import { REFUND_RESULT_PATH } from '@/constant/router'
+import { BALANCE_REFUND_RESULT_PATH } from '@/constant/router'
 import { usePage } from '@/hooks/usePage'
 import { useRefresh } from '@/hooks/useRefresh'
 import { useRefundEmitter } from '@/utils/emit/refund'
@@ -121,7 +121,7 @@ function onFilterChange(key: string, value: string | number | [number, number]) 
 // 跳转到退款记录详情
 function goToRefundDetail(record: Refund.IRefundApplicationVo) {
   uni.navigateTo({
-    url: `${REFUND_RESULT_PATH}?id=${record.id}`,
+    url: `${BALANCE_REFUND_RESULT_PATH}?id=${record.id}`,
   })
 }
 

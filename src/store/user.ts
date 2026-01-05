@@ -5,6 +5,7 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
 import { getUserInfoApi, getWxCode, postWxLoginApi } from '@/api/modules/user'
+import { useCurrentStudentStore } from '@/store/business/currentStudent'
 
 export const useUserStore = defineStore(
   'user',
@@ -30,39 +31,6 @@ export const useUserStore = defineStore(
       phone.value = val
     }
 
-    const currentStudent = computed(() => {
-      const { roleInfo, schoolName, schoolId } = unref(userInfo) || {}
-
-      if (!roleInfo)
-        return null
-
-      const student = {
-        ...((roleInfo as User.Common.IParentRoleInfoVo)?.currentChild || {}),
-        schoolName,
-        schoolId,
-      }
-
-      const list = []
-
-      if (student.schoolName) {
-        list.push(student.schoolName)
-      }
-      if (student.grade) {
-        list.push(student.grade)
-      }
-      if (student.departmentName) {
-        list.push(student.departmentName)
-      }
-      if (student.className) {
-        list.push(student.className)
-      }
-
-      return {
-        ...student,
-        fullClassName: list.join(' · '),
-      }
-    })
-
     /**
      * 获取用户信息
      */
@@ -78,6 +46,12 @@ export const useUserStore = defineStore(
       userInfo.value = data
       if (data.phone) {
         setPhone(data.phone)
+      }
+
+      // 如果是家长角色，保存当前学生的基本信息到 currentStudent store
+      if (data.userType === 'parent' && data.roleInfo?.currentChild) {
+        const currentStudentStore = useCurrentStudentStore()
+        currentStudentStore.setStudentInfo(data.roleInfo.currentChild)
       }
 
       return { code: 0, msg: '获取用户信息成功', data: res.data }
@@ -113,7 +87,6 @@ export const useUserStore = defineStore(
       userInfo,
       setUserInfo,
       getUserInfo,
-      currentStudent,
 
       role,
       setRole,

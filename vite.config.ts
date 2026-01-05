@@ -162,6 +162,7 @@ export default async ({ command, mode }) => {
               target: VITE_SERVER_BASEURL,
               changeOrigin: true,
               rewrite: path => path.replace(new RegExp(`^${VITE_APP_PROXY_PREFIX}`), ''),
+              secure: false, // 跳过 SSL 证书验证（开发环境）
             },
           }
         : undefined,

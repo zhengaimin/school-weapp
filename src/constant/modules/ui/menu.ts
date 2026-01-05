@@ -4,13 +4,13 @@ import {
   DEVICE_SUBSCRIBE_PATH,
   FACE_COLLECTION_PATH,
   FAMILY_MANAGE_PATH,
-  FUND_BALANCE_HISTORY_PATH,
+  FUND_HISTORY_PATH,
   PACKAGE_LIST_PATH,
-  PARENT_CONSUMPTION_HISTORY_PATH,
-  PARENT_STUDENT_BIND_PATH,
-  PARENT_STUDENT_DETAIL_PATH,
+  CONSUMPTION_HISTORY_PATH,
+  STUDENT_BIND_PATH,
+  STUDENT_DETAIL_PATH,
   PROFILE_EDIT_PATH,
-  REFUND_APPLY_PATH
+  BALANCE_REFUND_APPLY_PATH
 } from '@/constant/router'
 
 /**
@@ -45,7 +45,7 @@ export const MENU_CHILDREN_DETAIL: IMenuItem = {
   icon: 'user-5-line',
   color: '#f59e0b', // amber-500
   bgColor: '#fef3c7', // amber-100
-  path: PARENT_STUDENT_DETAIL_PATH
+  path: STUDENT_DETAIL_PATH
 }
 
 /** 绑定学生 - teal */
@@ -55,7 +55,7 @@ export const MENU_STUDENT_BIND: IMenuItem = {
   icon: 'user-add-line',
   color: '#14b8a6', // teal-500
   bgColor: '#ccfbf1', // teal-100
-  path: PARENT_STUDENT_BIND_PATH
+  path: STUDENT_BIND_PATH
 }
 
 /** 切换身份 - lime - TODO */
@@ -109,13 +109,13 @@ export const MENU_PACKAGE: IMenuItem = {
 }
 
 /** 申请退费 - red */
-export const MENU_REFUND_APPLY_PATH: IMenuItem = {
+export const MENU_REFUND_APPLY: IMenuItem = {
   id: 'refund_apply',
   icon: 'refund-2-line',
   title: '申请退费',
   color: '#ef4444', // red-500
   bgColor: '#fee2e2', // red-100
-  path: REFUND_APPLY_PATH
+  path: BALANCE_REFUND_APPLY_PATH
 }
 
 /** 意见反馈 - rose */
@@ -163,7 +163,7 @@ export const MENU_CONSUMPTION_RECORD: IMenuItem = {
   title: '消费记录',
   color: '#6366f1', // indigo-500
   bgColor: '#e0e7ff', // indigo-100
-  path: PARENT_CONSUMPTION_HISTORY_PATH
+  path: CONSUMPTION_HISTORY_PATH
 }
 
 /** 充值明细 - sky */
@@ -173,7 +173,7 @@ export const MENU_BALANCE_DETAILS: IMenuItem = {
   icon: 'bill-line',
   color: '#0ea5e9', // sky-500
   bgColor: '#e0f2fe', // sky-100
-  path: FUND_BALANCE_HISTORY_PATH
+  path: FUND_HISTORY_PATH
 }
 
 /** 成绩查询 - fuchsia */
@@ -189,7 +189,7 @@ export const MENU_SCORE: IMenuItem = {
 export const MENU_LIST = [
   MENU_ACCOUNT_INFO,
 
-  MENU_REFUND_APPLY_PATH,
+  MENU_REFUND_APPLY,
 
   MENU_CONSUMPTION_RECORD,
   MENU_BALANCE_DETAILS,

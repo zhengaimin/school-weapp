@@ -1,5 +1,4 @@
 <script lang="ts" setup>
-// #region 导入
 import type { Pkg } from '@/api/interface/modules/package'
 import type { TRefundStatus } from '@/constant/modules'
 import { computed, ref } from 'vue'
@@ -8,12 +7,11 @@ import { postCancelPackageRefundApi } from '@/api/modules/package/refund'
 import TButton from '@/components/common/button/index.vue'
 import WhiteCard from '@/components/common/white-card/index.vue'
 import Icon from '@/components/icon/index.vue'
-import { REFUND_STATUS, REFUND_STATUS_CONFIGS } from '@/constant/modules'
+import { DEVICE_TYPE, REFUND_STATUS, REFUND_STATUS_CONFIGS } from '@/constant/modules'
+import { PACKAGE_REFUND_RESULT_PATH } from '@/constant/router'
 import { formatTime } from '@/utils/format'
 import { toast } from '@/utils/toast'
-// #endregion
 
-// #region 属性定义
 const props = defineProps<{
   record: Pkg.Refund.IRefundApplicationRecord
 }>()
@@ -22,17 +20,11 @@ const emit = defineEmits<{
   click: [event: Event, record: Pkg.Refund.IRefundApplicationRecord]
   cancel: [record: Pkg.Refund.IRefundApplicationRecord]
 }>()
-// #endregion
 
-// #region 使用 Hooks
 const message = useMessage()
-// #endregion
 
-// #region 定义响应式数据
 const cancelling = ref(false)
-// #endregion
 
-// #region 定义计算属性
 const statusConfig = computed(() => {
   return REFUND_STATUS_CONFIGS[props.record.status as TRefundStatus]
 })
@@ -52,15 +44,16 @@ const actualAmount = computed(() => {
 const canCancel = computed(() => {
   return props.record.status === REFUND_STATUS.PENDING
 })
-// #endregion
 
-// #region 事件处理函数
-// 处理点击事件
+/** 处理点击事件 */
 function handleClick(event: Event) {
   emit('click', event, props.record)
+  uni.navigateTo({
+    url: `${PACKAGE_REFUND_RESULT_PATH}?id=${props.record.id}`,
+  })
 }
 
-// 处理取消申请
+/** 处理取消申请 */
 async function handleCancelRefund() {
   try {
     await message.confirm({
@@ -89,7 +82,6 @@ async function handleCancelRefund() {
     uni.hideLoading()
   }
 }
-// #endregion
 </script>
 
 <template>
@@ -106,9 +98,9 @@ async function handleCancelRefund() {
       </view>
 
       <!-- 内容区域 -->
-      <view relative z="10">
+      <view relative z="10" flex="~ col" gap="1">
         <!-- 第一行：套餐名称和金额 -->
-        <view flex="~ justify-between items-center" m="b-1">
+        <view flex="~ justify-between items-center">
           <view text="sm gray-900" font="medium">
             {{ record.statusText }}
           </view>
@@ -118,8 +110,20 @@ async function handleCancelRefund() {
           </view>
         </view>
 
+        <!-- 套餐内容 -->
+        <view flex="~ items-center" gap="2" text="xs gray-500">
+          <template v-if="record.deviceType === DEVICE_TYPE.DRYER">
+            <text>吹风时长 {{ record.packageContent?.dryerMinutes === -1 ? '不限' : `${record.packageContent?.dryerMinutes ?? 0}分钟` }}</text>
+          </template>
+          <template v-else>
+            <text>视频通话 {{ record.packageContent?.videoCallMinutes === -1 ? '不限' : `${record.packageContent?.videoCallMinutes ?? 0}分钟` }}</text>
+            <text>|</text>
+            <text>留言 {{ record.packageContent?.messageCount === -1 ? '不限' : `${record.packageContent?.messageCount ?? 0}条` }}</text>
+          </template>
+        </view>
+
         <!-- 第二行：状态和申请时间 -->
-        <view flex="~ justify-between items-center" m="b-2">
+        <view flex="~ justify-between items-center" m="b-1">
           <view text="xs gray-600">
             {{ record.status === REFUND_STATUS.REJECTED ? record.adminRemark : record.applyReason }}
           </view>

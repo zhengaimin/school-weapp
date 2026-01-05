@@ -13,9 +13,9 @@ import type { IdentityOption } from './components/IdentityCard.vue'
 import { storeToRefs } from 'pinia'
 import { getWxCode, postWxPhoneApi } from '@/api/modules/user'
 import Page from '@/components/common/page/index.vue'
-import { PARENT_STUDENT_BIND_PATH, TABBAR_HOME_PATH } from '@/constant/router'
+import { STUDENT_BIND_PATH, TABBAR_HOME_PATH } from '@/constant/router'
 import { usePage } from '@/hooks/usePage'
-import { useParentStore } from '@/store/parent'
+import { useParentStore } from '@/store/auth/parent'
 import { useUserStore } from '@/store/user'
 import IdentityCard from './components/IdentityCard.vue'
 import { identityOptions } from './data'
@@ -61,7 +61,7 @@ async function selectIdentity(identity: IdentityOption) {
 
     if (unref(needBind)) {
       uni.navigateTo({
-        url: PARENT_STUDENT_BIND_PATH,
+        url: STUDENT_BIND_PATH,
       })
 
       return
@@ -76,7 +76,7 @@ async function selectIdentity(identity: IdentityOption) {
 
       if (result.code !== 0) {
         uni.navigateTo({
-          url: `${PARENT_STUDENT_BIND_PATH}`,
+          url: `${STUDENT_BIND_PATH}`,
         })
         return
       }

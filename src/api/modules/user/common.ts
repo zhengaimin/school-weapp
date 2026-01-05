@@ -54,10 +54,11 @@ export function postWxPhoneApi(data: User.Common.ReqWxPhoneApi) {
 
 /**
  * @description 获取用户余额信息
- * @returns {Promise<User.Common.IStudentBalanceVo>}
+ * @param {User.Common.ReqGetBalanceApi} params
+ * @returns {Promise<User.Common.ResGetBalanceApi>}
  */
-export function getUserBalanceApi() {
-  return http.get<User.Common.IStudentBalanceVo>(USER_COMMON_API.BALANCE)
+export function getUserBalanceApi(params: User.Common.ReqGetBalanceApi) {
+  return http.get<User.Common.ResGetBalanceApi>(USER_COMMON_API.BALANCE, params)
 }
 
 /**
