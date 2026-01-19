@@ -9,7 +9,6 @@
 </route>
 
 <script lang="ts" setup>
-// #region 导入
 import type { Devices } from '@/api/interface/modules/devices'
 import { storeToRefs } from 'pinia'
 import { computed, ref, unref } from 'vue'
@@ -19,23 +18,19 @@ import Page from '@/components/common/page/index.vue'
 import RefreshList from '@/components/common/refresh-list/index.vue'
 import { usePage } from '@/hooks/usePage'
 import { useRefresh } from '@/hooks/useRefresh'
-import { useParentStore } from '@/store/auth/parent'
+import { useCurrentStudentStore } from '@/store/business/currentStudent'
 import { useUserStore } from '@/store/user'
 import { getEnvBaseUrl } from '@/utils'
 import { isMpWeixin } from '@/utils/platform'
 import { toast } from '@/utils/toast'
 import SubscriptionItem from './components/SubscriptionItem.vue'
-// #endregion
 
-// #region 组件选项配置
 defineOptions({
   options: {
     styleIsolation: 'apply-shared',
   },
 })
-// #endregion
 
-// #region 使用 Hooks
 const { pageLoading, pageError, pageLoaded, onLoginFail, getContentHeight, batchRequestHandler }
   = usePage()
 const { loading, refreshLoading, loaded, empty, list, onRefreshList, onLoadMore }
@@ -44,35 +39,29 @@ const { loading, refreshLoading, loaded, empty, list, onRefreshList, onLoadMore 
     listField: 'subscribed',
     immediate: false,
   })
-// #endregion
 
-// #region 使用 Store
 const userStore = useUserStore()
-const parentStore = useParentStore()
+const currentStudentStore = useCurrentStudentStore()
 const { userInfo } = storeToRefs(userStore)
-const { contactInfo } = storeToRefs(parentStore)
-// #endregion
+const { contactInfo } = storeToRefs(currentStudentStore)
 
-// #region 定义响应式数据
+/** 正在订阅的设备ID */
 const subscribingId = ref<number | null>(null)
-// #endregion
 
-// #region 定义计算属性
-// 刷新列表高度 - 底部按钮164rpx
+/** 内容区域高度 */
 const contentHeight = computed(() => {
   return getContentHeight('164rpx')
 })
-// #endregion
 
-// #region 方法定义
-// 拼接 URL 参数，不对任何参数进行编码
+/** 拼接URL参数 */
 function buildQueryString(params: Record<string, unknown>) {
   return Object.entries(params)
     .filter(([, v]) => v !== undefined && v !== null)
     .map(([k, v]) => `${k}=${String(v)}`)
     .join('&')
 }
-// 获取跳转设备订阅链接
+
+/** 获取跳转设备订阅链接 */
 function getSubscribeUrl() {
   const { schoolId, schoolName, wechatInfo } = unref(userInfo) || {}
   const { id: userContactUuid } = unref(contactInfo) || {}
@@ -91,22 +80,13 @@ function getSubscribeUrl() {
 
   return `${basePath}?${buildQueryString(params)}`
 }
-// #endregion
 
-// #region 事件处理函数
-// 跳转到订阅设备页面
+/** 跳转到订阅设备页面 */
 function handleGoToSubscribe() {
   if (isMpWeixin) {
-    // console.log({
-    //   appId: import.meta.env.VITE_APP_VOIP_APPID,
-    //   path: getSubscribeUrl(),
-    // })
     uni.navigateToMiniProgram({
       appId: import.meta.env.VITE_APP_VOIP_APPID,
       path: getSubscribeUrl(),
-      success(res) {
-        console.log('跳转成功', res)
-      },
       fail(err) {
         console.error('跳转失败', err)
         toast.show('跳转失败，请稍后重试')
@@ -117,10 +97,8 @@ function handleGoToSubscribe() {
     toast.show('该平台暂不支持小程序订阅')
   }
 }
-// #endregion
 
-// #region 生命周期钩子
-// 登录成功后
+/** 登录成功处理 */
 async function onLoginSuccess() {
   await batchRequestHandler([onRefreshList()])
 }
@@ -130,7 +108,6 @@ onShow(() => {
     onRefreshList()
   }
 })
-// #endregion
 </script>
 
 <template>

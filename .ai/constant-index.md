@@ -1,6 +1,8 @@
 # 常量索引文档
 
-本文档提供项目中所有常量的索引，便于快速查询和定位。所有常量定义遵循 [@.ai/constant.md](.ai/constant.md) 规范。
+> 命名规范请参考 [naming.md](./naming.md)
+
+本文档提供项目中所有常量的索引，便于快速查询和定位。所有常量定义遵循 [constant.md](./constant.md) 规范。
 
 ## 索引说明
 
@@ -337,4 +339,4 @@
 
 **最后更新**: 2025-12-30
 **维护者**: 开发团队
-**相关文档**: [@.ai/constant.md](.ai/constant.md)
+**相关文档**: [constant.md](./constant.md)

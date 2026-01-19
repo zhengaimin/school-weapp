@@ -109,7 +109,7 @@ async function handleSubmitExternalImage() {
 
         // 重新获取个人信息
         await userStore.getUserInfo()
-        await parentStore.axiosGetStudentListByParentApi()
+        await parentStore.axiosGetStudentListApi()
       }
     }
     else {
@@ -206,7 +206,7 @@ async function confirmSubmitImage() {
 
       // 重新获取个人信息
       await userStore.getUserInfo()
-      await parentStore.axiosGetStudentListByParentApi()
+      await parentStore.axiosGetStudentListApi()
     }
   }
   catch (error) {

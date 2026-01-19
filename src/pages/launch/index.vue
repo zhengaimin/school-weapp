@@ -1,4 +1,4 @@
-<route lang="jsonc" type="home">
+<route lang="jsonc">
 {
   "layout": "default",
   "style": {

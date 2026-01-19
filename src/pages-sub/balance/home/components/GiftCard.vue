@@ -1,83 +1,66 @@
 <script lang="ts" setup>
-// #region 导入
-import { computed } from 'vue'
+import type { Gifts } from '@/api/interface/modules/gifts'
 import WhiteCard from '@/components/common/white-card/index.vue'
-// #endregion
 
-// #region 属性定义
 const props = defineProps<{
-  validGifts?: {
-    records?: Array<{
-      totalMinutes?: number
-      remainingMinutes?: number
-      remainingDays?: number
-    }>
-  }
+  validGifts?: Gifts.Valid.ResGetValidGiftsApi
 }>()
-// #endregion
 
-// #region 定义计算属性
-// 计算总时长(分钟)
-const totalMinutes = computed(() => {
-  if (!props.validGifts?.records?.length)
-    return '--'
-  return props.validGifts.records.reduce((total, gift) => total + (gift.totalMinutes || 0), 0)
-})
+const emit = defineEmits<{
+  click: [event: Event]
+}>()
 
-// 计算剩余时长(分钟)
-const remainingMinutes = computed(() => {
-  if (!props.validGifts?.records?.length)
-    return '--'
-  return props.validGifts.records.reduce((total, gift) => total + (gift.remainingMinutes || 0), 0)
-})
+/** 记录数量 */
+const recordCount = computed(() => props.validGifts?.records?.length ?? 0)
 
-// 计算剩余天数(最小值)
-const remainingDays = computed(() => {
-  if (!props.validGifts?.records?.length)
-    return '--'
-
-  const minDays = props.validGifts.records.reduce(
-    (min, gift) => (gift.remainingDays !== undefined ? Math.min(min, gift.remainingDays) : min),
-    Number.MAX_SAFE_INTEGER,
-  )
-
-  return minDays === Number.MAX_SAFE_INTEGER ? '--' : minDays
-})
-// #endregion
+/** 是否有记录 */
+const hasRecords = computed(() => recordCount.value > 0)
 </script>
 
 <template>
-  <WhiteCard>
-    <view text="sm text-secondary" m="b-3">
-      赠时长信息
+  <WhiteCard v-if="hasRecords" @click.stop="e => emit('click', e)">
+    <!-- 卡片头部 -->
+    <view flex="~ row items-center justify-between" m="b-3">
+      <view flex="~ row items-center" gap="2">
+        <view w="1" h="3" bg="blue-500" rounded-full />
+        <text text="base gray-900" font="bold">
+          赠时长
+        </text>
+      </view>
+      <text text="xs gray-400">
+        共{{ recordCount }}条
+      </text>
     </view>
-    <view grid="~ cols-3" gap="4">
-      <view text="center">
-        <view text="lg text-primary" font="medium">
-          {{ totalMinutes }}
-        </view>
-        <view text="xs text-secondary">
-          总时长(分钟)
-        </view>
-      </view>
-      <view text="center">
-        <view text="lg text-primary" font="medium">
-          {{ remainingMinutes }}
-        </view>
-        <view text="xs text-secondary">
-          剩余时长(分钟)
-        </view>
-      </view>
-      <view text="center">
-        <view text="lg text-primary" font="medium">
-          {{ remainingDays }}
-        </view>
-        <view text="xs text-secondary">
-          剩余天数
+
+    <!-- 赠费记录列表 -->
+    <view bg="gray-50" rounded="md" px="3" py="1">
+      <view
+        v-for="(item, index) in validGifts?.records"
+        :key="item.id"
+        flex="~ row items-center justify-between"
+        py="2.5"
+        :class="[index < recordCount - 1 ? 'border-b border-b-gray-200 border-b-dashed' : '']"
+      >
+        <!-- 左侧：来源 -->
+        <text text="sm gray-800" font="medium">
+          {{ item.sourceText }}
+        </text>
+
+        <!-- 右侧：赠送时长 | 剩余时长 | 剩余天数 -->
+        <view flex="~ row items-center" gap="2">
+          <text text="xs gray-500">
+            赠{{ item.totalMinutes }}分钟
+          </text>
+          <view w="1px" h="3" bg="gray-300" />
+          <text text="xs blue-600" font="medium">
+            剩{{ item.remainingMinutes }}分钟
+          </text>
+          <view w="1px" h="3" bg="gray-300" />
+          <text text="xs" :class="item.remainingDays <= 3 ? 'text-orange-500' : 'text-gray-500'">
+            {{ item.remainingDays }}天
+          </text>
         </view>
       </view>
     </view>
   </WhiteCard>
 </template>
-
-<style scoped lang="scss"></style>

@@ -22,6 +22,10 @@ const props = defineProps({
   // 自定义样式
   customStyle: object().def(() => ({})),
   customClass: object().def(() => ({})),
+  // 颜色配置
+  bgColor: string(),
+  textColor: string(),
+  iconColor: string(),
 })
 // #endregion
 
@@ -44,19 +48,23 @@ const showHomeButton = computed(() => {
 const navStyle = computed(() => {
   const info = unref(navBarInfo)
 
-  if (!info)
-    return { display: 'none' }
+  if (!info) return { display: 'none' }
 
-  return {
+  const style: any = {
     height: `${info.navBarHeight || 60}px`,
     ...props.customStyle,
   }
+
+  if (props.bgColor) style.backgroundColor = props.bgColor
+
+  if (props.textColor) style.color = props.textColor
+
+  return style
 })
 // 计算标题样式
 const titleStyle = computed(() => {
   const info = unref(navBarInfo)
-  if (!info)
-    return {}
+  if (!info) return {}
 
   const { menuHeight, menuBottom } = info
 
@@ -69,20 +77,22 @@ const titleStyle = computed(() => {
 })
 const titleTextStyle = computed(() => {
   const info = unref(navBarInfo)
-  if (!info)
-    return {}
+  if (!info) return {}
 
   const { menuHeight } = info
 
-  return {
+  const style: any = {
     height: `${menuHeight}px`,
     lineHeight: `${menuHeight}px`,
   }
+
+  if (props.textColor) style.color = props.textColor
+
+  return style
 })
 const backStyle = computed(() => {
   const info = unref(navBarInfo)
-  if (!info)
-    return {}
+  if (!info) return {}
 
   const { menuHeight, menuBottom } = info
 
@@ -95,8 +105,7 @@ const backStyle = computed(() => {
 })
 const rightStyle = computed(() => {
   const info = unref(navBarInfo)
-  if (!info)
-    return {}
+  if (!info) return {}
 
   const { menuHeight, menuBottom, width } = info
 
@@ -113,6 +122,8 @@ const rightStyle = computed(() => {
 
   return result
 })
+
+const resolvedIconColor = computed(() => props.iconColor || 'currentColor')
 // #endregion
 
 // #region 事件处理函数
@@ -148,10 +159,10 @@ function handleBack() {
           <Icon
             v-if="showHomeButton"
             name="home-3-line"
-            icon-color="currentColor"
+            :icon-color="resolvedIconColor"
             icon-size="40rpx"
           />
-          <Icon v-else name="arrow-left-line" icon-color="currentColor" icon-size="40rpx" />
+          <Icon v-else name="arrow-left-line" :icon-color="resolvedIconColor" icon-size="40rpx" />
         </view>
       </slot>
     </view>

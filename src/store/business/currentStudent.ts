@@ -18,8 +18,9 @@ import type { TDeviceType } from '@/constant/modules'
 
 import dayjs from 'dayjs'
 import { defineStore } from 'pinia'
+import { computed, ref } from 'vue'
 import { getFamilyContactsApi } from '@/api/modules/family/contacts'
-import { DEVICE_TYPE } from '@/constant/modules'
+import { useUserStore } from '@/store/user'
 
 type IBalanceInfo = User.Common.IStudentBalanceInfoVo & {
   availableBalanceFormatted: string
@@ -38,7 +39,7 @@ export const useCurrentStudentStore = defineStore(
     // 亲情号列表缓存
     const familyContacts = ref<Family.Contact.ResGetFamilyContactsApi[]>([])
     // 选中的设备类型
-    const deviceType = ref<TDeviceType>(DEVICE_TYPE.VIDEO)
+    const deviceType = ref<TDeviceType | null>(null)
 
     const setStudentInfo = (info: User.Common.ICurrentChildVo | null) => {
       studentInfo.value = info
@@ -71,6 +72,21 @@ export const useCurrentStudentStore = defineStore(
       return map
     })
 
+    // 学生完整信息：学校名称·年级名称·级部名称·班级名称（没有则不显示）
+    const studentFullInfo = computed(() => {
+      if (!studentInfo.value) return ''
+
+      const userStore = useUserStore()
+      const parts = [
+        userStore.userInfo?.schoolName,
+        studentInfo.value.grade,
+        studentInfo.value.departmentName,
+        studentInfo.value.className,
+      ].filter(Boolean)
+
+      return parts.join('·')
+    })
+
     const axiosGetFamilyContactsApi = async () => {
       const result = await getFamilyContactsApi({})
 
@@ -90,7 +106,7 @@ export const useCurrentStudentStore = defineStore(
       balanceInfo.value = null
       contactInfo.value = null
       familyContacts.value = []
-      deviceType.value = DEVICE_TYPE.VIDEO
+      deviceType.value = null
     }
 
     return {
@@ -106,6 +122,7 @@ export const useCurrentStudentStore = defineStore(
       setDeviceType,
 
       familyContactsRelationshipMap,
+      studentFullInfo,
 
       axiosGetFamilyContactsApi,
       clearStudentData,

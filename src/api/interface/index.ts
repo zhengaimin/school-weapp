@@ -29,3 +29,16 @@ export interface ResultData<T = any> {
    */
   data: T
 }
+
+export type { Devices } from './modules/devices'
+export type { Family } from './modules/family'
+export type { File } from './modules/file'
+export type { Gifts } from './modules/gifts'
+export type { Message } from './modules/message'
+export type { Overview } from './modules/overview'
+export type { Pkg } from './modules/package'
+export type { Payment } from './modules/payment'
+export type { Refund } from './modules/refund'
+export type { Schools } from './modules/schools'
+export type { Students } from './modules/students'
+export type { User } from './modules/user'

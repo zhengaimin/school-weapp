@@ -1,8 +1,11 @@
 import type { Pkg } from '@/api/interface/modules/package'
 import { storeToRefs } from 'pinia'
-import { computed, ref, unref } from 'vue'
-import { getCheckPendingApi, getPendingPackagePaymentApi, getStudentActivePackageApi } from '@/api/modules'
-import { PACKAGE_TYPE } from '@/constant/modules/business/package'
+import { ref, unref } from 'vue'
+import {
+  getCheckPendingApi,
+  getPendingPackagePaymentApi,
+  getStudentActivePackageApi,
+} from '@/api/modules'
 import { useParentStore } from '@/store/auth/parent'
 import { useCurrentStudentStore } from '@/store/business/currentStudent'
 
@@ -19,25 +22,29 @@ export function usePackage() {
   const pendingRefundInfo = ref<Pkg.Refund.IPendingApplication | null>(null)
   const hasPendingRefund = ref(false)
 
+  /** 生效中套餐列表 */
+  const activePackages = ref<Pkg.Query.IStudentActivePackageVo[]>([])
+  /** 待生效套餐列表 */
+  const waitingPackages = ref<Pkg.Query.IStudentActivePackageVo[]>([])
+
   /** 获取学生当前正在使用的套餐 */
   async function axiosGetStudentActivePackageApi() {
     try {
-      const result = await getStudentActivePackageApi()
+      const result = await getStudentActivePackageApi({ deviceType: unref(deviceType) })
       if (result.code === 0) {
-        const allPackages = [
-          ...(result.data.activePackages || []),
-          ...(result.data.waitingPackages || []),
-        ]
+        activePackages.value = result.data.activePackages || []
+        waitingPackages.value = result.data.waitingPackages || []
+        const allPackages = [...activePackages.value, ...waitingPackages.value]
         allPurchasedPackages.value = allPackages
         purchasedPackageIds.value = new Set(allPackages.map(pkg => pkg.packageId))
-        activePackage.value = result.data.activePackages?.[0] ?? null
-        activePackageTotal.value = result.data?.totalCount ?? null
+        activePackage.value = activePackages.value[0] ?? null
+        activePackageTotal.value = result.data.totalCount ?? null
       }
       return result
     }
     catch (error) {
       console.error('获取学生当前套餐失败:', error)
-      return { code: -1 }
+      return { code: -1, data: null }
     }
   }
 
@@ -72,18 +79,10 @@ export function usePackage() {
     }
   }
 
-  /** 判断当前活跃套餐是否为固定套餐 */
-  const isFixedPackageActive = computed(() => {
-    return activePackage.value?.snapshotInfo.packageType === PACKAGE_TYPE.FIXED
-  })
-
-  /** 判断当前活跃套餐是否为通用套餐 */
-  const isGeneralPackageActive = computed(() => {
-    return activePackage.value?.snapshotInfo.packageType === PACKAGE_TYPE.GENERAL
-  })
-
   return {
     activePackage,
+    activePackages,
+    waitingPackages,
     activePackageTotal,
     allPurchasedPackages,
     purchasedPackageIds,
@@ -93,7 +92,5 @@ export function usePackage() {
     axiosGetStudentActivePackageApi,
     axiosGetPendingPaymentApi,
     axiosGetCheckPendingApi,
-    isFixedPackageActive,
-    isGeneralPackageActive,
   }
 }

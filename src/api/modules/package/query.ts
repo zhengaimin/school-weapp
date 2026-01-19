@@ -30,10 +30,11 @@ export function getStudentPackagesApi(params: Pkg.Query.ReqGetStudentApi) {
 
 /**
  * @description 获取学生当前正在使用的套餐
+ * @param {Pkg.Query.ReqGetStudentActiveApi} params
  * @returns {Promise<Pkg.Query.ResGetStudentActiveApi>}
  */
-export function getStudentActivePackageApi() {
-  return http.get<Pkg.Query.ResGetStudentActiveApi>(PACKAGE_QUERY_API.STUDENT_ACTIVE)
+export function getStudentActivePackageApi(params?: Pkg.Query.ReqGetStudentActiveApi) {
+  return http.get<Pkg.Query.ResGetStudentActiveApi>(PACKAGE_QUERY_API.STUDENT_ACTIVE, params)
 }
 
 /**

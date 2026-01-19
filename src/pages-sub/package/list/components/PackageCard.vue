@@ -1,11 +1,13 @@
 <script lang="ts" setup>
 import type { Pkg } from '@/api/interface/modules/package'
+import { storeToRefs } from 'pinia'
 import { computed } from 'vue'
 import WhiteCard from '@/components/common/white-card/index.vue'
 import { DEVICE_TYPE, PACKAGE_TYPE, PACKAGE_TYPE_I18N } from '@/constant/modules'
+import { useCurrentStudentStore } from '@/store/business/currentStudent'
 
 interface Props {
-  pkg: Pkg.Query.IPackage
+  package: Pkg.Query.IPackage
   isPurchased?: boolean
 }
 
@@ -14,13 +16,15 @@ const emit = defineEmits<{
   click: []
 }>()
 
-const isFixed = computed(() => props.pkg.packageType === PACKAGE_TYPE.FIXED)
-const isVideoDevice = computed(() => props.pkg.deviceType === DEVICE_TYPE.VIDEO)
+const currentStudentStore = useCurrentStudentStore()
+const { deviceType } = storeToRefs(currentStudentStore)
+
+const isFixed = computed(() => props.package.packageType === PACKAGE_TYPE.FIXED)
+const isVideoDevice = computed(() => deviceType.value === DEVICE_TYPE.VIDEO)
 
 const messageCountDisplay = computed(() => {
-  const count = props.pkg.packageContent?.messageCount
-  if (count === -1)
-    return '∞'
+  const count = props.package.packageContent?.messageCount
+  if (count === -1) return '∞'
   return count ?? '-'
 })
 </script>
@@ -31,15 +35,21 @@ const messageCountDisplay = computed(() => {
     <view flex="~ row items-center justify-between" mb="2">
       <view flex="~ row items-center" gap="2">
         <text text="lg gray-800" font="semibold">
-          {{ PACKAGE_TYPE_I18N[pkg.packageType] }}
+          {{ PACKAGE_TYPE_I18N[package.packageType] }}
         </text>
         <view v-if="isPurchased" px="1.5" py="0.5" rounded bg="green-500/10">
-          <text text="xs green-600" font="medium">已购买</text>
+          <text text="xs green-600" font="medium">
+            已购买
+          </text>
         </view>
       </view>
       <view flex="~ row items-baseline">
-        <text text="sm red-500" font="semibold">¥</text>
-        <text text="2xl red-500" font="bold">{{ pkg.purchasePrice }}</text>
+        <text text="sm red-500" font="semibold">
+          ¥
+        </text>
+        <text text="2xl red-500" font="bold">
+          {{ package.purchasePrice }}
+        </text>
       </view>
     </view>
 
@@ -49,7 +59,7 @@ const messageCountDisplay = computed(() => {
         <!-- 话机：通话分钟 -->
         <view v-if="isVideoDevice" flex="~ col items-center">
           <text text="base gray-800" font="semibold" mb="0.5">
-            {{ pkg.packageContent?.videoCallMinutes ?? '-' }}
+            {{ package.packageContent?.videoCallMinutes ?? '-' }}
           </text>
           <text text="xs gray-500">
             通话分钟
@@ -67,7 +77,7 @@ const messageCountDisplay = computed(() => {
         <!-- 吹风机：吹风时长 -->
         <view v-if="!isVideoDevice" flex="~ col items-center">
           <text text="base gray-800" font="semibold" mb="0.5">
-            {{ pkg.packageContent?.dryerMinutes ?? '-' }}
+            {{ package.packageContent?.dryerMinutes ?? '-' }}
           </text>
           <text text="xs gray-500">
             吹风时长
@@ -75,7 +85,7 @@ const messageCountDisplay = computed(() => {
         </view>
         <view flex="~ col items-center">
           <text text="base gray-800" font="semibold" mb="0.5">
-            {{ pkg.totalMonths ?? '-' }}
+            {{ package.totalMonths ?? '-' }}
           </text>
           <text text="xs gray-500">
             套餐月数
@@ -85,26 +95,26 @@ const messageCountDisplay = computed(() => {
     </view>
 
     <!-- 套餐说明 -->
-    <view v-if="pkg.templateDescription" mb="2">
+    <view v-if="package.templateDescription" mb="2">
       <text text="sm gray-500" leading="relaxed" class="line-clamp-2">
-        {{ pkg.templateDescription }}
+        {{ package.templateDescription }}
       </text>
     </view>
 
     <!-- 使用规则 -->
-    <view v-if="pkg.usageRules" p="x-3 y-2" bg="primary/6" rounded="md" mb="2">
+    <view v-if="package.usageRules" p="x-3 y-2" bg="primary/6" rounded="md" mb="2">
       <text text="xs primary" font="semibold" block mb="0.5">
         使用规则
       </text>
       <text text="sm primary" leading="relaxed">
-        {{ pkg.usageRules }}
+        {{ package.usageRules }}
       </text>
     </view>
 
     <!-- 底部：有效期 + 查看详情 -->
     <view flex="~ row items-center justify-between" mt="2">
-      <text v-if="isFixed && pkg.startTime" text="xs gray-400">
-        有效期：{{ pkg.startTime }} 至 {{ pkg.endTime }}
+      <text v-if="isFixed && package.startTime" text="xs gray-400">
+        有效期：{{ package.startTime }} 至 {{ package.endTime }}
       </text>
       <view v-else />
       <view flex="~ row items-center" text="sm primary" font="medium">

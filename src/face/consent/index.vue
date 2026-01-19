@@ -19,6 +19,7 @@ import WhiteCard from '@/components/common/white-card/index.vue'
 import { COMMON_SIGNATURE_PATH, FACE_COLLECTION_PATH } from '@/constant/router'
 import { usePage } from '@/hooks/usePage'
 import { useParentStore } from '@/store/auth/parent'
+import { useCurrentStudentStore } from '@/store/business/currentStudent'
 import { useUserStore } from '@/store/user'
 import { uploadBase64Promise, uploadFilePromise, uploadFileUrl } from '@/utils/file/upload'
 import { toast } from '@/utils/toast'
@@ -39,7 +40,9 @@ const { pageLoading, pageError, onLoginSuccess, onLoginFail, getContentHeight } 
 // #region 使用 Store
 const parentStore = useParentStore()
 const userStore = useUserStore()
-const { userInfo, currentStudent } = storeToRefs(userStore)
+const currentStudentStore = useCurrentStudentStore()
+const { userInfo } = storeToRefs(userStore)
+const { studentInfo } = storeToRefs(currentStudentStore)
 // #endregion
 
 // #region 定义响应式数据
@@ -60,7 +63,7 @@ async function axiosUploadSignatureImageApi(imageData: string): Promise<string> 
     // 生成文件名：用户id_学生id_时间戳+随机值.png
     const timestamp = Date.now()
     const randomValue = Math.random().toString(36).substring(2, 8)
-    const fileName = `${unref(userInfo).userId}_${unref(currentStudent)?.studentId}_${timestamp}_${randomValue}.png`
+    const fileName = `${unref(userInfo).userId}_${unref(studentInfo)?.studentId}_${timestamp}_${randomValue}.png`
 
     let uploadResult: { code: number, data: any }
 

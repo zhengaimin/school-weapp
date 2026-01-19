@@ -7,7 +7,7 @@ import { postCancelPackageRefundApi } from '@/api/modules/package/refund'
 import TButton from '@/components/common/button/index.vue'
 import WhiteCard from '@/components/common/white-card/index.vue'
 import Icon from '@/components/icon/index.vue'
-import { DEVICE_TYPE, REFUND_STATUS, REFUND_STATUS_CONFIGS } from '@/constant/modules'
+import { REFUND_STATUS, REFUND_STATUS_CONFIGS } from '@/constant/modules'
 import { PACKAGE_REFUND_RESULT_PATH } from '@/constant/router'
 import { formatTime } from '@/utils/format'
 import { toast } from '@/utils/toast'
@@ -108,18 +108,6 @@ async function handleCancelRefund() {
           <view text="lg gray-900" font="bold">
             ¥{{ Number(actualAmount).toFixed(2) }}
           </view>
-        </view>
-
-        <!-- 套餐内容 -->
-        <view flex="~ items-center" gap="2" text="xs gray-500">
-          <template v-if="record.deviceType === DEVICE_TYPE.DRYER">
-            <text>吹风时长 {{ record.packageContent?.dryerMinutes === -1 ? '不限' : `${record.packageContent?.dryerMinutes ?? 0}分钟` }}</text>
-          </template>
-          <template v-else>
-            <text>视频通话 {{ record.packageContent?.videoCallMinutes === -1 ? '不限' : `${record.packageContent?.videoCallMinutes ?? 0}分钟` }}</text>
-            <text>|</text>
-            <text>留言 {{ record.packageContent?.messageCount === -1 ? '不限' : `${record.packageContent?.messageCount ?? 0}条` }}</text>
-          </template>
         </view>
 
         <!-- 第二行：状态和申请时间 -->

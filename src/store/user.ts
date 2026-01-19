@@ -5,6 +5,7 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
 import { getUserInfoApi, getWxCode, postWxLoginApi } from '@/api/modules/user'
+import { DEVICE_TYPE } from '@/constant/modules'
 import { useCurrentStudentStore } from '@/store/business/currentStudent'
 
 export const useUserStore = defineStore(
@@ -31,9 +32,7 @@ export const useUserStore = defineStore(
       phone.value = val
     }
 
-    /**
-     * 获取用户信息
-     */
+    /** 获取用户信息 */
     const getUserInfo = async () => {
       const res: any = await getUserInfoApi()
 
@@ -52,6 +51,21 @@ export const useUserStore = defineStore(
       if (data.userType === 'parent' && data.roleInfo?.currentChild) {
         const currentStudentStore = useCurrentStudentStore()
         currentStudentStore.setStudentInfo(data.roleInfo.currentChild)
+      }
+
+      // 设置默认设备类型（仅当 store 中 deviceType 为空时）
+      const types = data.supportedDeviceTypes || []
+      if (types.length > 0) {
+        const currentStudentStore = useCurrentStudentStore()
+        if (!currentStudentStore.deviceType) {
+          const defaultType
+            = types.length === 1
+              ? types[0]
+              : types.includes(DEVICE_TYPE.VIDEO)
+                ? DEVICE_TYPE.VIDEO
+                : types[0]
+          currentStudentStore.setDeviceType(defaultType)
+        }
       }
 
       return { code: 0, msg: '获取用户信息成功', data: res.data }
@@ -80,6 +94,13 @@ export const useUserStore = defineStore(
       userInfo.value = null
     }
 
+    /**
+     * 获取学校支持的设备类型列表
+     */
+    const getSupportedDeviceTypes = () => {
+      return userInfo.value?.supportedDeviceTypes || []
+    }
+
     return {
       token,
       setToken,
@@ -97,6 +118,8 @@ export const useUserStore = defineStore(
       setPhone,
 
       logout,
+
+      getSupportedDeviceTypes,
     }
   },
   {

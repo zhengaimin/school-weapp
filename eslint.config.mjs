@@ -30,6 +30,11 @@ export default uniHelper({
     'vue/html-self-closing': 'off',
     // 禁用 namespace 相关的 ESLint 规则
     '@typescript-eslint/no-namespace': 'off',
+    // 单行 if 语句保持在一行
+    'style/nonblock-statement-body-position': ['error', 'beside'],
+    'style/max-statements-per-line': ['error', { max: 2 }],
+    'style/indent': 'off',
+    'antfu/if-newline': 'off',
   },
   formatters: {
     /**

@@ -17,9 +17,15 @@ import { getPackageRefundListApi } from '@/api/modules/package/refund'
 import FilterGroup from '@/components/common/filter-group/index.vue'
 import Page from '@/components/common/page/index.vue'
 import RefreshList from '@/components/common/refresh-list/index.vue'
-import { ALL, REFUND_STATUS, REFUND_STATUS_I18N, REFUND_STATUS_OPTIONS } from '@/constant/modules'
+import {
+  ALL,
+  REFUND_STATUS,
+  REFUND_STATUS_I18N,
+  REFUND_STATUS_OPTIONS,
+} from '@/constant/modules'
 import { usePage } from '@/hooks/usePage'
 import { useRefresh } from '@/hooks/useRefresh'
+import { useCurrentStudentStore } from '@/store/business/currentStudent'
 import { usePackageEmitter } from '@/utils/emit/package'
 import RefundHistoryItem from './components/RefundHistoryItem.vue'
 
@@ -29,15 +35,34 @@ defineOptions({
   },
 })
 
-const { pageLoading, pageError, getContentHeight, batchRequestHandler, onLoginFail } = usePage()
-const { emitPackageRefund } = usePackageEmitter()
-
 type FilterValue = string | number | number[] | [number, number]
+
+const { pageLoading, pageError, getContentHeight, batchRequestHandler, onLoginFail } = usePage()
+const { emitPackageRefund, onPackageRefund } = usePackageEmitter()
+const currentStudentStore = useCurrentStudentStore()
+
+const {
+  query,
+  list: recordsList,
+  loading,
+  refreshLoading,
+  loaded,
+  empty,
+  onRefreshList,
+  onLoadMore,
+} = useRefresh<Pkg.Refund.IRefundApplicationRecord>({
+  get: params => getPackageRefundListApi({ ...params, deviceType: currentStudentStore.deviceType }),
+  listField: 'list',
+  immediate: false,
+})
+
+/** 筛选条件 */
 const filters = ref<FilterValue[]>([
   [dayjs().subtract(1, 'year').valueOf(), dayjs().valueOf()],
   ALL,
 ])
 
+/** 筛选配置 */
 const filterConfigs = computed<FilterConfig[]>(() => [
   {
     key: 'daterange',
@@ -53,38 +78,19 @@ const filterConfigs = computed<FilterConfig[]>(() => [
     options: [{ label: '全部', value: ALL }, ...REFUND_STATUS_OPTIONS],
   },
 ])
-
-const contentStyle = computed(() => {
-  return getContentHeight('140rpx')
-})
-
-const {
-  query,
-  list: recordsList,
-  loading,
-  refreshLoading,
-  loaded,
-  empty,
-  onRefreshList,
-  onLoadMore,
-} = useRefresh<Pkg.Refund.IRefundApplicationRecord>({
-  get: params => getPackageRefundListApi(params),
-  listField: 'list',
-  immediate: false,
-})
+/** 内容区域样式 */
+const contentStyle = computed(() => getContentHeight('140rpx'))
 
 /** 筛选条件变化 */
 function onFilterChange(key: string, value: [number, number] | string | number) {
   if (key === 'daterange') {
     const [startTime, endTime] = value as [number, number]
-
     query.value.startDate = dayjs(startTime).format('YYYY-MM-DD')
     query.value.endDate = dayjs(endTime).format('YYYY-MM-DD')
   }
   else if (key === 'status') {
     query.value.status = value === ALL ? undefined : value
   }
-
   onRefreshList()
 }
 
@@ -95,21 +101,29 @@ function handleCancelSuccess(record: Pkg.Refund.IRefundApplicationRecord) {
     targetRecord.status = REFUND_STATUS.CANCELLED
     targetRecord.statusText = REFUND_STATUS_I18N[REFUND_STATUS.CANCELLED]
   }
-
   emitPackageRefund()
 }
-
 /** 登录成功处理 */
 function handleLoginSuccess() {
   const daterange = filters.value[0] as [number, number]
   const [startTime, endTime] = daterange
   query.value.startDate = dayjs(startTime).format('YYYY-MM-DD')
   query.value.endDate = dayjs(endTime).format('YYYY-MM-DD')
-
   query.value.status = filters.value[1] === ALL ? undefined : filters.value[1]
-
   batchRequestHandler([onRefreshList()])
 }
+
+onShow(() => {
+  onPackageRefund((id) => {
+    if (id) {
+      const index = recordsList.value.findIndex(item => item.id === id)
+      if (index !== -1) {
+        recordsList.value[index].status = REFUND_STATUS.CANCELLED
+        recordsList.value[index].statusText = REFUND_STATUS_I18N[REFUND_STATUS.CANCELLED]
+      }
+    }
+  })
+})
 </script>
 
 <template>

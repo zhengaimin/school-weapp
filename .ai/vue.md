@@ -1,5 +1,7 @@
 # Vue 开发规范
 
+> 命名规范请参考 [naming.md](./naming.md)
+
 本文档包含 Vue 组件和页面的开发规范，涵盖代码组织、命名规范、样式规范等内容。
 
 ---
@@ -508,15 +510,14 @@ onMounted(() => {
 7. **Store**
 8. **本地数据/组件**
 9. **组件选项配置**（defineOptions）
-10. **Hook 函数调用**
-11. **Store 相关调用**
-12. **响应式数据**（ref、reactive）
-13. **计算属性**（computed）
-14. **验证规则**
-15. **接口请求函数**（与后端API交互的函数）
-16. **方法定义**（通用方法函数，如 refreshPage 等）
-17. **事件处理函数**（用户交互事件处理）
-18. **生命周期钩子**（Vue 生命周期函数及 onLoginSuccess、onShow 等）
+10. **ts 类型定义**（type、interface）
+11. **useXXX Hook 函数调用**（同区域内不换行）
+12. **ref、reactive 响应式数据**（同区域内不换行，每个变量需添加 `/** */` 注释）
+13. **computed 计算属性**（同区域内不换行，每个属性需添加 `/** */` 注释）
+14. **Methods 方法定义**（通用方法函数，同区域内不换行，每个方法需添加 `/** */` 注释）
+15. **axios 接口请求函数**（与后端API交互的函数，同区域内不换行，每个方法需添加 `/** */` 注释）
+16. **handle 事件处理函数**（用户交互事件处理，同区域内不换行，每个方法需添加 `/** */` 注释）
+17. **生命周期钩子**（onShow、onLoginSuccess、onLoginFail 等，同区域内不换行）
 
 #### 重要说明
 
@@ -1567,11 +1568,29 @@ uni.navigateTo({ url: REFUND_HISTORY_PATH })
 
 #### Toast 提示规范
 
-统一使用 `toast` 方法，根据不同场景选择：
-- **成功提示**: `toast.success('操作成功')`
-- **错误提示**: `toast.error('操作失败')`
-- **警告提示**: `toast.warning('注意事项')`
-- **普通提示**: `toast.show('普通提示')`
-- **信息提示**: `toast.info('信息提示')`
+统一使用 `toast` 方法，禁止使用 `uni.showToast`。
 
-详细规范请参见 `.roo/rules/toast.md`。
+**导入方式**：
+```typescript
+import { toast } from '@/utils/toast'
+```
+
+**使用方法**：
+```typescript
+// 正确做法
+toast.show('操作成功')
+toast.success('提交成功')
+toast.error('请检查网络连接')
+toast.warning('请注意')
+toast.info('信息提示')
+
+// 错误做法
+uni.showToast({ title: '操作成功', icon: 'none' })
+```
+
+**方法说明**：
+- `toast.show(message)` - 普通提示
+- `toast.success(message)` - 成功提示
+- `toast.error(message)` - 错误提示
+- `toast.warning(message)` - 警告提示
+- `toast.info(message)` - 信息提示

@@ -8,7 +8,7 @@ import { storeToRefs } from 'pinia'
 import { computed, nextTick, reactive, ref } from 'vue'
 import { getMessagesApi, postMessageApi, putReadMessagesApi } from '@/api/modules/message'
 import { usePage } from '@/hooks/usePage'
-import { useUserStore } from '@/store/user'
+import { useCurrentStudentStore } from '@/store/business/currentStudent'
 import { isNumber } from '@/utils/is'
 import { MessageCache } from '../utils/cache'
 // #endregion
@@ -19,8 +19,8 @@ export function useChat() {
   // #endregion
 
   // #region 使用 Store
-  const userStore = useUserStore()
-  const { currentStudent } = storeToRefs(userStore)
+  const currentStudentStore = useCurrentStudentStore()
+  const { studentInfo } = storeToRefs(currentStudentStore)
   // #endregion
 
   // #region 定义响应式数据
@@ -63,8 +63,8 @@ export function useChat() {
 
   // #region 定义计算属性
   // 当前学生信息
-  const studentName = computed(() => currentStudent.value?.studentName || '聊天')
-  const studentId = computed(() => currentStudent.value?.studentId)
+  const studentName = computed(() => studentInfo.value?.studentName || '聊天')
+  const studentId = computed(() => studentInfo.value?.studentId)
 
   /** 内容区域样式 */
   const contentStyle = computed(() => {
@@ -508,8 +508,8 @@ export function useChat() {
       receiverId: studentId.value, // 设置接收方ID为当前学生ID
       senderName: userStore.userInfo?.userName || '我', // 设置发送方姓名
       senderAvatar: userStore.userInfo?.wechatInfo?.avatarUrl || '', // 设置发送方头像
-      receiverName: currentStudent.value.studentName, // 设置接收方姓名
-      receiverAvatar: currentStudent.value.faceImageUrl || '', // 设置接收方头像
+      receiverName: studentInfo.value.studentName, // 设置接收方姓名
+      receiverAvatar: studentInfo.value.faceImageUrl || '', // 设置接收方头像
     }
 
     // 添加到消息列表

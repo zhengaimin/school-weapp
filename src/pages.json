@@ -16,21 +16,21 @@
   },
   "pages": [
     {
-      "path": "pages/launch/index",
+      "path": "pages/parent/overview/index",
       "type": "home",
       "layout": "default",
       "style": {
         "navigationStyle": "custom",
-        "navigationBarTitleText": ""
+        "navigationBarTitleText": "概览"
       }
     },
     {
-      "path": "pages/parent/index",
+      "path": "pages/launch/index",
       "type": "page",
       "layout": "default",
       "style": {
         "navigationStyle": "custom",
-        "navigationBarTitleText": "首页"
+        "navigationBarTitleText": ""
       }
     },
     {
@@ -40,6 +40,15 @@
       "style": {
         "navigationStyle": "custom",
         "navigationBarTitleText": "欢迎使用"
+      }
+    },
+    {
+      "path": "pages/parent/home/index",
+      "type": "page",
+      "layout": "default",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "首页"
       }
     }
   ],
@@ -57,49 +66,6 @@
           }
         },
         {
-          "path": "demo/datetime-picker-popup",
-          "type": "page",
-          "layout": "default",
-          "style": {
-            "navigationStyle": "custom",
-            "navigationBarTitleText": "时间选择器示例"
-          }
-        },
-        {
-          "path": "demo/icon",
-          "type": "page",
-          "layout": "default",
-          "style": {
-            "navigationStyle": "custom",
-            "navigationBarTitleText": ""
-          }
-        },
-        {
-          "path": "demo/navigate-to-miniprogram",
-          "type": "page",
-          "style": {
-            "navigationBarTitleText": "跳转小程序示例"
-          }
-        },
-        {
-          "path": "demo/refresh-list",
-          "type": "page",
-          "layout": "default",
-          "style": {
-            "navigationStyle": "custom",
-            "navigationBarTitleText": "刷新列表测试"
-          }
-        },
-        {
-          "path": "demo/status-tip",
-          "type": "page",
-          "layout": "default",
-          "style": {
-            "navigationStyle": "custom",
-            "navigationBarTitleText": "StatusTip 示例"
-          }
-        },
-        {
           "path": "balance/history/index",
           "type": "page",
           "layout": "default",
@@ -114,7 +80,7 @@
           "layout": "default",
           "style": {
             "navigationStyle": "custom",
-            "navigationBarTitleText": "余额查询"
+            "navigationBarTitleText": "余额信息"
           }
         },
         {
@@ -181,24 +147,6 @@
           }
         },
         {
-          "path": "consumption/history/index",
-          "type": "page",
-          "layout": "default",
-          "style": {
-            "navigationStyle": "custom",
-            "navigationBarTitleText": "消费记录"
-          }
-        },
-        {
-          "path": "demo/login-test/index",
-          "type": "page",
-          "layout": "default",
-          "style": {
-            "navigationStyle": "custom",
-            "navigationBarTitleText": "登录测试"
-          }
-        },
-        {
           "path": "device/subscribe/index",
           "type": "page",
           "layout": "default",
@@ -226,16 +174,16 @@
           }
         },
         {
-          "path": "fund/balance/index",
+          "path": "history/consumption/index",
           "type": "page",
           "layout": "default",
           "style": {
             "navigationStyle": "custom",
-            "navigationBarTitleText": "余额查询"
+            "navigationBarTitleText": "消费记录"
           }
         },
         {
-          "path": "fund/history/index",
+          "path": "history/fund/index",
           "type": "page",
           "layout": "default",
           "style": {

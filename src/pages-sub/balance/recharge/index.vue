@@ -9,14 +9,12 @@
 </route>
 
 <script lang="ts" setup>
-// #region 导入
 import type { Payment } from '@/api/interface/modules/payment'
 import { onShow } from '@dcloudio/uni-app'
 import { storeToRefs } from 'pinia'
 import { computed, ref, unref } from 'vue'
 import { getPaymentConfigApi, getPendingBalancePaymentApi } from '@/api/modules/payment'
 import TButton from '@/components/common/button/index.vue'
-import FabActions from '@/components/common/fab-actions/index.vue'
 import Notice from '@/components/common/notice/index.vue'
 import Page from '@/components/common/page/index.vue'
 import RoleAvatar from '@/components/common/role-avatar/index.vue'
@@ -31,90 +29,65 @@ import { useForm } from '@/hooks/useForm'
 import { usePage } from '@/hooks/usePage'
 import { useSchoolModules } from '@/hooks/useSchoolModules'
 import { usePayment } from '@/pages-sub/balance/hooks/usePayment'
-import { useParentStore } from '@/store/auth/parent'
 import { useCurrentStudentStore } from '@/store/business/currentStudent'
 import { useUserStore } from '@/store/user'
 import { toast } from '@/utils/toast'
-// #endregion
 
-// #region 组件选项配置
 defineOptions({
   options: {
     styleIsolation: 'apply-shared',
   },
 })
 
-// #endregion
-
-// #region 使用 Hooks
 const { pageLoading, pageError, pageLoaded, batchRequestHandler, onLoginFail, getContentHeight }
   = usePage()
 const { formRef, validate, resetValidate } = useForm()
 const { axiosPostRechargeApi, rechargeLoading } = usePayment()
 const { axiosGetUserBalanceApi } = useBalance()
 const { hasSelectRechargeAmountModules, hasInputRechargeAmountModules } = useSchoolModules()
-// #endregion
 
-// #region 使用 Store
 const userStore = useUserStore()
-const parentStore = useParentStore()
 const currentStudentStore = useCurrentStudentStore()
-const { balanceInfo } = storeToRefs(currentStudentStore)
-const { deviceType } = storeToRefs(currentStudentStore)
-const { currentStudent } = storeToRefs(parentStore)
-// #endregion
+const { studentInfo, balanceInfo, deviceType } = storeToRefs(currentStudentStore)
 
-// #region 定义响应式数据
-// 模拟存在待支付订单
+/** 是否存在待支付订单 */
 const hasPendingOrder = ref(false)
+/** 待支付订单信息 */
 const pendingOrderInfo = ref<Payment.Order.Pending.ResGetPendingApi | null>(null)
-// 充值金额选项
+/** 充值金额选项 */
 const amountOptions = ref<{ value: number, label: string, selected: boolean }[]>([])
-// 当前选中的金额
+/** 当前选中的金额 */
 const currentAmount = ref(0)
-// 表单数据
+/** 表单数据 */
 const formData = ref<{
   customAmount: string | number
 }>({
   customAmount: '',
 })
-// 支付配置信息
+/** 支付配置信息 */
 const paymentConfig = ref<Payment.Config.IPaymentConfig>({
   fixedAmounts: '',
   minAmount: null,
   maxAmount: null,
   defaultAmount: null,
 })
-// #endregion
 
-// #region 定义计算属性
+/** 是否显示充值模块 */
 const showRechargeModules = computed(
   () => hasSelectRechargeAmountModules.value || hasInputRechargeAmountModules.value,
 )
+/** 内容区域样式 */
 const contentStyle = computed(() => getContentHeight('164rpx'))
-// Fab 操作按钮列表
-const fabActions = [
-  {
-    text: '充值记录',
-    path: BALANCE_RECHARGE_HISTORY_PATH,
-    icon: 'history-line',
-    iconColor: '#606266',
-    iconSize: '24rpx',
-  },
-]
-// #endregion
 
-// #region 定义验证规则
 const rules = {
   customAmount: [{ required: false, message: '请输入有效的充值金额' }],
 }
-// #endregion
 
-// #region 接口请求函数
-// 检查待支付订单
+/** 检查待支付订单 */
 async function axiosCheckPendingOrderApi() {
   try {
-    const result = await getPendingBalancePaymentApi()
+    const result = await getPendingBalancePaymentApi({ deviceType: deviceType.value })
+
     if (result.code === 0) {
       const { hasPending } = result.data
       hasPendingOrder.value = hasPending
@@ -127,8 +100,7 @@ async function axiosCheckPendingOrderApi() {
     throw error
   }
 }
-
-// 获取支付配置
+/** 获取支付配置 */
 async function axiosGetPaymentConfigApi() {
   try {
     const result = await getPaymentConfigApi()
@@ -164,10 +136,8 @@ async function axiosGetPaymentConfigApi() {
     throw error
   }
 }
-// #endregion
 
-// #region 方法定义
-// 清空金额选择
+/** 清空金额选择 */
 function clearAmount() {
   // 清空预设金额选中状态
   amountOptions.value.forEach((option) => {
@@ -177,14 +147,10 @@ function clearAmount() {
   formData.value.customAmount = ''
   // 清空当前金额
   currentAmount.value = 0
-  // 重置表单验证
   resetValidate()
 }
-// #endregion
 
-// #region 事件处理函数
-
-// 处理自定义金额变化
+/** 处理自定义金额变化 */
 async function handleCustomAmountChange(event: { value: string | number }) {
   const { value } = event
 
@@ -222,33 +188,36 @@ async function handleCustomAmountChange(event: { value: string | number }) {
   currentAmount.value = numValue
 }
 
-// 点击待支付订单公告，跳转到结果页面
+/** 点击待支付订单公告 */
 function handlePendingOrderClick() {
   if (!pendingOrderInfo.value) {
     toast.show('订单信息不完整')
     return
   }
 
-  // 由于当前类型中没有orderId，我们使用amount作为参数跳转
-  // 或者可以跳转到充值历史页面查看待支付订单
   uni.navigateTo({
     url: BALANCE_RECHARGE_HISTORY_PATH,
   })
 }
 
-// 选择预设金额
+/** 选择预设金额 */
 function selectAmount(amount: number) {
-  // 清空自定义金额
   formData.value.customAmount = ''
   resetValidate()
-  // 更新选中状态
   amountOptions.value.forEach((option) => {
     option.selected = option.value === amount
   })
   currentAmount.value = amount
 }
 
-// 确认充值
+/** 查看充值记录 */
+function handleViewHistory() {
+  uni.navigateTo({
+    url: BALANCE_RECHARGE_HISTORY_PATH,
+  })
+}
+
+/** 确认充值 */
 async function handleConfirmRecharge() {
   if (hasPendingOrder.value) {
     toast.show('您有待支付的订单，请先处理')
@@ -278,11 +247,7 @@ async function handleConfirmRecharge() {
   await axiosPostRechargeApi(amountToPay, paymentMethod, deviceType.value, {
     async onSuccess(data) {
       const { orderNo, id } = data
-
-      // 清空金额选择和输入
       clearAmount()
-
-      // 跳转到充值成功页面
       uni.navigateTo({
         url: `${BALANCE_RECHARGE_RESULT_PATH}?orderId=${id}&orderNo=${orderNo}`,
       })
@@ -294,13 +259,10 @@ async function handleConfirmRecharge() {
     },
   })
 }
-// #endregion
 
-// #region 生命周期钩子
+/** 登录成功处理 */
 async function onLoginSuccess() {
   clearAmount()
-
-  // 批量处理接口请求
   await batchRequestHandler([axiosGetPaymentConfigApi(), axiosCheckPendingOrderApi()])
 }
 
@@ -310,7 +272,6 @@ onShow(() => {
     batchRequestHandler([axiosCheckPendingOrderApi(), axiosGetUserBalanceApi()])
   }
 })
-// #endregion
 </script>
 
 <template>
@@ -343,7 +304,7 @@ onShow(() => {
           <view flex="1 col" gap-1>
             <view flex="~ items-center justify-between">
               <view text="sm text-primary" font="medium">
-                {{ currentStudent?.studentName }}
+                {{ studentInfo?.studentName }}
               </view>
               <view text="xs text-secondary">
                 当前余额
@@ -351,7 +312,7 @@ onShow(() => {
             </view>
             <view flex="~ items-center justify-between">
               <view text="xs text-secondary">
-                {{ currentStudent?.fullClassName }}
+                {{ studentInfo?.className }}
               </view>
               <view text="sm primary" font="medium">
                 ￥{{ balanceInfo?.availableBalanceFormatted }}
@@ -412,21 +373,26 @@ onShow(() => {
       </view>
     </scroll-view>
 
-    <view v-if="showRechargeModules" p="4">
+    <view v-if="showRechargeModules" p="4" flex="~ row" gap="3">
+      <!-- 充值记录按钮 -->
+      <view w="1/3">
+        <TButton type="default" size="large" full @click="handleViewHistory">
+          充值记录
+        </TButton>
+      </view>
       <!-- 确认充值按钮 -->
-      <TButton
-        :type="currentAmount > 0 ? 'primary' : 'default'"
-        size="large"
-        full
-        :disabled="currentAmount <= 0 || hasPendingOrder"
-        :loading="rechargeLoading"
-        @click="handleConfirmRecharge"
-      >
-        {{ currentAmount > 0 ? `确认充值 ¥${currentAmount}` : '确认充值' }}
-      </TButton>
+      <view w="2/3">
+        <TButton
+          :type="currentAmount > 0 ? 'primary' : 'default'"
+          size="large"
+          full
+          :disabled="currentAmount <= 0 || hasPendingOrder"
+          :loading="rechargeLoading"
+          @click="handleConfirmRecharge"
+        >
+          {{ currentAmount > 0 ? `确认充值 ¥${currentAmount}` : '确认充值' }}
+        </TButton>
+      </view>
     </view>
-
-    <!-- 浮动操作按钮 -->
-    <FabActions :actions="fabActions" icon-color="white" icon-size="32rpx" :bottom="164" />
   </Page>
 </template>

@@ -117,6 +117,10 @@ export namespace User {
       schoolId: number
       /** 学校名称 */
       schoolName: string
+      /** 成绩h5页面地址 */
+      scoreUrl: string
+      /** 学校支持的设备类型列表（VIDEO-话机，DRYER-吹风机等） */
+      supportedDeviceTypes: string[]
       /** 微信信息 */
       wechatInfo: IWechatInfoVo
       /** 角色特定信息 */
@@ -131,8 +135,6 @@ export namespace User {
       agreementAcceptedAt: string
       /** 是否关注微信服务号 */
       wechatSubscribed: boolean
-      /** 成绩h5页面地址 */
-      scoreUrl: string
     }
 
     /** 获取微信绑定的手机号 */
@@ -166,6 +168,17 @@ export namespace User {
       phone?: string
       avatar?: string
     }
+
+    /** 更新微信用户信息 */
+    export interface ReqPutUpdateWxUserInfoApi {
+      /** 微信用户信息加密数据 */
+      encryptedData: string
+      /** 初始向量 */
+      iv: string
+    }
+
+    /** 更新微信用户信息响应 */
+    export interface ResPutUpdateWxUserInfoApi {}
 
     // #region 获取用户余额
     /** 获取用户余额 - 请求参数 */

@@ -120,4 +120,8 @@
     "Weixin"
   ],
   "liveServer.settings.port": 5501
+
+  // Auto Fold 配置
+  // "autofold.default": 2,
+  // "autofold.unfoldOnLineSelect": true
 }

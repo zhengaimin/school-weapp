@@ -14,6 +14,7 @@ import {
   CHECKBOX_CIRCLE_LINE,
   CLOSE_CIRCLE_LINE,
   COUPON_LINE,
+  CUSTOMER_SERVICE_LINE,
   DELETE_BIN_LINE,
   EDIT_LINE,
   ERROR_WARNING_LINE,
@@ -48,8 +49,10 @@ import {
   STOP_CIRCLE_LINE,
   TABLET_LINE,
   TIME_LINE,
+  TIMER_2_LINE,
   UPLOAD_2_LINE,
   UPLOAD_CLOUD_LINE,
+  USER_3_LINE,
   USER_5_LINE,
   USER_ADD_LINE,
   USER_LINE,
@@ -57,6 +60,8 @@ import {
   USER_SMILE_LINE,
   VOICEPRINT_LINE,
   WALLET_3_LINE,
+  WALLET_LINE,
+  WINDY_LINE,
 } from './modules'
 
 const svgMap = {
@@ -89,6 +94,8 @@ const svgMap = {
   'smartphone-line': SMARTPHONE_LINE,
   'tablet-line': TABLET_LINE,
   'keyboard-line': KEYBOARD_LINE,
+  'windy-line': WINDY_LINE,
+  'customer-service-line': CUSTOMER_SERVICE_LINE,
 
   // media
   'stop-circle-line': STOP_CIRCLE_LINE,
@@ -102,6 +109,7 @@ const svgMap = {
   // finance
   'refund-2-line': REFUND_2_LINE,
   'wallet-3-line': WALLET_3_LINE,
+  'wallet-line': WALLET_LINE,
   'money-cny-circle-line': MONEY_CNY_CIRCLE_LINE,
   'coupon-line': COUPON_LINE,
   'shopping-cart-line': SHOPPING_CART_LINE,
@@ -133,10 +141,12 @@ const svgMap = {
   'alarm-warning-line': ALARM_WARNING_LINE,
   'alarm-warning-fill': ALARM_WARNING_FILL,
   'upload-cloud-line': UPLOAD_CLOUD_LINE,
+  'timer-2-line': TIMER_2_LINE,
 
   // user
   'user-settings-line': USER_SETTINGS_LINE,
   'parent-line': PARENT_LINE,
+  'user-3-line': USER_3_LINE,
   'user-5-line': USER_5_LINE,
   'user-smile-line': USER_SMILE_LINE,
   'user-add-line': USER_ADD_LINE,

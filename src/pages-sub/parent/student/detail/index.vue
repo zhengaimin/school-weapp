@@ -9,7 +9,6 @@
 </route>
 
 <script lang="ts" setup>
-// #region 导入
 import { storeToRefs } from 'pinia'
 import { computed, unref } from 'vue'
 import Page from '@/components/common/page/index.vue'
@@ -21,124 +20,108 @@ import { usePage } from '@/hooks/usePage'
 import { useParentStore } from '@/store/auth/parent'
 import { useCurrentStudentStore } from '@/store/business/currentStudent'
 import { copyToClipboard } from '@/utils/clipboard'
-// #endregion
 
-// #region 组件选项配置
 defineOptions({
   options: {
     styleIsolation: 'apply-shared',
   },
 })
-// #endregion
 
-// #region 使用 Hooks
 const { pageLoading, pageError, onLoginFail } = usePage()
-// #endregion
 
-// #region 使用 Store
 const parentStore = useParentStore()
 const currentStudentStore = useCurrentStudentStore()
 const { currentStudent } = storeToRefs(parentStore)
 const { studentInfo } = storeToRefs(currentStudentStore)
-// #endregion
 
-// #region 定义计算属性
+interface StudentDetailItem {
+  key: string
+  label: string
+  value: string
+  copyable: boolean
+}
+
+/** 学生人脸状态文案 */
 const faceStatusText = computed(() => {
-  if (!studentInfo.value || studentInfo.value.faceStatus === null)
-    return '未知'
+  if (!studentInfo.value || studentInfo.value.faceStatus === null) return '未知'
   return FACE_STATUS_I18N[studentInfo.value.faceStatus] || '未知'
 })
 
-// 学生详细信息配置
-const studentDetailItems = computed(() => [
-  {
+/** 追加学生信息条目 */
+function pushStudentDetailItem(items: StudentDetailItem[], item: StudentDetailItem) {
+  if (item.value) {
+    items.push(item)
+  }
+}
+
+/** 学生详细信息配置 */
+const studentDetailItems = computed(() => {
+  const items: StudentDetailItem[] = []
+  const current = currentStudent.value
+  const info = studentInfo.value
+
+  pushStudentDetailItem(items, {
     key: 'school',
     label: '学校',
-    value: currentStudent.value?.schoolName || '',
+    value: current?.schoolName || '',
     copyable: false,
-  },
-  ...(currentStudent.value?.grade
-    ? [
-        {
-          key: 'grade',
-          label: '年级',
-          value: currentStudent.value.grade,
-          copyable: false,
-        },
-      ]
-    : []),
-  ...(currentStudent.value?.departmentName
-    ? [
-        {
-          key: 'department',
-          label: '级部',
-          value: currentStudent.value.departmentName,
-          copyable: false,
-        },
-      ]
-    : []),
-  ...(currentStudent.value?.className
-    ? [
-        {
-          key: 'class',
-          label: '班级',
-          value: currentStudent.value.className,
-          copyable: false,
-        },
-      ]
-    : []),
-  ...(studentInfo.value?.studentCode
-    ? [
-        {
-          key: 'studentCode',
-          label: '学号',
-          value: studentInfo.value.studentCode,
-          copyable: true,
-        },
-      ]
-    : []),
-  ...(studentInfo.value?.cardNumber
-    ? [
-        {
-          key: 'cardNumber',
-          label: '卡号',
-          value: studentInfo.value.cardNumber,
-          copyable: true,
-        },
-      ]
-    : []),
-  ...(studentInfo.value?.idCard
-    ? [
-        {
-          key: 'idCard',
-          label: '身份证',
-          value: studentInfo.value.idCard,
-          copyable: true,
-        },
-      ]
-    : []),
-  {
-    key: 'UUID',
-    label: '唯一号',
-    value: studentInfo.value?.UUID || '',
+  })
+  pushStudentDetailItem(items, {
+    key: 'grade',
+    label: '年级',
+    value: info?.grade || current?.grade || '',
+    copyable: false,
+  })
+  pushStudentDetailItem(items, {
+    key: 'department',
+    label: '级部',
+    value: info?.departmentName || '',
+    copyable: false,
+  })
+  pushStudentDetailItem(items, {
+    key: 'class',
+    label: '班级',
+    value: info?.className || current?.className || '',
+    copyable: false,
+  })
+  pushStudentDetailItem(items, {
+    key: 'studentCode',
+    label: '学号',
+    value: info?.studentCode || '',
     copyable: true,
-  },
-  {
-    key: 'faceStatus',
-    label: '人脸状态',
-    value: faceStatusText.value,
-    copyable: false,
-  },
-])
-// #endregion
-// #endregion
+  })
+  pushStudentDetailItem(items, {
+    key: 'cardNumber',
+    label: '卡号',
+    value: info?.cardNumber || '',
+    copyable: true,
+  })
+  pushStudentDetailItem(items, {
+    key: 'idCard',
+    label: '身份证',
+    value: info?.idCard || '',
+    copyable: true,
+  })
 
-// #region 事件处理函数
-/**
- * 复制学生信息到剪贴板
- * @param field 字段名，如 'studentCode', 'cardNumber' 等
- * @param label 显示标签，如 '学号', '卡号' 等
- */
+  items.push(
+    {
+      key: 'UUID',
+      label: '唯一号',
+      value: info?.UUID || '',
+      copyable: true,
+    },
+    {
+      key: 'faceStatus',
+      label: '人脸状态',
+      value: faceStatusText.value,
+      copyable: false,
+    },
+  )
+
+  return items
+})
+
+/** 复制学生信息到剪贴板 */
 function handleCopyStudentInfo(field: string, label: string) {
   if (studentInfo.value && studentInfo.value[field as keyof typeof studentInfo.value]) {
     const value = studentInfo.value[field as keyof typeof studentInfo.value]
@@ -147,9 +130,8 @@ function handleCopyStudentInfo(field: string, label: string) {
     }
   }
 }
-// #endregion
 
-// #region 生命周期钩子
+/** 登录成功处理 */
 function onLoginSuccess() {
   if (unref(currentStudent)) {
     pageLoading.value = false
@@ -160,7 +142,6 @@ function onLoginSuccess() {
     pageError.value = '网络异常，请稍后重试'
   }
 }
-// #endregion
 </script>
 
 <template>
@@ -176,7 +157,7 @@ function onLoginSuccess() {
       <WhiteCard>
         <view flex="~ items-center" gap="4">
           <RoleAvatar type="student" size="large" />
-          <view flex="1" space="y-2">
+          <view flex="~ col 1" gap="2">
             <view text="xl gray-900" font="bold">
               {{ studentInfo?.studentName }}
             </view>
@@ -190,14 +171,21 @@ function onLoginSuccess() {
       <!-- 学生详细信息 -->
       <WhiteCard custom-class="py-4!">
         <view flex="~ col" gap="4">
-          <view v-for="item in studentDetailItems" :key="item.key" flex="~ justify-between items-start" gap="4">
+          <view
+            v-for="item in studentDetailItems"
+            :key="item.key"
+            flex="~ justify-between items-start"
+            gap="4"
+          >
             <text shrink-0 text="sm">
               {{ item.label }}
             </text>
 
             <!-- 可复制字段 -->
             <view
-              v-if="item.copyable" flex="~ items-center gap-2" cursor="pointer"
+              v-if="item.copyable"
+              flex="~ items-center gap-2"
+              cursor="pointer"
               @click="handleCopyStudentInfo(item.key, item.label)"
             >
               <text text="sm gray-900 right break-all" font-medium>

@@ -27,6 +27,6 @@ export function getPaymentDetailApi(id: number) {
 }
 
 /** 获取待处理订单 - /api/payment/pending */
-export function getPendingBalancePaymentApi() {
-  return http.get<Payment.Order.Pending.ResGetPendingApi>(PAYMENT_ORDER_API.PENDING)
+export function getPendingBalancePaymentApi(params?: Payment.Order.Pending.ReqGetPendingApi) {
+  return http.get<Payment.Order.Pending.ResGetPendingApi>(PAYMENT_ORDER_API.PENDING, params)
 }

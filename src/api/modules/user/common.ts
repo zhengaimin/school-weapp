@@ -7,6 +7,7 @@ const USER_COMMON_API = {
   PROFILE: `${API}/user/profile`,
   WX_LOGIN: `${API}/public/wx/login`,
   WX_BIND_PHONE: `${API}/public/wx/bind-phone`,
+  WX_UPDATE_USERINFO: `${API}/wx/update-userinfo`,
   BALANCE: `${API}/user/balance`,
   BALANCE_DETAILS: `${API}/user/balance/details`,
   AGREEMENT: `${API}/user/agreement`,
@@ -50,6 +51,15 @@ export function postWxLoginApi(data: User.Common.ReqWxLoginApi) {
  */
 export function postWxPhoneApi(data: User.Common.ReqWxPhoneApi) {
   return http.post<User.Common.ResWxPhoneApi>(USER_COMMON_API.WX_BIND_PHONE, data)
+}
+
+/**
+ * @description 更新微信用户信息
+ * @param {User.Common.ReqPutUpdateWxUserInfoApi} data
+ * @returns {Promise<User.Common.ResPutUpdateWxUserInfoApi>}
+ */
+export function putUpdateWxUserInfoApi(data: User.Common.ReqPutUpdateWxUserInfoApi) {
+  return http.put<User.Common.ResPutUpdateWxUserInfoApi>(USER_COMMON_API.WX_UPDATE_USERINFO, data)
 }
 
 /**

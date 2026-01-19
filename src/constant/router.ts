@@ -2,6 +2,10 @@
 export const TABBAR_HOME_PATH = '/pages/parent/index'
 export const TABBAR_PROFILE_PATH = '/pages/profile/index'
 
+// ==================== 家长 (parent) ====================
+export const PARENT_OVERVIEW_PATH = '/pages/parent/overview/index'
+export const PARENT_HOME_PATH = '/pages/parent/home/index'
+
 // ==================== 启动/欢迎 ====================
 export const LAUNCH_PATH = '/pages/launch/index'
 export const WELCOME_PATH = '/pages/welcome/index'
@@ -34,8 +38,8 @@ export const BALANCE_REFUND_HISTORY_PATH = '/pages-sub/balance/refund/history/in
 export const BALANCE_REFUND_RESULT_PATH = '/pages-sub/balance/refund/result/index'
 
 // ==================== 记录 (history) ====================
-export const CONSUMPTION_HISTORY_PATH = '/pages-sub/consumption/history/index'
-export const FUND_HISTORY_PATH = '/pages-sub/fund/history/index'
+export const CONSUMPTION_HISTORY_PATH = '/pages-sub/history/consumption/index'
+export const FUND_HISTORY_PATH = '/pages-sub/history/fund/index'
 
 // ==================== 亲情号 (family) ====================
 export const FAMILY_MANAGE_PATH = '/pages-sub/family/manage/index'
@@ -58,9 +62,3 @@ export const COMMON_SIGNATURE_PATH = '/pages-sub/common/signature/index'
 export const COMMON_FOLLOW_PATH = '/pages-sub/common/follow/index'
 export const COMMON_ICON_PATH = '/pages-sub/common/icon/index'
 export const COMMON_WEBVIEW_PATH = '/pages-sub/common/webview/index'
-
-// ==================== Demo ====================
-export const DEMO_REFRESH_LIST_PATH = '/pages-sub/demo/refresh-list'
-export const DEMO_DATETIME_PICKER_POPUP_PATH = '/pages-sub/demo/datetime-picker-popup'
-export const DEMO_STATUS_TIP_PATH = '/pages-sub/demo/status-tip'
-export const DEMO_LOGIN_TEST_PATH = '/pages-sub/demo/login-test/index'

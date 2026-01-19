@@ -1,35 +1,35 @@
 <script lang="ts" setup>
 import type { Pkg } from '@/api/interface/modules/package'
 import dayjs from 'dayjs'
+import { storeToRefs } from 'pinia'
 import WhiteCard from '@/components/common/white-card/index.vue'
 import { DEVICE_TYPE, PACKAGE_TYPE_I18N } from '@/constant/modules'
-import { PACKAGE_DETAIL_PATH } from '@/constant/router'
+import { PACKAGE_HISTORY_RESULT_PATH } from '@/constant/router'
+import { useCurrentStudentStore } from '@/store/business/currentStudent'
 
 const props = defineProps<{
   package: Pkg.Query.IStudentActivePackageVo
 }>()
 
-const isVideoDevice = computed(() => props.package?.snapshotInfo.deviceType === DEVICE_TYPE.VIDEO)
+const currentStudentStore = useCurrentStudentStore()
+const { deviceType } = storeToRefs(currentStudentStore)
+
+const isVideoDevice = computed(() => deviceType.value === DEVICE_TYPE.VIDEO)
 
 function handleClick() {
-  const { packageId } = props.package
+  const { id, paymentOrderNo } = props.package
 
-  uni.navigateTo({ url: `${PACKAGE_DETAIL_PATH}?id=${packageId}` })
+  uni.navigateTo({
+    url: `${PACKAGE_HISTORY_RESULT_PATH}?orderNo=${paymentOrderNo}&packageRecordId=${id}`,
+  })
 }
 </script>
 
 <template>
   <WhiteCard v-if="package" @click="handleClick">
-    <!-- 头部：名称 + 状态标签 -->
-    <view flex="~ row items-center" gap="2" mb="3">
-      <text text="lg gray-800" font="semibold">
-        {{ PACKAGE_TYPE_I18N[package?.snapshotInfo.packageType] }}
-      </text>
-      <view px="1.5" py="0.5" rounded bg="primary/10">
-        <text text="xs primary" font="medium">
-          使用中
-        </text>
-      </view>
+    <!-- 头部：名称 -->
+    <view text="lg gray-800" font="semibold" mb="3">
+      {{ PACKAGE_TYPE_I18N[package?.snapshotInfo.packageType] }}
     </view>
 
     <!-- 指标区域 -->

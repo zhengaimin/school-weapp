@@ -6,10 +6,9 @@
  * - 绑定状态
  */
 import type { Students } from '@/api/interface/modules/students'
-import type { User } from '@/api/interface/modules/user'
 
 import { defineStore } from 'pinia'
-import { getStudentListByParentApi } from '@/api/modules/students'
+import { getStudentListApi } from '@/api/modules/students'
 
 export const useParentStore = defineStore(
   'parent',
@@ -66,8 +65,8 @@ export const useParentStore = defineStore(
       }
     })
 
-    const axiosGetStudentListByParentApi = async () => {
-      const result = await getStudentListByParentApi()
+    const axiosGetStudentListApi = async () => {
+      const result = await getStudentListApi()
 
       if (result.code === 0) {
         const list = result.data.students || []
@@ -77,9 +76,8 @@ export const useParentStore = defineStore(
         if (list.length) {
           const existingId = currentStudentId.value
           // 如果当前ID存在且在列表中，保持不变；否则选择第一个
-          const nextId = existingId !== null && list.some(s => s.id === existingId)
-            ? existingId
-            : list[0].id
+          const nextId
+            = existingId !== null && list.some(s => s.id === existingId) ? existingId : list[0].id
           setCurrentStudentId(nextId)
         }
         else {
@@ -103,7 +101,7 @@ export const useParentStore = defineStore(
       studentsIdMap,
       currentStudent,
 
-      axiosGetStudentListByParentApi,
+      axiosGetStudentListApi,
     }
   },
   {

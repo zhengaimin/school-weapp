@@ -9,9 +9,7 @@
 </route>
 
 <script lang="ts" setup>
-// #region 导入
 import type { Family } from '@/api/interface/modules/family'
-
 import { storeToRefs } from 'pinia'
 import { computed, nextTick, onMounted, onUnmounted } from 'vue'
 import { useMessage } from 'wot-design-uni'
@@ -24,75 +22,58 @@ import { FAMILY_EDIT_PATH } from '@/constant/router'
 import { usePage } from '@/hooks/usePage'
 import { useRefresh } from '@/hooks/useRefresh'
 import { MessageCache } from '@/pages-sub/chat/utils/cache'
-import { useConfigStore } from '@/store/config'
 import { useParentStore } from '@/store/auth/parent'
 import { useCurrentStudentStore } from '@/store/business/currentStudent'
+import { useConfigStore } from '@/store/config'
 import { useUserStore } from '@/store/user'
 import { useFamily } from '@/utils/emit/family'
-// #endregion
 
-// #region 组件选项配置
 defineOptions({
   options: {
     styleIsolation: 'apply-shared',
   },
 })
-// #endregion
 
-// #region 使用 Hooks
 const message = useMessage()
 const { pageLoading, pageError, onLoginFail, getContentHeight, batchRequestHandler } = usePage()
 const { onRefreshFamilyList } = useFamily()
-// #endregion
 
-// #region 使用 Store
 const configStore = useConfigStore()
 const userStore = useUserStore()
 const parentStore = useParentStore()
 const currentStudentStore = useCurrentStudentStore()
 const { relationshipValueMap } = storeToRefs(configStore)
 const { currentStudent } = storeToRefs(parentStore)
-// #endregion
 
-// #region 定义响应式数据
 const { loading, refreshLoading, loaded, empty, list, onRefreshList, onLoadMore }
   = useRefresh<Family.Contact.ResGetFamilyContactsApi>({
     get: getFamilyContactsApi,
     immediate: false,
   })
-// #endregion
 
-// #region 定义计算属性
+/** 内容区域高度 */
 const contentHeight = computed(() => {
   return getContentHeight('164rpx')
 })
-// #endregion
 
-// #region 接口请求函数
-// 删除亲情号列表
+/** 删除亲情号 */
 async function axiosDeleteFamilyContactApi(id: number) {
   try {
     uni.showLoading({ title: '正在删除...', icon: 'none' })
 
-    // 找到要删除的联系人
     const contactToDelete = list.value.find(item => item.id === id)
-
     const result = await deleteFamilyContactApi(id)
 
     uni.hideLoading()
     if (result.code === 0) {
       uni.showToast({ title: '删除成功', icon: 'none' })
       list.value = list.value.filter(item => item.id !== id)
-      // 更新 store 中的亲情号列表缓存
       currentStudentStore.setFamilyContacts(list.value)
 
-      // 如果删除的亲情号手机号和当前用户手机号一致，清除 student store 中的 contactInfo
       if (contactToDelete?.phone && contactToDelete.phone === userStore.phone) {
         currentStudentStore.setContactInfo(null)
       }
-      // 清空当前学生的聊天记录缓存
       if (currentStudent.value?.id) {
-        console.log(currentStudent.value.id)
         MessageCache.clearCachedMessages(currentStudent.value.id)
       }
 
@@ -103,68 +84,57 @@ async function axiosDeleteFamilyContactApi(id: number) {
     return result
   }
   catch (error) {
-    console.log('删除失败', error)
+    console.error('删除失败', error)
     uni.hideLoading()
     return { code: -1 }
   }
 }
-// #endregion
 
-// #region 事件处理函数
+/** 跳转到编辑页面 */
 function handleToEdit(id?: number) {
   const url = id ? `${FAMILY_EDIT_PATH}?id=${id}` : FAMILY_EDIT_PATH
-
-  uni.navigateTo({
-    url,
-  })
+  uni.navigateTo({ url })
 }
 
+/** 显示删除确认弹窗 */
 function showDeleteConfirmModal(id?: number) {
-  if (!id) {
-    return
-  }
+  if (!id) return
 
   message
     .confirm({
       title: '确认删除',
       msg: '确定要删除这个亲情号码吗？删除后无法恢复。',
     })
-    .then(async () => {
+    .then(() => {
       axiosDeleteFamilyContactApi(id)
     })
 }
-// #endregion
 
-// #region 生命周期钩子
+/** 登录成功处理 */
 async function onLoginSuccess() {
   await batchRequestHandler([configStore.axiosGetRelationshipOptionsApi(true), onRefreshList()])
-  // 缓存亲情号列表到 store
-  parentStore.setFamilyContacts(list.value)
+  currentStudentStore.setFamilyContacts(list.value)
 }
+
+/** 自定义刷新列表 */
 async function customOnRefreshList() {
   const result = await onRefreshList()
-  // 刷新成功后，缓存亲情号列表到 store
-  parentStore.setFamilyContacts(list.value)
-
+  currentStudentStore.setFamilyContacts(list.value)
   return result
 }
 
-// 定义取消监听的函数
 let cancelFamilyListListener: (() => void) | null = null
 
 onMounted(() => {
-  // 使用新的事件监听机制
   cancelFamilyListListener = onRefreshFamilyList(customOnRefreshList)
 })
 
 onUnmounted(() => {
-  // 取消事件监听
   if (cancelFamilyListListener) {
     cancelFamilyListListener()
     cancelFamilyListListener = null
   }
 })
-// #endregion
 </script>
 
 <template>

@@ -37,8 +37,8 @@ export namespace Students {
     total: number
   }
 
-  /** 获取家长的绑定的孩子列表 */
-  export interface ResGetStudentListByParent {
+  /** 获取家长的孩子列表 - 响应 */
+  export interface ResGetListApi {
     students: IStudentVo[]
     total: number
   }

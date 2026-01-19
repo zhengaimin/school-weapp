@@ -168,11 +168,30 @@ export namespace Payment {
     }
 
     export namespace Pending {
+      /** 获取待支付订单-请求 */
+      export interface ReqGetPendingApi {
+        /** 设备类型：VIDEO-视频话机，DRYER-吹风机 */
+        deviceType?: 'VIDEO' | 'DRYER'
+      }
+
       /** 获取待支付订单-响应 */
       export interface ResGetPendingApi {
-        amount: string
+        /** 是否存在待支付订单 */
         hasPending: boolean
-        message: string
+        /** 待支付订单号 */
+        orderNo?: string
+        /** 订单金额 */
+        amount?: string
+        /** 支付方式 */
+        paymentMethod?: 'WECHAT' | 'MOCK'
+        /** 订单创建时间 */
+        createdAt?: string
+        /** 订单过期时间 */
+        expireAt?: string
+        /** 剩余有效时间（秒） */
+        remainingTime?: number
+        /** 响应消息 */
+        message?: string
       }
     }
   }

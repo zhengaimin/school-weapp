@@ -27,13 +27,19 @@ export namespace Pkg {
      * 吹风机 - 吹风机分钟数
      */
     export interface IPackageContent {
-      /**  */
+      deviceType: TDeviceType
       /** 视频通话分钟数 */
       videoCallMinutes: number
       /** 留言条数 */
       messageCount: number
       /** 吹风机分钟数 */
       dryerMinutes: number
+      firstMonthRatio: boolean
+      monthlyDecrease: boolean
+      monthlyReset: boolean
+      packageCode: string
+      packageType: string
+      totalMonths: number
     }
 
     /** 套餐信息 */
@@ -175,6 +181,8 @@ export namespace Pkg {
       }
       /** 套餐是否存在 */
       isPackageExists: boolean
+      /** 是否可退款 */
+      canRefund: boolean
       /** 当前模板 */
       currentTemplate: {
         /** 模板ID */
@@ -258,43 +266,94 @@ export namespace Pkg {
       userName: string
     }
 
+    /** 套餐内容快照 */
+    export interface IPackageSnapshotData {
+      /** 套餐编码 */
+      packageCode: string
+      /** 套餐类型 */
+      packageType: TPackageType
+      /** 设备类型 */
+      deviceType: TDeviceType
+      /** 视频通话分钟数 */
+      videoCallMinutes: number | null
+      /** 语音通话分钟数 */
+      voiceCallMinutes: number | null
+      /** 留言条数（-1表示无限制） */
+      messageCount: number | null
+      /** 吹风机使用分钟数 */
+      dryerMinutes: number | null
+      /** 套餐总月数 */
+      totalMonths: number
+      /** 是否月末清零 */
+      monthlyReset: boolean
+      /** 首月比例扣款 */
+      firstMonthRatio: boolean
+      /** 是否按月递减计费 */
+      monthlyDecrease: boolean
+      /** 固定套餐开始时间 */
+      startTime: string | null
+      /** 固定套餐结束时间 */
+      endTime: string | null
+    }
+
     /** 活跃套餐信息 */
     export interface IStudentActivePackageVo {
       /** 套餐记录ID */
       id: number
-      /** 套餐ID */
+      /** 套餐模板ID */
       packageId: number
+      /** 套餐名称 */
+      packageName: string
+      /** 套餐内容快照 */
+      packageContent: IPackageSnapshotData
       /** 购买日期 */
       purchaseDate: string
       /** 支付日期 */
       paymentDate: string | null
+      /** 支付订单号 */
+      paymentOrderNo: string
+      /** 套餐快照信息 */
+      snapshotInfo: IPackageSnapshotData | null
+      /** 套餐模板是否还存在 */
+      isPackageExists: boolean
+      /** 当前最新的套餐模板信息 */
+      currentTemplate: any | null
       /** 生效日期 */
       startDate: string
       /** 到期日期 */
       endDate: string
       /** 状态 */
-      status: number
+      status: TPackageBuyStatus
       /** 状态文本 */
       statusText: string
-      /** 购买者信息 */
+      /** 购买价格 */
+      purchasePrice: number
+      /** 是否可退款 */
+      canRefund: boolean
+      /** 不可退款原因 */
+      refundReason?: string
+      /** 剩余额度 */
+      remainingAmount: IRemainingAmount
+      /** 购买人信息 */
       purchaserInfo: IPurchaserInfo
-      /** 快照信息 */
-      snapshotInfo: ISnapshotInfo
-      /** 套餐是否存在 */
-      isPackageExists: boolean
-      /** 当前模板 */
-      currentTemplate: any
     }
 
+    /** 获取学生当前正在使用的套餐 - 请求 */
+    export interface ReqGetStudentActiveApi {
+      /** 设备类型 */
+      deviceType?: TDeviceType
+    }
+
+    /** 获取学生当前正在使用的套餐 - 响应 */
     export interface ResGetStudentActiveApi {
       /** 学生ID */
       studentId: number
-      /** 套餐总数 */
-      totalCount: number
-      /** 活跃套餐列表 */
+      /** 已激活的套餐列表 */
       activePackages: IStudentActivePackageVo[]
-      /** 待生效的套餐列表 */
-      waitingPackages: IStudentActivePackageVo[]
+      /** 待激活的套餐列表 */
+      waitingPackages: IStudentActivePackageVo[] | null
+      /** 总数量（已激活+待激活） */
+      totalCount: number
     }
     // #endregion
 
@@ -569,10 +628,14 @@ export namespace Pkg {
       packageName: string
       /** 套餐类型 */
       packageType: TPackageType
-      /** 设备类型 */
-      deviceType: TDeviceType
-      /** 套餐内容 */
-      packageContent: Query.IPackageContent
+      /** 套餐内容快照 */
+      packageContent: Query.IPackageSnapshotData
+      /** 学生购买套餐的记录ID（支付成功后才有值） */
+      packageRecordId: number | null
+      /** 是否可以退款 */
+      canRefund: boolean
+      /** 不可退款原因（当canRefund为false时返回具体原因） */
+      refundReason?: string
       /** 套餐总月数 */
       totalMonths: number
       /** 预计开始日期 */
@@ -658,6 +721,8 @@ export namespace Pkg {
     export interface ReqGetListApi {
       /** 退费状态筛选 */
       status?: number
+      /** 设备类型 */
+      deviceType?: TDeviceType
       /** 页码 */
       page?: number
       /** 每页数量 */
@@ -676,16 +741,12 @@ export namespace Pkg {
       packageName: string
       /** 套餐类型 */
       packageType: string
-      /** 设备类型 */
-      deviceType: TDeviceType
-      /** 套餐内容 */
-      packageContent: IRefundPackageContent
       /** 原始价格 */
       originalPrice: string
       /** 申请金额 */
       applyAmount: string
       /** 实际退款金额 */
-      actualAmount: string
+      actualAmount: string | null
       /** 状态 */
       status: TRefundStatus
       /** 状态文本 */
@@ -694,7 +755,7 @@ export namespace Pkg {
       applyReason: string
       /** 管理员备注 */
       adminRemark: string
-      /** 申請時間 */
+      /** 申请时间 */
       applyTime: string
       /** 审核时间 */
       auditTime: string | null

@@ -1,0 +1,863 @@
+<!doctype html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>概览 - 校园管理系统</title>
+  <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'primary': '#3269dd',
+            'primary-light': '#5b8cff',
+            'primary-dark': '#1e4ba8',
+            'primary-50': '#f0f4ff',
+            'primary-100': '#e1eaff',
+            'secondary': '#44bbdd',
+            'secondary-light': '#6bc9e3',
+            'secondary-dark': '#2a9bc1',
+            'accent': '#f57b32',
+            'accent-light': '#f89a5b',
+            'accent-dark': '#e55a0a',
+            'text-primary': '#1a202c',
+            'text-secondary': '#4a5568',
+            'text-muted': '#9ca3af',
+            'bg-primary': '#ffffff',
+            'bg-secondary': '#f7fafc',
+            'bg-muted': '#edf2f7'
+          },
+          borderRadius: {
+            none: '0px',
+            sm: '4px',
+            DEFAULT: '8px',
+            md: '12px',
+            lg: '16px',
+            xl: '20px',
+            '2xl': '24px',
+            '3xl': '32px',
+            full: '9999px',
+            button: '8px'
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.6.0/remixicon.min.css" />
+  <link rel="stylesheet" href="../common/button-styles.css" />
+  <style>
+    :root {
+      --primary: #3269dd;
+      --primary-light: #5b8cff;
+      --primary-dark: #1e4ba8;
+      --secondary: #44bbdd;
+      --accent: #f57b32;
+      --bg-secondary: #f7fafc;
+    }
+
+    body {
+      font-family: 'PingFang SC', 'Helvetica Neue', Arial, sans-serif;
+      width: 100%;
+      margin: 0;
+      background: #f8fafc;
+    }
+
+    .gradient-bg {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+    }
+
+    .safe-area-top {
+      padding-top: 60px;
+    }
+
+    .circle-bg {
+      fill: none;
+      stroke: #edf2f7;
+      stroke-width: 2.5;
+    }
+
+    .circle {
+      fill: none;
+      stroke-width: 2.5;
+      stroke-linecap: round;
+      transition: stroke-dasharray 1s ease-out;
+    }
+
+    @keyframes progress {
+      0% {
+        stroke-dasharray: 0 100;
+      }
+    }
+
+    .student-card {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+
+    canvas {
+      display: block;
+    }
+  </style>
+</head>
+
+<body class="bg-gray-50 min-h-screen pb-6">
+  <!-- Fixed Header Background -->
+  <div class="gradient-bg fixed top-0 left-0 right-0 overflow-hidden" style="height: 45vh; z-index: 10;">
+    <!-- Decorative Circles -->
+    <div class="absolute -top-10 -right-10 w-32 h-32 bg-white bg-opacity-10 rounded-full"></div>
+    <div class="absolute top-20 -left-8 w-20 h-20 bg-white bg-opacity-15 rounded-full"></div>
+    <div class="absolute bottom-16 right-12 w-24 h-24 bg-white bg-opacity-5 rounded-full"></div>
+
+    <!-- Wave Shape at Bottom -->
+    <div class="absolute bottom-0 left-0 right-0" style="height: 100px;">
+      <svg viewBox="0 0 375 100" preserveAspectRatio="none" class="w-full h-full">
+        <path d="M0,70 Q93.75,20 187.5,40 T375,25 L375,100 L0,100 Z" fill="#f8fafc" />
+      </svg>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="px-4 pt-4 relative space-y-4" style="z-index: 20;">
+    <div class="px-1">
+      <h1 class="text-white text-xl font-bold leading-tight">概览</h1>
+      <p class="text-white/80 text-xs mt-1">请选择学生查看统计与设备信息</p>
+    </div>
+
+    <div class="bg-white/90 rounded-2xl p-4 shadow-sm border border-white/40 backdrop-blur">
+      <div class="relative">
+        <button id="studentSelectorBtn" type="button" class="w-full text-left" onclick="toggleStudentDropdown()">
+          <div class="flex items-center gap-3">
+            <div class="relative">
+              <div id="studentAvatar" class="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center text-primary text-xl font-bold border border-blue-100/50 shadow-sm">
+              </div>
+            </div>
+            <div class="flex-1">
+              <h3 id="studentName" class="text-base font-bold text-gray-900 leading-tight"></h3>
+              <p id="studentClass" class="text-xs text-gray-500 mt-0.5"></p>
+            </div>
+            <i id="dropdownIcon" class="ri-arrow-down-s-line text-gray-400 text-xl transition-transform duration-300"></i>
+          </div>
+        </button>
+
+        <!-- Dropdown Menu -->
+        <div id="studentDropdown" class="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden z-50 hidden">
+          <div id="studentList" class="max-h-64 overflow-y-auto">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="space-y-6" id="studentView">
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+  <script>
+    const childrenData = [
+      {
+        id: 'xiaoming',
+        name: '张小明',
+        class: '实验小学 · 三年级二班',
+        devices: {
+          hairDryer: {
+            balance: -15.50,
+            monthlyExpense: 12.50,
+            monthlyRecharge: 50.00,
+            package: {
+              remaining: 45,
+              total: 60,
+              pending: 1
+            }
+          },
+          phone: {
+            balance: 40.00,
+            monthlyExpense: 12.20,
+            monthlyRecharge: 50.00,
+            package: null
+          }
+        }
+      },
+      {
+        id: 'xiaohong',
+        name: '张小红',
+        class: '育才小学 · 一年级一班',
+        devices: {
+          hairDryer: {
+            balance: 20.00,
+            monthlyExpense: 5.30,
+            monthlyRecharge: 20.00,
+            package: {
+              remaining: 30,
+              total: 60,
+              pending: 0
+            }
+          },
+          phone: {
+            balance: 23.20,
+            monthlyExpense: 10.00,
+            monthlyRecharge: 30.00,
+            package: {
+              remaining: 80,
+              total: 100,
+              pending: 1
+            }
+          }
+        }
+      },
+      {
+        id: 'xiaoli',
+        name: '张小丽',
+        class: '实验小学 · 五年级一班',
+        devices: {
+          hairDryer: {
+            balance: 60.00,
+            monthlyExpense: 15.20,
+            monthlyRecharge: 50.00,
+            package: null
+          },
+          phone: {
+            balance: 60.50,
+            monthlyExpense: 20.00,
+            monthlyRecharge: 100.00,
+            package: null
+          }
+        }
+      }
+    ];
+
+    const DEVICE_LABELS = {
+      hairDryer: '吹风机',
+      phone: '校园话机'
+    };
+
+    let currentStudentId = '';
+
+    let chartInstances = {
+      balance: null,
+      package: null,
+      expense: null
+    };
+
+    function configureChartDefaults() {
+      if (typeof Chart === 'undefined') return;
+      Chart.defaults.font.family = "'PingFang SC', 'Helvetica Neue', Arial, sans-serif";
+      Chart.defaults.font.size = 11;
+      Chart.defaults.color = '#6b7280';
+    }
+
+    function destroyCharts() {
+      Object.values(chartInstances).forEach(chart => {
+        if (chart && typeof chart.destroy === 'function') chart.destroy();
+      });
+      chartInstances = { balance: null, package: null, expense: null };
+    }
+
+    function toNumber(value) {
+      const num = Number(value);
+      return Number.isFinite(num) ? num : 0;
+    }
+
+    function clampNonNegative(value) {
+      return Math.max(0, toNumber(value));
+    }
+
+    function createDoughnutChart(canvasId, { labels, data, colors, formatValue, emptyLabel = '暂无数据', emptyColor = '#e5e7eb', tooltipEnabled = true, centerText = null }) {
+      const canvas = document.getElementById(canvasId);
+      if (!canvas || typeof Chart === 'undefined') return null;
+
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return null;
+
+      const normalized = Array.isArray(data) ? data.map(clampNonNegative) : [];
+      const sourceTotal = normalized.reduce((sum, v) => sum + v, 0);
+      const isEmpty = sourceTotal <= 0;
+
+      const finalLabels = isEmpty ? [emptyLabel] : labels;
+      const finalData = isEmpty ? [1] : normalized;
+      const finalColors = isEmpty ? [emptyColor] : colors;
+
+      // 中心文本插件
+      const centerTextPlugin = {
+        id: 'centerText',
+        afterDatasetsDraw(chart) {
+          if (!centerText) return;
+
+          const { ctx, chartArea: { width, height } } = chart;
+          ctx.save();
+
+          const centerX = width / 2;
+          const centerY = height / 2;
+
+          // 绘制主文本
+          ctx.font = 'bold 14px "PingFang SC", sans-serif';
+          ctx.fillStyle = '#1f2937';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(centerText.value, centerX, centerY - 5);
+
+          // 绘制副文本
+          if (centerText.label) {
+            ctx.font = '9px "PingFang SC", sans-serif';
+            ctx.fillStyle = '#9ca3af';
+            ctx.fillText(centerText.label, centerX, centerY + 8);
+          }
+
+          ctx.restore();
+        }
+      };
+
+      return new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: finalLabels,
+          datasets: [{
+            data: finalData,
+            backgroundColor: finalColors,
+            borderWidth: 0,
+            hoverOffset: 4,
+            borderRadius: 8,
+            spacing: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: '70%',
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              enabled: !isEmpty && tooltipEnabled,
+              callbacks: {
+                label: (context) => {
+                  if (isEmpty) return emptyLabel;
+                  const value = clampNonNegative(context.parsed);
+                  const percent = sourceTotal ? Math.round((value / sourceTotal) * 100) : 0;
+                  const formatted = typeof formatValue === 'function' ? formatValue(value, context.dataIndex) : String(value);
+                  return `${context.label}: ${formatted} (${percent}%)`;
+                }
+              }
+            }
+          }
+        },
+        plugins: [centerTextPlugin]
+      });
+    }
+
+    function getDeviceNumber(child, type, key) {
+      return clampNonNegative(child?.devices?.[type]?.[key]);
+    }
+
+    function getPackageSummary(child) {
+      const devices = ['hairDryer', 'phone'];
+      let total = 0, remainingRaw = 0, pending = 0, withPackage = 0;
+
+      devices.forEach(type => {
+        const pkg = child?.devices?.[type]?.package;
+        if (!pkg) return;
+        withPackage += 1;
+        total += clampNonNegative(pkg.total);
+        remainingRaw += clampNonNegative(pkg.remaining);
+        pending += clampNonNegative(pkg.pending);
+      });
+
+      const used = Math.max(0, total - remainingRaw);
+      const remaining = Math.max(0, total - used);
+      return { total, remaining, used, pending, withPackage };
+    }
+
+    function renderCharts(child) {
+      const fallback = document.getElementById('chartsFallback');
+      if (typeof Chart === 'undefined') {
+        if (fallback) fallback.classList.remove('hidden');
+        return;
+      }
+      if (fallback) fallback.classList.add('hidden');
+
+      const rootStyle = getComputedStyle(document.documentElement);
+      const primary = rootStyle.getPropertyValue('--primary').trim() || '#3269dd';
+      const accent = rootStyle.getPropertyValue('--accent').trim() || '#f57b32';
+      const secondary = rootStyle.getPropertyValue('--secondary').trim() || '#44bbdd';
+
+      // 吹风机数据
+      const hairDryerBalance = child?.devices?.hairDryer?.balance || 0;
+      const hairDryerExpense = getDeviceNumber(child, 'hairDryer', 'monthlyExpense');
+      const hairDryerRecharge = getDeviceNumber(child, 'hairDryer', 'monthlyRecharge');
+      const hairDryerPkg = child?.devices?.hairDryer?.package;
+
+      // 话机数据
+      const phoneBalance = child?.devices?.phone?.balance || 0;
+      const phoneExpense = getDeviceNumber(child, 'phone', 'monthlyExpense');
+      const phoneRecharge = getDeviceNumber(child, 'phone', 'monthlyRecharge');
+      const phonePkg = child?.devices?.phone?.package;
+
+      // 渲染吹风机图表HTML
+      renderDeviceChartsHTML('hairDryer', hairDryerPkg, hairDryerBalance);
+      // 渲染话机图表HTML
+      renderDeviceChartsHTML('phone', phonePkg, phoneBalance);
+
+      // 创建吹风机图表
+      const isHairDryerOverdrawn = hairDryerBalance < 0;
+      chartInstances.hairDryerBalance = createDoughnutChart('chartHairDryerBalance', {
+        labels: isHairDryerOverdrawn ? ['欠费'] : ['余额', '已用'],
+        data: isHairDryerOverdrawn ? [Math.abs(hairDryerBalance)] : [hairDryerBalance, Math.max(0, hairDryerRecharge - hairDryerBalance)],
+        colors: isHairDryerOverdrawn ? ['#ef4444'] : [primary, '#e5e7eb'],
+        formatValue: v => `￥${v.toFixed(2)}`,
+        emptyLabel: '暂无余额',
+        centerText: {
+          value: `￥${hairDryerBalance.toFixed(2)}`,
+          label: isHairDryerOverdrawn ? '欠费' : '余额'
+        }
+      });
+
+      if (hairDryerPkg) {
+        const hairDryerPkgNote = document.getElementById('hairDryerPackageNote');
+        if (hairDryerPkgNote && hairDryerPkg.pending > 0) {
+          hairDryerPkgNote.textContent = `待生效 ${hairDryerPkg.pending}`;
+        }
+
+        chartInstances.hairDryerPackage = createDoughnutChart('chartHairDryerPackage', {
+          labels: ['已用', '剩余'],
+          data: [Math.max(0, hairDryerPkg.total - hairDryerPkg.remaining), hairDryerPkg.remaining],
+          colors: [accent, secondary],
+          formatValue: v => `${Math.round(v)} 分`,
+          tooltipEnabled: true,
+          emptyLabel: '暂无套餐',
+          centerText: {
+            value: `${hairDryerPkg.remaining}`,
+            label: '剩余分钟'
+          }
+        });
+      }
+
+      chartInstances.hairDryerExpense = createDoughnutChart('chartHairDryerExpense', {
+        labels: ['支出', '剩余'],
+        data: [hairDryerExpense, Math.max(0, hairDryerRecharge - hairDryerExpense)],
+        colors: [accent, '#e5e7eb'],
+        formatValue: v => `￥${v.toFixed(2)}`,
+        emptyLabel: '暂无支出',
+        centerText: {
+          value: `￥${hairDryerExpense.toFixed(2)}`,
+          label: '本月支出'
+        }
+      });
+
+      // 创建话机图表
+      const isPhoneOverdrawn = phoneBalance < 0;
+      chartInstances.phoneBalance = createDoughnutChart('chartPhoneBalance', {
+        labels: isPhoneOverdrawn ? ['欠费'] : ['余额', '已用'],
+        data: isPhoneOverdrawn ? [Math.abs(phoneBalance)] : [phoneBalance, Math.max(0, phoneRecharge - phoneBalance)],
+        colors: isPhoneOverdrawn ? ['#ef4444'] : [primary, '#e5e7eb'],
+        formatValue: v => `￥${v.toFixed(2)}`,
+        emptyLabel: '暂无余额',
+        centerText: {
+          value: `￥${phoneBalance.toFixed(2)}`,
+          label: isPhoneOverdrawn ? '欠费' : '余额'
+        }
+      });
+
+      if (phonePkg) {
+        const phonePkgNote = document.getElementById('phonePackageNote');
+        if (phonePkgNote && phonePkg.pending > 0) {
+          phonePkgNote.textContent = `待生效 ${phonePkg.pending}`;
+        }
+
+        chartInstances.phonePackage = createDoughnutChart('chartPhonePackage', {
+          labels: ['已用', '剩余'],
+          data: [Math.max(0, phonePkg.total - phonePkg.remaining), phonePkg.remaining],
+          colors: [accent, secondary],
+          formatValue: v => `${Math.round(v)} 分`,
+          tooltipEnabled: true,
+          emptyLabel: '暂无套餐',
+          centerText: {
+            value: `${phonePkg.remaining}`,
+            label: '剩余分钟'
+          }
+        });
+      }
+
+      chartInstances.phoneExpense = createDoughnutChart('chartPhoneExpense', {
+        labels: ['支出', '剩余'],
+        data: [phoneExpense, Math.max(0, phoneRecharge - phoneExpense)],
+        colors: [accent, '#e5e7eb'],
+        formatValue: v => `￥${v.toFixed(2)}`,
+        emptyLabel: '暂无支出',
+        centerText: {
+          value: `￥${phoneExpense.toFixed(2)}`,
+          label: '本月支出'
+        }
+      });
+    }
+
+    function renderDeviceChartsHTML(deviceType, hasPackage, balance) {
+      const container = document.getElementById(`${deviceType}Charts`);
+      if (!container) return;
+
+      const isOverdrawn = balance < 0;
+      const balanceColor = isOverdrawn ? 'text-red-600' : 'text-primary';
+      const packageNoteId = `${deviceType}PackageNote`;
+      const badgeColor = deviceType === 'hairDryer' ? 'blue' : 'orange';
+
+      let html = `
+        <!-- 余额 -->
+        <div class="bg-white/80 rounded-xl p-3 border border-gray-100/80 shadow-sm">
+          <div class="flex items-center gap-2 mb-2">
+            <div class="w-6 h-6 rounded-lg bg-primary-50 ${balanceColor} flex items-center justify-center text-sm">
+              <i class="ri-wallet-line"></i>
+            </div>
+            <div class="text-xs font-bold text-gray-700">${isOverdrawn ? '欠费' : '余额'}</div>
+          </div>
+          <div class="relative h-24">
+            <canvas id="chart${deviceType === 'hairDryer' ? 'HairDryer' : 'Phone'}Balance" role="img" aria-label="${deviceType === 'hairDryer' ? '吹风机' : '话机'}余额"></canvas>
+          </div>
+        </div>
+      `;
+
+      if (hasPackage) {
+        // 有套餐：显示套餐和本月支出（本月支出占2列）
+        html += `
+        <!-- 套餐 -->
+        <div class="bg-white/80 rounded-xl p-3 border border-gray-100/80 shadow-sm">
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-2">
+              <div class="w-6 h-6 rounded-lg bg-cyan-50 text-secondary-dark flex items-center justify-center text-sm">
+                <i class="ri-timer-2-line"></i>
+              </div>
+              <div class="text-xs font-bold text-gray-700">套餐</div>
+            </div>
+            <div id="${packageNoteId}" class="text-[10px] px-1.5 py-0.5 bg-${badgeColor}-100 text-${badgeColor}-700 rounded-md font-medium"></div>
+          </div>
+          <div class="relative h-24">
+            <canvas id="chart${deviceType === 'hairDryer' ? 'HairDryer' : 'Phone'}Package" role="img" aria-label="${deviceType === 'hairDryer' ? '吹风机' : '话机'}套餐"></canvas>
+          </div>
+        </div>
+
+        <!-- 本月支出 -->
+        <div class="bg-white/80 rounded-xl p-3 border border-gray-100/80 col-span-2 shadow-sm">
+          <div class="flex items-center gap-2 mb-2">
+            <div class="w-6 h-6 rounded-lg bg-orange-50 text-accent flex items-center justify-center text-sm">
+              <i class="ri-money-cny-circle-line"></i>
+            </div>
+            <div class="text-xs font-bold text-gray-700">本月支出</div>
+          </div>
+          <div class="relative h-28">
+            <canvas id="chart${deviceType === 'hairDryer' ? 'HairDryer' : 'Phone'}Expense" role="img" aria-label="${deviceType === 'hairDryer' ? '吹风机' : '话机'}本月支出"></canvas>
+          </div>
+        </div>
+        `;
+      } else {
+        // 无套餐：本月支出放在套餐位置
+        html += `
+        <!-- 本月支出 -->
+        <div class="bg-white/80 rounded-xl p-3 border border-gray-100/80 shadow-sm">
+          <div class="flex items-center gap-2 mb-2">
+            <div class="w-6 h-6 rounded-lg bg-orange-50 text-accent flex items-center justify-center text-sm">
+              <i class="ri-money-cny-circle-line"></i>
+            </div>
+            <div class="text-xs font-bold text-gray-700">本月支出</div>
+          </div>
+          <div class="relative h-24">
+            <canvas id="chart${deviceType === 'hairDryer' ? 'HairDryer' : 'Phone'}Expense" role="img" aria-label="${deviceType === 'hairDryer' ? '吹风机' : '话机'}本月支出"></canvas>
+          </div>
+        </div>
+        `;
+      }
+
+      container.innerHTML = html;
+    }
+
+    function getInitialChildId() {
+      const fromQuery = new URLSearchParams(window.location.search).get('child');
+      if (fromQuery && childrenData.some(child => child.id === fromQuery)) return fromQuery;
+      return childrenData[0]?.id || '';
+    }
+
+    function syncUrlChild(childId) {
+      try {
+        const url = new URL(window.location.href);
+        url.searchParams.set('child', childId);
+        window.history.replaceState({}, '', url.toString());
+      } catch (e) {}
+    }
+
+    function renderSelectedStudent(childId) {
+      const studentView = document.getElementById('studentView');
+      const studentAvatar = document.getElementById('studentAvatar');
+      const studentName = document.getElementById('studentName');
+      const studentClass = document.getElementById('studentClass');
+
+      if (!studentView) return;
+
+      const child = childrenData.find(c => c.id === childId) || childrenData[0];
+      destroyCharts();
+
+      if (!child) {
+        studentView.innerHTML = '<div class="bg-white/85 rounded-[24px] p-5 shadow-sm border border-gray-100/50 text-sm text-gray-500">暂无学生数据</div>';
+        return;
+      }
+
+      currentStudentId = child.id;
+
+      // Update student info in header
+      if (studentAvatar) studentAvatar.textContent = child.name.charAt(0);
+      if (studentName) studentName.textContent = child.name;
+      if (studentClass) studentClass.textContent = child.class;
+
+      // Update student list to show current selection
+      renderStudentList();
+
+      studentView.innerHTML = createStudentCard(child, 0);
+
+      renderCharts(child);
+      syncUrlChild(child.id);
+    }
+
+    function calculatePercentage(remaining, total) {
+      if (!total || total <= 0) return 0;
+      const percent = (remaining / total) * 100;
+      return Math.max(0, Math.min(100, Math.round(percent)));
+    }
+
+    function toggleDevice(childId, type) {
+      const content = document.getElementById(`device-content-${childId}-${type}`);
+      const icon = document.getElementById(`device-icon-${childId}-${type}`);
+      const button = icon?.closest('button');
+      if (!content || !icon) return;
+
+      const isExpanded = content.classList.contains('grid-rows-[1fr]');
+
+      if (isExpanded) {
+        content.classList.remove('grid-rows-[1fr]');
+        content.classList.add('grid-rows-[0fr]');
+        icon.classList.remove('rotate-180');
+        content.setAttribute('aria-hidden', 'true');
+        if (button) button.setAttribute('aria-expanded', 'false');
+      } else {
+        content.classList.remove('grid-rows-[0fr]');
+        content.classList.add('grid-rows-[1fr]');
+        icon.classList.add('rotate-180');
+        content.setAttribute('aria-hidden', 'false');
+        if (button) button.setAttribute('aria-expanded', 'true');
+      }
+    }
+
+    function renderDeviceSection(child, type) {
+      const device = child.devices?.[type];
+      if (!device) return '';
+
+      const isHairDryer = type === 'hairDryer';
+      const deviceName = isHairDryer ? '吹风机' : '校园话机';
+      const iconClass = isHairDryer ? 'ri-windy-line' : 'ri-customer-service-line';
+      const iconBg = isHairDryer ? 'bg-blue-50' : 'bg-orange-50';
+      const iconColor = isHairDryer ? 'text-primary' : 'text-accent';
+      const badgeColor = isHairDryer ? 'blue' : 'orange';
+
+      const balance = Number(device.balance) || 0;
+      const monthlyExpense = Number(device.monthlyExpense) || 0;
+      const monthlyRecharge = Number(device.monthlyRecharge) || 0;
+
+      let packageInfo = '';
+      let packageHtml = '';
+
+      if (device.package) {
+        const percent = calculatePercentage(device.package.remaining, device.package.total);
+        const pendingBadge = device.package.pending > 0
+          ? `<span class="text-[10px] px-1.5 py-0.5 bg-${badgeColor}-100 text-${badgeColor}-700 rounded-md font-medium ml-2">待生效 ${device.package.pending}</span>`
+          : '';
+
+        packageInfo = `<span class="text-gray-500">|</span> <span>剩余 ${device.package.remaining} 分钟</span>`;
+
+        packageHtml = `
+          <div class="mt-3 bg-white rounded-xl p-3 border border-gray-100">
+            <div class="flex items-center gap-3">
+              <div class="flex-1">
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="text-xs font-bold text-gray-700">套餐剩余</span>
+                  ${pendingBadge}
+                </div>
+                <div class="flex items-baseline gap-1">
+                  <span class="text-lg font-bold ${iconColor}">${device.package.remaining}</span>
+                  <span class="text-xs text-gray-400">/ ${device.package.total} 分</span>
+                </div>
+              </div>
+              <div class="w-10 h-10 relative flex-shrink-0">
+                <svg viewBox="0 0 36 36" class="w-full h-full transform -rotate-90">
+                  <path class="text-gray-100" stroke-width="4" fill="none" stroke="currentColor" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                  <path class="${iconColor}" stroke-dasharray="${percent}, 100" stroke-width="4" fill="none" stroke="currentColor" stroke-linecap="round" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                </svg>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      return `
+        <div class="bg-[#F8F9FB] rounded-2xl border border-gray-100 overflow-hidden">
+          <div class="flex items-center justify-between p-4">
+            <button type="button" onclick="goToHome('${child.id}')" class="flex items-center gap-3 flex-1 text-left hover:opacity-80 transition-opacity">
+              <div class="w-10 h-10 rounded-full ${iconBg} ${iconColor} flex items-center justify-center text-lg flex-shrink-0">
+                <i class="${iconClass}"></i>
+              </div>
+              <div>
+                <div class="text-sm font-bold text-gray-800">${deviceName}</div>
+                <div class="flex items-baseline gap-1 text-xs text-gray-500">
+                  <span>余额 ${balance.toFixed(2)} 元</span>
+                  ${packageInfo}
+                </div>
+              </div>
+            </button>
+            <button type="button" onclick="toggleDevice('${child.id}', '${type}')" class="w-10 h-10 flex items-center justify-center hover:bg-gray-100 rounded-full transition-colors" aria-expanded="false" aria-controls="device-content-${child.id}-${type}">
+              <i id="device-icon-${child.id}-${type}" class="ri-arrow-down-s-line text-gray-400 text-xl transition-transform duration-300"></i>
+            </button>
+          </div>
+
+          <div id="device-content-${child.id}-${type}" class="grid grid-rows-[0fr] transition-all duration-300 ease-out" aria-hidden="true">
+            <div class="overflow-hidden min-h-0">
+              <div class="px-4 pb-4">
+                <div class="flex gap-4 mb-1">
+                  <div class="flex-1 bg-white/50 rounded-lg p-2">
+                    <div class="text-[10px] text-gray-400">本月支出</div>
+                    <div class="text-sm font-bold text-gray-700">¥${monthlyExpense.toFixed(2)}</div>
+                  </div>
+                  <div class="flex-1 bg-white/50 rounded-lg p-2">
+                    <div class="text-[10px] text-gray-400">本月充值</div>
+                    <div class="text-sm font-bold text-gray-700">¥${monthlyRecharge.toFixed(2)}</div>
+                  </div>
+                </div>
+                ${packageHtml}
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderStatisticsSection() {
+      return `
+        <div class="space-y-4">
+          <!-- 吹风机统计 -->
+          <div class="bg-[#F8F9FB] rounded-2xl border border-gray-100 p-4">
+            <button type="button" onclick="goToDeviceDetail('hairDryer')" class="w-full flex items-center gap-2 mb-3 hover:opacity-80 transition-opacity">
+              <div class="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-primary">
+                <i class="ri-windy-line text-base"></i>
+              </div>
+              <div class="flex-1 text-left">
+                <div class="text-sm font-bold text-gray-800">吹风机</div>
+                <div class="text-[10px] text-gray-400">使用统计</div>
+              </div>
+              <i class="ri-arrow-right-s-line text-gray-400 text-xl"></i>
+            </button>
+
+            <div class="grid grid-cols-2 gap-3" id="hairDryerCharts">
+            </div>
+          </div>
+
+          <!-- 校园话机统计 -->
+          <div class="bg-[#F8F9FB] rounded-2xl border border-gray-100 p-4">
+            <button type="button" onclick="goToDeviceDetail('phone')" class="w-full flex items-center gap-2 mb-3 hover:opacity-80 transition-opacity">
+              <div class="w-8 h-8 rounded-full bg-orange-50 flex items-center justify-center text-accent">
+                <i class="ri-customer-service-line text-base"></i>
+              </div>
+              <div class="flex-1 text-left">
+                <div class="text-sm font-bold text-gray-800">校园话机</div>
+                <div class="text-[10px] text-gray-400">使用统计</div>
+              </div>
+              <i class="ri-arrow-right-s-line text-gray-400 text-xl"></i>
+            </button>
+
+            <div class="grid grid-cols-2 gap-3" id="phoneCharts">
+            </div>
+          </div>
+        </div>
+
+        <div id="chartsFallback" class="hidden mb-3 text-xs text-gray-400 bg-white/60 border border-gray-100 rounded-xl px-3 py-2">
+          图表库加载失败，请检查网络或将 Chart.js 本地化。
+        </div>
+      `;
+    }
+
+    function createStudentCard(child, index) {
+      return renderStatisticsSection();
+    }
+
+    function goToHome(childId) {
+      window.location.href = `首页.html?child=${childId}`;
+    }
+
+    function goToDeviceDetail(deviceType) {
+      const deviceName = deviceType === 'hairDryer' ? '吹风机' : '校园话机';
+      console.log(`跳转到${deviceName}详情页，学生ID: ${currentStudentId}`);
+      // TODO: 根据实际需求修改跳转URL
+      // window.location.href = `device-detail.html?child=${currentStudentId}&device=${deviceType}`;
+    }
+
+    function toggleStudentDropdown() {
+      const dropdown = document.getElementById('studentDropdown');
+      const icon = document.getElementById('dropdownIcon');
+      if (!dropdown || !icon) return;
+
+      const isHidden = dropdown.classList.contains('hidden');
+      if (isHidden) {
+        dropdown.classList.remove('hidden');
+        icon.classList.add('rotate-180');
+      } else {
+        dropdown.classList.add('hidden');
+        icon.classList.remove('rotate-180');
+      }
+    }
+
+    function selectStudent(childId) {
+      toggleStudentDropdown();
+      renderSelectedStudent(childId);
+    }
+
+    function renderStudentList() {
+      const studentList = document.getElementById('studentList');
+      if (!studentList) return;
+
+      studentList.innerHTML = childrenData.map(child => `
+        <button type="button" onclick="selectStudent('${child.id}')" class="w-full flex items-center gap-3 p-3 hover:bg-gray-50 transition-colors ${currentStudentId === child.id ? 'bg-blue-50' : ''}">
+          <div class="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-primary text-base font-bold border border-blue-100/50">
+            ${child.name.charAt(0)}
+          </div>
+          <div class="flex-1 text-left">
+            <div class="text-sm font-bold text-gray-900">${child.name}</div>
+            <div class="text-xs text-gray-500">${child.class}</div>
+          </div>
+          ${currentStudentId === child.id ? '<i class="ri-check-line text-primary text-lg"></i>' : ''}
+        </button>
+      `).join('');
+    }
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+      const dropdown = document.getElementById('studentDropdown');
+      const btn = document.getElementById('studentSelectorBtn');
+      if (!dropdown || !btn) return;
+
+      if (!dropdown.classList.contains('hidden') && !btn.contains(e.target) && !dropdown.contains(e.target)) {
+        dropdown.classList.add('hidden');
+        const icon = document.getElementById('dropdownIcon');
+        if (icon) icon.classList.remove('rotate-180');
+      }
+    });
+
+    function initializeOverview() {
+      configureChartDefaults();
+
+      const initialId = getInitialChildId();
+
+      renderStudentList();
+      renderSelectedStudent(initialId);
+    }
+
+    document.addEventListener('DOMContentLoaded', initializeOverview);
+  </script>
+</body>
+
+</html>

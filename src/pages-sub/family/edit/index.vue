@@ -9,7 +9,6 @@
 </route>
 
 <script lang="ts" setup>
-// #region 导入
 import type { Family } from '@/api/interface/modules/family'
 import type { TBatchRequestList } from '@/hooks/usePage'
 import { storeToRefs } from 'pinia'
@@ -27,51 +26,42 @@ import Form from '@/components/form/index/index.vue'
 import Picker from '@/components/form/picker/index.vue'
 import { useForm } from '@/hooks/useForm'
 import { usePage } from '@/hooks/usePage'
+import { useCurrentStudentStore } from '@/store/business/currentStudent'
 import { useConfigStore } from '@/store/config'
-import { useParentStore } from '@/store/auth/parent'
 import { currRoute } from '@/utils'
 import { useFamily } from '@/utils/emit/family'
 import { toast } from '@/utils/toast'
-// #endregion
 
-// #region 组件选项配置
 defineOptions({
   options: {
     styleIsolation: 'apply-shared',
   },
 })
-// #endregion
 
-// #region 使用 Store
 const configStore = useConfigStore()
-const parentStore = useParentStore()
+const currentStudentStore = useCurrentStudentStore()
 const { relationshipOptions } = storeToRefs(configStore)
-const { familyContactsRelationshipMap } = storeToRefs(parentStore)
-// #endregion
+const { familyContactsRelationshipMap } = storeToRefs(currentStudentStore)
 
-// #region 使用 Hooks
 const { pageLoading, pageError, batchRequestHandler, onLoginFail, getContentHeight } = usePage()
 const { formRef, validate, submitLoading, scrollIntoView, scrollToFirstError }
   = useForm('.contact-scroll')
 const { emitRefreshFamilyList } = useFamily()
-// #endregion
 
-// #region 定义响应式数据
+/** 当前编辑的亲情号信息 */
 const currentEditContact = ref<Family.Contact.ResGetFamilyContactsApi | null>(null)
-
+/** 表单数据 */
 const formData = ref<Family.Contact.ReqPostFamilyContactApi>({
   relationship: null,
   phone: '',
   nickname: '',
 })
-// #endregion
 
-// #region 定义计算属性
+/** 内容区域高度 */
 const contentHeight = computed(() => {
   return getContentHeight('164rpx')
 })
-
-// 处理关系选项，禁用已存在的关系（编辑时排除当前关系）
+/** 处理关系选项，禁用已存在的关系（编辑时排除当前关系） */
 const processedRelationshipOptions = computed(() => {
   return relationshipOptions.value.map((option) => {
     const isCurrentRelationship = currentEditContact.value?.relationship === option.value
@@ -83,9 +73,7 @@ const processedRelationshipOptions = computed(() => {
     }
   })
 })
-// #endregion
 
-// #region 定义验证规则
 const rules: Record<string, import('@/components/form/types').RuleItem[]> = {
   relationship: [{ required: true, message: '请选择关系' }],
   phone: [
@@ -98,14 +86,12 @@ const rules: Record<string, import('@/components/form/types').RuleItem[]> = {
   ],
   nickname: [{ max: 20, message: '昵称不能超过20个字符' }],
 }
-// #endregion
 
-// #region 接口请求函数
+/** 获取亲情号详情 */
 async function axiosGetFamilyContactDetailApi(id: number) {
   try {
     const result = await getFamilyContactDetailApi(id)
 
-    // 获取到当前亲情号的信息，回显到 form 中
     if (result.code === 0) {
       currentEditContact.value = result.data
       formData.value.relationship = result.data.relationship || 0
@@ -120,12 +106,10 @@ async function axiosGetFamilyContactDetailApi(id: number) {
     return { code: -1, message: '获取信息失败', data: null }
   }
 }
-// #endregion
 
-// #region 事件处理函数
+/** 提交表单 */
 async function handleSubmit() {
   try {
-    console.log(formData.value)
     const { valid } = await validate(['relationship', 'phone', 'nickname'])
     if (!valid) {
       scrollToFirstError()
@@ -153,27 +137,22 @@ async function handleSubmit() {
     submitLoading.value = false
   }
 }
-// #endregion
 
-// #region 生命周期钩子
+/** 登录成功处理 */
 function onLoginSuccess() {
   const { query } = currRoute()
 
-  // 构建请求列表，只包含统一类型的请求
   const reqList: TBatchRequestList = [
     configStore.axiosGetRelationshipOptionsApi(),
-    // 获取亲情号列表用于关系禁用逻辑
-    parentStore.axiosGetFamilyContactsApi(),
+    currentStudentStore.axiosGetFamilyContactsApi(),
   ]
 
   if (query.id) {
     reqList.push(axiosGetFamilyContactDetailApi(+query.id))
   }
 
-  // 使用 batchRequestHandler 处理统一类型的请求
   batchRequestHandler(reqList)
 }
-// #endregion
 </script>
 
 <template>

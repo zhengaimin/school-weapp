@@ -13,7 +13,7 @@ import type { IdentityOption } from './components/IdentityCard.vue'
 import { storeToRefs } from 'pinia'
 import { getWxCode, postWxPhoneApi } from '@/api/modules/user'
 import Page from '@/components/common/page/index.vue'
-import { STUDENT_BIND_PATH, TABBAR_HOME_PATH } from '@/constant/router'
+import { PARENT_OVERVIEW_PATH, STUDENT_BIND_PATH } from '@/constant/router'
 import { usePage } from '@/hooks/usePage'
 import { useParentStore } from '@/store/auth/parent'
 import { useUserStore } from '@/store/user'
@@ -72,7 +72,7 @@ async function selectIdentity(identity: IdentityOption) {
 
     // 获取学生列表
     if (!unref(students)?.length) {
-      const result = await parentStore.axiosGetStudentListByParentApi()
+      const result = await parentStore.axiosGetStudentListApi()
 
       if (result.code !== 0) {
         uni.navigateTo({
@@ -83,7 +83,7 @@ async function selectIdentity(identity: IdentityOption) {
     }
 
     uni.redirectTo({
-      url: `${TABBAR_HOME_PATH}?role=${id}`,
+      url: PARENT_OVERVIEW_PATH,
     })
   }
   catch (error) {

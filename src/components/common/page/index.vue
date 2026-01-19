@@ -21,6 +21,10 @@ const props = defineProps({
   title: string().def(''),
   showTabbar: bool().def(false),
   showBack: bool().def(true),
+  navbar: bool().def(true),
+  navBgColor: string(),
+  navTextColor: string(),
+  navIconColor: string(),
 
   error: string().def(''),
 
@@ -57,8 +61,7 @@ const needsLogin = computed(() => {
 
 /** 显示的标题（包含设备类型） */
 const displayTitle = computed(() => {
-  if (!props.title)
-    return ''
+  if (!props.title) return ''
 
   if (deviceType.value) {
     const deviceName = DEVICE_TYPE_I18N[deviceType.value]
@@ -94,18 +97,15 @@ function handleScroll(e) {
 /** 初始化用户信息和学生列表 */
 async function initInfo() {
   // 没有 token，直接返回
-  if (!unref(token))
-    return
+  if (!unref(token)) return
 
   // 没有用户信息、或者是首次启动，则获取用户信息
-  if (!unref(userInfo) || unref(isFirstLaunch))
-    await userStore.getUserInfo()
+  if (!unref(userInfo) || unref(isFirstLaunch)) await userStore.getUserInfo()
 
   // 获取家长下的学生列表
   const isParent = unref(role) === ROLE_TYPE.PARENT
   const noStudents = !unref(students).length
-  if (isParent && (noStudents || unref(isFirstLaunch)))
-    await parentStore.axiosGetStudentListByParentApi()
+  if (isParent && (noStudents || unref(isFirstLaunch))) await parentStore.axiosGetStudentListApi()
 }
 
 /** 处理登录成功后的导航逻辑 */
@@ -178,13 +178,13 @@ async function otherEnvLogin() {
     userStore.setRole(ROLE_TYPE.PARENT)
     userStore.setPhone('15972227364')
     userStore.setToken(
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ3ZWNoYXRBY2NvdW50SWQiOjE1LCJjdXJyZW50VXNlcklkIjozNiwidXNlcm5hbWUiOiJ3ZWNoYXRfdXNlcl8xNSIsImlkZW50aXRpZXMiOnsiMzYiOnsidXNlcklkIjoyNCwicm9sZUlkIjo0LCJyb2xlQ29kZSI6InBhcmVudCIsInRlbmFudElkIjoyLCJ0ZW5hbnRDb2RlIjoidGVzdF90ZW5hbnRfMDAxIiwic2Nob29sSWQiOjEsInNjaG9vbENvZGUiOiJTQ0hPT0xfM18xNzU1NjE1NjYwIiwidXNlclR5cGUiOiJwYXJlbnQifX0sInVzZXJUeXBlIjoiVVNFUiIsImV4cCI6MTc2NzY3MDg3OSwibmJmIjoxNzY3NTg0NDc5LCJpYXQiOjE3Njc1ODQ0Nzl9.HRvfv9gfkI5hLX0RhDSbGxpOq1LEzDyJHHs6-aA1TXk',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ3ZWNoYXRBY2NvdW50SWQiOjE1LCJjdXJyZW50VXNlcklkIjo0NCwidXNlcm5hbWUiOiJ3ZWNoYXRfdXNlcl8xNSIsImlkZW50aXRpZXMiOnsiNDQiOnsidXNlcklkIjozOSwicm9sZUlkIjo0LCJyb2xlQ29kZSI6InBhcmVudCIsInRlbmFudElkIjoyLCJ0ZW5hbnRDb2RlIjoidGVzdF90ZW5hbnRfMDAxIiwic2Nob29sSWQiOjEsInNjaG9vbENvZGUiOiJTQ0hPT0xfM18xNzU1NjE1NjYwIiwidXNlclR5cGUiOiJwYXJlbnQifX0sInVzZXJUeXBlIjoiVVNFUiIsImV4cCI6MTc2ODYxNTU3OCwibmJmIjoxNzY4NTI5MTc4LCJpYXQiOjE3Njg1MjkxNzh9.QPR6T9T40ECDy5GH8yTmbJds2e0StalS12AvnroDE34',
     )
 
     if (unref(isFirstLaunch)) {
       isFirstLaunch.value = false
       await userStore.getUserInfo()
-      await parentStore.axiosGetStudentListByParentApi()
+      await parentStore.axiosGetStudentListApi()
     }
 
     emit('login:success')
@@ -223,7 +223,14 @@ onMounted(async () => {
 <template>
   <view class="t-page" flex="~ col" relative z-1 box-border h-screen bg-gray-50 pb-safe>
     <!-- 导航 -->
-    <Navigation v-if="show" :title="displayTitle" :show-back="showBack">
+    <Navigation
+      v-if="show && navbar"
+      :title="displayTitle"
+      :show-back="showBack"
+      :bg-color="navBgColor"
+      :text-color="navTextColor"
+      :icon-color="navIconColor"
+    >
       <template v-if="!loading" #right>
         <slot name="header-right" />
       </template>

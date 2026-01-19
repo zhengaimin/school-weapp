@@ -3,7 +3,7 @@ const PACKAGE_REFUND_EVENT = 'package:refund'
 const PACKAGE_TRANSACTION_EVENT = 'package:transaction'
 
 // 定义事件回调函数的类型
-type PackageRefundSuccessCallback = () => void
+type PackageRefundSuccessCallback = (id?: number) => void
 
 type PackageTransactionSuccessCallback = () => void
 
@@ -35,9 +35,10 @@ function onPackageTransaction(callback: PackageTransactionSuccessCallback) {
 
 /**
  * 发送套餐退款事件
+ * @param id 退款记录ID（可选）
  */
-function emitPackageRefund() {
-  uni.$emit(PACKAGE_REFUND_EVENT)
+function emitPackageRefund(id?: number) {
+  uni.$emit(PACKAGE_REFUND_EVENT, id)
 }
 
 /**

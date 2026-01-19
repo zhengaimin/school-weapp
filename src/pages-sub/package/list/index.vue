@@ -11,22 +11,21 @@
 <script lang="ts" setup>
 import type { Pkg } from '@/api/interface/modules/package'
 import { storeToRefs } from 'pinia'
-import { computed, unref } from 'vue'
+import { computed, ref, unref } from 'vue'
 import { getAvailablePackagesApi } from '@/api/modules/package'
 import TButton from '@/components/common/button/index.vue'
 import Notice from '@/components/common/notice/index.vue'
 import Page from '@/components/common/page/index.vue'
 import RefreshList from '@/components/common/refresh-list/index.vue'
+import SimpleTabs from '@/components/common/simple-tabs/index.vue'
 import StatusTip from '@/components/common/status-tip/index.vue'
 import {
   PACKAGE_DETAIL_PATH,
   PACKAGE_HISTORY_PATH,
   PACKAGE_REFUND_HISTORY_PATH,
 } from '@/constant/router'
-import { useBalance } from '@/hooks/useBalance'
 import { usePage } from '@/hooks/usePage'
 import { useRefresh } from '@/hooks/useRefresh'
-import { useParentStore } from '@/store/auth/parent'
 import { useCurrentStudentStore } from '@/store/business/currentStudent'
 import { usePackageEmitter } from '@/utils/emit/package'
 import { usePackage } from '../hooks/usePackage'
@@ -41,15 +40,24 @@ defineOptions({
 
 const { pageLoading, pageError, pageLoaded, batchRequestHandler, onLoginFail, getContentHeight }
   = usePage()
-const parentStore = useParentStore()
 const currentStudentStore = useCurrentStudentStore()
 const { deviceType } = storeToRefs(currentStudentStore)
+
+/** Tab 状态 */
+const currentTab = ref(0)
+const tabs = ['生效中', '待生效', '可购买']
+
+/** 生效中/待生效套餐的加载状态 */
+const activeLoading = ref(false)
+const activeRefreshLoading = ref(false)
+const activeListBusy = computed(() => activeLoading.value || activeRefreshLoading.value)
+
 const {
   loading,
   refreshLoading,
   loaded,
   empty,
-  list: packagesList,
+  list: availableList,
   onRefreshList,
   onLoadMore,
 } = useRefresh<Pkg.Query.IPackage>({
@@ -57,11 +65,9 @@ const {
   immediate: false,
   listField: 'packages',
 })
-const { axiosGetUserBalanceApi } = useBalance()
+
 const { onPackageRefund, onPackageTransaction } = usePackageEmitter()
 const {
-  activePackage,
-  activePackageTotal,
   hasPendingRefund,
   pendingPayment,
   purchasedPackageIds,
@@ -70,13 +76,52 @@ const {
   axiosGetStudentActivePackageApi,
 } = usePackage()
 
+/** 生效中套餐列表 */
+const activePackages = ref<Pkg.Query.IStudentActivePackageVo[]>([])
+/** 待生效套餐列表 */
+const waitingPackages = ref<Pkg.Query.IStudentActivePackageVo[]>([])
+
 const contentStyle = computed(() => getContentHeight('164rpx'))
 
 /** 是否显示待支付订单 */
 const hasPendingPayment = computed(() => pendingPayment.value?.hasPending)
 
-/** 是否显示当前激活套餐 */
-const hasActivePackage = computed(() => !!unref(activePackage))
+/** 生效中套餐是否为空 */
+const activeEmpty = computed(
+  () => (activePackages.value?.length ?? 0) === 0 && !activeListBusy.value,
+)
+
+/** 待生效套餐是否为空 */
+const pendingEmpty = computed(
+  () => (waitingPackages.value?.length ?? 0) === 0 && !activeListBusy.value,
+)
+
+/** 获取生效/待生效套餐 */
+async function fetchActivePackages(isRefresh = false) {
+  if (isRefresh) {
+    activeRefreshLoading.value = true
+  }
+  else {
+    activeLoading.value = true
+  }
+  try {
+    const result = await axiosGetStudentActivePackageApi()
+    if (result.code === 0 && result.data) {
+      activePackages.value = result.data?.activePackages || []
+      waitingPackages.value = result.data?.waitingPackages || []
+    }
+    return result
+  }
+  finally {
+    activeRefreshLoading.value = false
+    activeLoading.value = false
+  }
+}
+
+/** 刷新生效中/待生效套餐 */
+function onRefreshActivePackages() {
+  return fetchActivePackages(true)
+}
 
 /** 点击待支付通知跳转到历史页面 */
 function handlePendingPaymentClick() {
@@ -97,7 +142,7 @@ function handleGoToPackageDetail(id: number) {
 async function onLoginSuccess() {
   batchRequestHandler([
     onRefreshList(),
-    axiosGetStudentActivePackageApi(),
+    fetchActivePackages(),
     axiosGetPendingPaymentApi(),
     axiosGetCheckPendingApi(),
   ])
@@ -106,46 +151,34 @@ async function onLoginSuccess() {
 onShow(() => {
   if (unref(pageLoaded)) {
     batchRequestHandler([
-      axiosGetStudentActivePackageApi(),
+      fetchActivePackages(),
       axiosGetCheckPendingApi(),
       axiosGetPendingPaymentApi(),
-      axiosGetUserBalanceApi(),
     ])
   }
 })
 
 onPackageRefund(() => {
-  batchRequestHandler([axiosGetStudentActivePackageApi(), axiosGetCheckPendingApi()])
+  batchRequestHandler([fetchActivePackages(), axiosGetCheckPendingApi()])
 })
 
 onPackageTransaction(() => {
-  batchRequestHandler([
-    axiosGetStudentActivePackageApi(),
-    axiosGetPendingPaymentApi(),
-    axiosGetUserBalanceApi(),
-  ])
+  batchRequestHandler([fetchActivePackages(), axiosGetPendingPaymentApi()])
 })
 </script>
 
 <template>
   <Page
     title="套餐列表"
+    :scroll-y="false"
     :loading="pageLoading"
     :error="pageError"
     @login:success="onLoginSuccess"
     @login:fail="onLoginFail"
   >
-    <RefreshList
-      :custom-style="contentStyle"
-      :loading="loading"
-      :refresh-loading="refreshLoading"
-      :loaded="loaded"
-      :empty="empty && !hasActivePackage"
-      @refresh="onRefreshList"
-      @loadmore="onLoadMore"
-    >
-      <view p="x-4 y-2!" flex="~ col" gap="4">
-        <!-- 待审核套餐提示 -->
+    <view flex="~ col" :style="contentStyle">
+      <!-- 顶部提示 -->
+      <view v-if="hasPendingRefund || hasPendingPayment" p="x-4 t-2" flex="~ col" gap="2">
         <Notice
           v-if="hasPendingRefund"
           type="warning"
@@ -153,7 +186,6 @@ onPackageTransaction(() => {
           :show-popup="false"
           @click="handleGoToRefundHistory"
         />
-        <!-- 待支付提醒 -->
         <Notice
           v-if="hasPendingPayment"
           type="warning"
@@ -161,50 +193,66 @@ onPackageTransaction(() => {
           title="当前存在待支付订单，点击查看"
           @click="handlePendingPaymentClick"
         />
+      </view>
 
-        <!-- 已购买套餐区域 -->
-        <view v-if="hasActivePackage" flex="~ col" gap="3">
-          <view flex="~ row items-center justify-between" px="1">
-            <text text="base gray-800" font="bold">
-              已购买套餐
-            </text>
-            <view v-if="activePackageTotal" px="2" py="0.5" bg="primary/10" rounded-full>
-              <text text="xs primary" font="medium">
-                {{ activePackageTotal }} 个生效中
-              </text>
-            </view>
+      <!-- Tab 切换 -->
+      <SimpleTabs v-model="currentTab" :tabs="tabs" />
+
+      <!-- Tab 内容区域 -->
+      <view relative w-full flex-1 overflow-hidden>
+        <!-- 生效中 -->
+        <RefreshList
+          v-if="currentTab === 0"
+          loaded
+          :loading="activeLoading"
+          :refresh-loading="activeRefreshLoading"
+          :empty="activeEmpty"
+          @refresh="onRefreshActivePackages"
+        >
+          <view p="x-4 y-2!" flex="~ col" gap="3">
+            <ActivePackageCard v-for="item in activePackages" :key="item.id" :package="item" />
+            <StatusTip v-if="activeEmpty" image="content" />
           </view>
-          <ActivePackageCard v-if="activePackage" :package="activePackage!" />
-        </view>
+        </RefreshList>
 
-        <!-- 可购买套餐区域 -->
-        <view flex="~ col" gap="3">
-          <!-- 区块标题 -->
-          <view flex="~ row items-center justify-between" px="1">
-            <text text="base gray-800" font="bold">
-              可购买套餐
-            </text>
-            <text text="xs gray-400">
-              按需选择
-            </text>
+        <!-- 待生效 -->
+        <RefreshList
+          v-if="currentTab === 1"
+          loaded
+          :loading="activeLoading"
+          :refresh-loading="activeRefreshLoading"
+          :empty="pendingEmpty"
+          @refresh="onRefreshActivePackages"
+        >
+          <view p="x-4 y-2!" flex="~ col" gap="3">
+            <ActivePackageCard v-for="item in waitingPackages" :key="item.id" :package="item" />
+            <StatusTip v-if="pendingEmpty" image="content" />
           </view>
+        </RefreshList>
 
-          <!-- 套餐列表 -->
-          <view flex="~ col" gap="3">
+        <!-- 可购买 -->
+        <RefreshList
+          v-if="currentTab === 2"
+          :loading="loading"
+          :refresh-loading="refreshLoading"
+          :loaded="loaded"
+          :empty="empty"
+          @refresh="onRefreshList"
+          @loadmore="onLoadMore"
+        >
+          <view p="x-4 y-2!" flex="~ col" gap="3">
             <PackageCard
-              v-for="pkg in packagesList"
+              v-for="pkg in availableList"
               :key="pkg.id"
-              :pkg="pkg"
+              :package="pkg"
               :is-purchased="purchasedPackageIds.has(pkg.id)"
               @click="handleGoToPackageDetail(pkg.id)"
             />
+            <StatusTip v-if="empty" image="content" />
           </view>
-
-          <!-- 空状态 -->
-          <StatusTip v-if="!loading && packagesList.length === 0" image="content" />
-        </view>
+        </RefreshList>
       </view>
-    </RefreshList>
+    </view>
 
     <!-- 底部操作按钮 -->
     <view p="x-4 y-3" flex gap="4" border="t gray-100">

@@ -9,7 +9,6 @@
 </route>
 
 <script lang="ts" setup>
-// #region 导入
 import type { Students } from '@/api/interface/modules/students'
 import { storeToRefs } from 'pinia'
 import { computed, ref, unref } from 'vue'
@@ -30,88 +29,85 @@ import { TABBAR_HOME_PATH } from '@/constant/router'
 import { useBalance } from '@/hooks/useBalance'
 import { useForm } from '@/hooks/useForm'
 import { usePage } from '@/hooks/usePage'
-import { useConfigStore } from '@/store/config'
 import { useParentStore } from '@/store/auth/parent'
+import { useCurrentStudentStore } from '@/store/business/currentStudent'
+import { useConfigStore } from '@/store/config'
 import { useUserStore } from '@/store/user'
 import { sleep } from '@/utils'
 import { toast } from '@/utils/toast'
-// #endregion
 
-// #region 组件选项配置
 defineOptions({
   options: {
     styleIsolation: 'apply-shared',
   },
 })
-// #endregion
 
-// #region 使用 Store
 const userStore = useUserStore()
 const parentStore = useParentStore()
-const { needBind, studentsIdMap } = storeToRefs(parentStore)
-// #endregion
-
-// #region 使用 Hooks
+const currentStudentStore = useCurrentStudentStore()
 const configStore = useConfigStore()
+const { needBind, studentsIdMap } = storeToRefs(parentStore)
 const { axiosGetUserBalanceApi } = useBalance()
 const { pageLoading, pageError, batchRequestHandler, onLoginFail, getContentHeight } = usePage()
-const { formRef, submitLoading, scrollIntoView, validate, scrollToFirstError }
-  = useForm('.bind-scroll')
-// #endregion
+const { formRef, submitLoading, scrollIntoView, validate, scrollToFirstError } = useForm('.bind-scroll')
 
-// #region 定义响应式数据
+/** 表单数据 */
 const formData = ref({
   school: '',
   name: '',
   searchType: SEARCH_TYPE.CODE,
   searchValue: '',
 })
+/** 搜索结果 */
 const searchResult = ref<{
   type: 'found' | 'notFound' | null
   students?: Students.IStudentVo[]
 }>({
   type: null,
 })
+/** 选中的学生 */
 const selectedStudent = ref<Students.IStudentVo | null>(null)
+/** 学生信息弹框显示状态 */
 const showStudentInfoModal = ref(false)
+/** 原始学校选项 */
 const rawSchoolOptions = ref<any[]>([])
+/** 学校选项 */
 const schoolOptions = ref<{ label: string, value: string | number }[]>([])
-// #endregion
 
-// #region 定义计算属性
-const searchValueLabel = computed(() => {
-  return SEARCH_TYPE_OPTIONS.find(item => item.value === formData.value.searchType)?.label || '学号'
-})
-const contentHeight = computed(() => {
-  return getContentHeight('164rpx')
-})
-// 获取学生唯一标识
-const getStudentIdentifier = computed(() => {
-  return (student: Students.IStudentVo) => {
-    if (formData.value.searchType === SEARCH_TYPE.CODE)
-      return student.studentCode
-    if (formData.value.searchType === SEARCH_TYPE.UUID)
-      return student.uuid
-    return student.idCard
-  }
-})
-// #endregion
-
-// #region 定义验证规则
+/** 表单验证规则 */
 const rules = {
   school: [{ required: true, message: '请选择学校' }],
   name: [{ required: true, message: '请输入学生姓名' }],
   searchType: [{ required: true, message: '请选择证件类型' }],
   searchValue: [{ required: true, message: '请输入证件号码' }],
 }
-// #endregion
 
-// #region 接口请求函数
+/** 搜索值标签 */
+const searchValueLabel = computed(() => {
+  return SEARCH_TYPE_OPTIONS.find(item => item.value === formData.value.searchType)?.label || '学号'
+})
+/** 内容区域高度 */
+const contentHeight = computed(() => {
+  return getContentHeight('164rpx')
+})
+/** 获取学生唯一标识 */
+const getStudentIdentifier = computed(() => {
+  return (student: Students.IStudentVo) => {
+    if (formData.value.searchType === SEARCH_TYPE.CODE) return student.studentCode
+    if (formData.value.searchType === SEARCH_TYPE.UUID) return student.uuid
+    return student.idCard
+  }
+})
+
+/** 隐藏搜索结果 */
+function hideSearchResult() {
+  searchResult.value = { type: null }
+}
+
 /** 获取学校列表 */
 async function axiosGetSchoolsApi() {
   try {
     const result = await getSchoolsApi({ page: 1, pageSize: 100 })
-
     if (result.code === 0 && result.data?.schools) {
       const { data } = result
       rawSchoolOptions.value = data.schools
@@ -120,7 +116,6 @@ async function axiosGetSchoolsApi() {
         value: item.id,
       }))
     }
-
     return result
   }
   catch (error) {
@@ -128,47 +123,33 @@ async function axiosGetSchoolsApi() {
     return { code: -1 }
   }
 }
-/** 获取学生列表 */
+/** 搜索学生 */
 async function axiosPostPublicStudentApi(params: Students.ReqPostPublicStudentApi) {
   try {
     const { code, data } = await postPublicStudentApi(params)
     if (code === 0 && data && data.students && data.students.length > 0) {
-      searchResult.value = {
-        type: 'found',
-        students: data.students,
-      }
+      searchResult.value = { type: 'found', students: data.students }
     }
     else {
-      searchResult.value = {
-        type: 'notFound',
-      }
+      searchResult.value = { type: 'notFound' }
     }
   }
   catch (error) {
-    searchResult.value = {
-      type: 'notFound',
-    }
+    searchResult.value = { type: 'notFound' }
     console.log(error)
   }
 }
-/**
- * 当 needBind = true，则调用 postParentRegisterApi 接口
- * 当 needBind = false，则调用 postBindStudentApi 接口
- */
+/** 绑定学生（needBind=true 调用注册接口，否则调用绑定接口） */
 async function axiosPostBindStudentApi(params: { studentId: number }) {
   try {
     let api = null
-
     const { studentId } = params
 
-    // 检查是否需要注册绑定流程
     if (unref(needBind)) {
-      // 需要注册绑定：先获取微信登录凭证，然后调用注册接口
       const { code } = await getWxCode()
       if (!code) {
         throw new Error('获取微信登录凭证失败')
       }
-
       api = () =>
         postParentRegisterApi({
           loginCode: code,
@@ -176,7 +157,6 @@ async function axiosPostBindStudentApi(params: { studentId: number }) {
           chooseChildUserId: studentId,
         })
     }
-    // 直接绑定学生
     else {
       api = () => postBindStudentApi({ studentId })
     }
@@ -187,10 +167,7 @@ async function axiosPostBindStudentApi(params: { studentId: number }) {
       userStore.setToken(result.data.token)
       await userStore.getUserInfo()
       await axiosGetUserBalanceApi()
-
-      // 切换学生成功后，清除亲情号信息
-      parentStore.setContactInfo(null)
-
+      currentStudentStore.setContactInfo(null)
       setTimeout(() => {
         uni.navigateBack()
       }, 500)
@@ -204,30 +181,19 @@ async function axiosPostBindStudentApi(params: { studentId: number }) {
   }
 }
 
-// #endregion
-
-// #region 方法定义
-// 隐藏搜索结果
-function hideSearchResult() {
-  searchResult.value = { type: null }
-}
-// #endregion
-
-// #region 事件处理函数
-// 学校变化处理
-async function onSchoolChange(schoolId: number) {
+/** 学校变化处理 */
+async function handleSchoolChange() {
   formData.value.name = ''
   formData.value.searchValue = ''
   hideSearchResult()
 }
-// 学生姓名输入变化
-function onStudentNameInput() {
+/** 学生姓名输入变化 */
+function handleStudentNameInput() {
   hideSearchResult()
 }
-// 搜索学生
+/** 搜索学生 */
 async function handleSearchStudent() {
   try {
-    // 使用表单校验
     const { valid } = await validate(['school', 'name', 'searchType', 'searchValue'])
     if (!valid) {
       scrollToFirstError()
@@ -248,12 +214,9 @@ async function handleSearchStudent() {
       tenantId: +selectedSchool.tenantId,
       name: name.trim(),
     }
-    if (searchType === SEARCH_TYPE.CODE)
-      params.studentCode = searchValue.trim()
-    else if (searchType === SEARCH_TYPE.ID_CARD)
-      params.idCard = searchValue.trim()
-    else if (searchType === SEARCH_TYPE.UUID)
-      params.UUID = searchValue.trim()
+    if (searchType === SEARCH_TYPE.CODE) params.studentCode = searchValue.trim()
+    else if (searchType === SEARCH_TYPE.ID_CARD) params.idCard = searchValue.trim()
+    else if (searchType === SEARCH_TYPE.UUID) params.UUID = searchValue.trim()
 
     await axiosPostPublicStudentApi(params)
 
@@ -268,34 +231,29 @@ async function handleSearchStudent() {
     submitLoading.value = false
   }
 }
-
-// 确认绑定
+/** 确认绑定 */
 async function handleConfirmBinding() {
   try {
     submitLoading.value = true
 
-    // 调用绑定学生接口
     const result = await axiosPostBindStudentApi({
       studentId: selectedStudent.value.id,
     })
 
     if (result.code === 0) {
-      // 如果是注册流程，需要更新用户 token
       if (unref(needBind) && result.data?.token) {
         parentStore.setNeedBind(false)
       }
 
-      // 显示成功提示
       toast.info('绑定成功！')
       showStudentInfoModal.value = false
 
       await sleep(500)
       await batchRequestHandler(
-        [parentStore.axiosGetStudentListByParentApi(), configStore.axiosGetSchoolModulesApi()],
+        [parentStore.axiosGetStudentListApi(), configStore.axiosGetSchoolModulesApi()],
         { auto: false },
       )
 
-      // 重定向到首页
       uni.redirectTo({
         url: `${TABBAR_HOME_PATH}?role=${ROLE_TYPE.PARENT}`,
       })
@@ -306,8 +264,6 @@ async function handleConfirmBinding() {
   }
   catch (error: any) {
     console.error('绑定失败:', error)
-
-    // 显示错误提示
     const errorMessage = error?.message || error?.data?.message || error?.msg || '绑定失败，请重试'
     toast.show(errorMessage)
   }
@@ -316,13 +272,10 @@ async function handleConfirmBinding() {
   }
 }
 
-// #endregion
-
-// #region 生命周期钩子
+/** 登录成功处理 */
 async function onLoginSuccess() {
   batchRequestHandler([axiosGetSchoolsApi()])
 }
-// #endregion
 </script>
 
 <template>
@@ -355,7 +308,7 @@ async function onLoginSuccess() {
                   :options="schoolOptions"
                   title="选择学校"
                   placeholder="请选择学校"
-                  @change="onSchoolChange"
+                  @change="handleSchoolChange"
                 />
               </Cell>
 
@@ -365,7 +318,7 @@ async function onLoginSuccess() {
                   v-model="formData.name"
                   placeholder="请输入学生姓名"
                   :disabled="!formData.school"
-                  @input="onStudentNameInput"
+                  @input="handleStudentNameInput"
                   @confirm="handleSearchStudent"
                 />
               </Cell>
@@ -386,7 +339,7 @@ async function onLoginSuccess() {
                   v-model="formData.searchValue"
                   :placeholder="`请输入${searchValueLabel}`"
                   :disabled="!formData.school"
-                  @input="onStudentNameInput"
+                  @input="handleStudentNameInput"
                   @confirm="handleSearchStudent"
                 />
               </Cell>
@@ -492,5 +445,3 @@ async function onLoginSuccess() {
     </BottomPopup>
   </Page>
 </template>
-
-

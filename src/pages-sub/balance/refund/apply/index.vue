@@ -15,7 +15,6 @@ import { computed, onUnmounted, ref, unref } from 'vue'
 import { useMessage } from 'wot-design-uni'
 import { getPendingRefundApi, postApplyRefundApi } from '@/api/modules/refund'
 import TButton from '@/components/common/button/index.vue'
-import FabActions from '@/components/common/fab-actions/index.vue'
 import Notice from '@/components/common/notice/index.vue'
 import Page from '@/components/common/page/index.vue'
 import RoleAvatar from '@/components/common/role-avatar/index.vue'
@@ -28,7 +27,6 @@ import { BALANCE_REFUND_HISTORY_PATH, BALANCE_REFUND_RESULT_PATH } from '@/const
 import { useBalance } from '@/hooks/useBalance'
 import { useForm } from '@/hooks/useForm'
 import { usePage } from '@/hooks/usePage'
-import { useParentStore } from '@/store/auth/parent'
 import { useCurrentStudentStore } from '@/store/business/currentStudent'
 import { useUserStore } from '@/store/user'
 import { useRefundEmitter } from '@/utils/emit/refund'
@@ -49,10 +47,8 @@ const { axiosGetUserBalanceApi } = useBalance()
 const { onRefundSuccess } = useRefundEmitter()
 
 const userStore = useUserStore()
-const parentStore = useParentStore()
 const currentStudentStore = useCurrentStudentStore()
-const { currentStudent } = storeToRefs(parentStore)
-const { balanceInfo, deviceType } = storeToRefs(currentStudentStore)
+const { studentInfo, balanceInfo, deviceType } = storeToRefs(currentStudentStore)
 
 const pendingRefundInfo = ref<Refund.Application.ResGetPendingApi | null>(null)
 const formData = ref({
@@ -122,6 +118,13 @@ function handleCancelPendingRefund() {
   }
   uni.navigateTo({
     url: `${BALANCE_REFUND_RESULT_PATH}?id=${pendingRefundInfo.value.applicationId}`,
+  })
+}
+
+/** 查看历史记录 */
+function handleViewHistory() {
+  uni.navigateTo({
+    url: BALANCE_REFUND_HISTORY_PATH,
   })
 }
 
@@ -247,7 +250,7 @@ defineExpose({
             <view flex="1 col" gap-1>
               <view flex="~ items-center justify-between">
                 <view text="sm text-primary" font="medium">
-                  {{ currentStudent?.studentName || '未选择学生' }}
+                  {{ studentInfo?.studentName || '未选择学生' }}
                 </view>
                 <view text="xs text-secondary">
                   当前余额
@@ -255,7 +258,7 @@ defineExpose({
               </view>
               <view flex="~ items-center justify-between">
                 <view text="xs text-secondary">
-                  {{ currentStudent?.fullClassName }}
+                  {{ studentInfo?.className }}
                 </view>
                 <view text="sm primary" font="medium">
                   {{ availableBalanceText }}
@@ -289,25 +292,26 @@ defineExpose({
       </view>
     </scroll-view>
 
-    <view p="4">
+    <view p="4" flex="~ row" gap="3">
+      <!-- 历史记录按钮 -->
+      <view w="1/3">
+        <TButton type="default" size="large" full @click="handleViewHistory">
+          历史记录
+        </TButton>
+      </view>
       <!-- 提交申请按钮 -->
-      <TButton
-        type="primary"
-        size="large"
-        full
-        :disabled="cannotSubmit"
-        :loading="submitLoading"
-        @click="handleSubmitRefund"
-      >
-        提交退费申请
-      </TButton>
+      <view w="2/3">
+        <TButton
+          type="primary"
+          size="large"
+          full
+          :disabled="cannotSubmit"
+          :loading="submitLoading"
+          @click="handleSubmitRefund"
+        >
+          提交退费申请
+        </TButton>
+      </view>
     </view>
   </Page>
-
-  <!-- 悬浮操作按钮 -->
-  <FabActions
-    :actions="[{ text: '历史记录', path: BALANCE_REFUND_HISTORY_PATH }]"
-    :z-index="100"
-    :bottom="164"
-  />
 </template>

@@ -49,6 +49,7 @@ export function useRefresh<T>({ get, formatItem, immediate = true, listField = '
     }
 
     try {
+      // console.log(unref(query))
       const result: ResultData<IResponse> = await get(unref(query))
 
       if (result.code === 0) {

@@ -1,14 +1,11 @@
 <script lang="ts" setup>
-// #region 导入
 import type { Refund } from '@/api/interface/modules/refund'
 import TButton from '@/components/common/button/index.vue'
 import WhiteCard from '@/components/common/white-card/index.vue'
 import Icon from '@/components/icon/index.vue'
 import { REFUND_STATUS, REFUND_STATUS_CONFIGS } from '@/constant/modules'
 import { formatTime } from '@/utils/format'
-// #endregion
 
-// #region 属性定义
 defineProps<{
   record: Refund.IRefundApplicationVo
 }>()
@@ -17,13 +14,11 @@ const emit = defineEmits<{
   click: [event: Event]
   cancel: [record: Refund.IRefundApplicationVo]
 }>()
-// #endregion
 
-// #region 方法
+/** 处理取消操作 */
 function handleCancel(record: Refund.IRefundApplicationVo) {
   emit('cancel', record)
 }
-// #endregion
 </script>
 
 <template>

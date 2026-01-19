@@ -1,6 +1,6 @@
 import type { Payment } from '@/api/interface/modules/payment'
 import { storeToRefs } from 'pinia'
-import { ref } from 'vue'
+import { ref, unref } from 'vue'
 import {
   getPaymentStatusApi,
   postCancelPaymentRecordApi,
@@ -8,6 +8,7 @@ import {
   postRechargeApi,
 } from '@/api/modules/payment'
 import { USER_TYPE } from '@/constant/modules'
+import { useCurrentStudentStore } from '@/store/business/currentStudent'
 import { useUserStore } from '@/store/user'
 import { useMessage } from '@/uni_modules/wot-design-uni'
 import { toast } from '@/utils/toast'
@@ -16,8 +17,10 @@ import { requestWxPayment } from '@/utils/uni'
 export function usePayment() {
   const message = useMessage()
   const userStore = useUserStore()
+  const currentStudentStore = useCurrentStudentStore()
 
-  const { currentStudent, userInfo } = storeToRefs(userStore)
+  const { studentInfo } = storeToRefs(currentStudentStore)
+  const { userInfo } = storeToRefs(userStore)
 
   const cancelLoading = ref(false)
   const rechargeLoading = ref(false)
@@ -143,7 +146,7 @@ export function usePayment() {
     try {
       uni.showLoading({ title: '正在创建订单...' })
       const { userType } = unref(userInfo) || {}
-      const { studentId } = unref(currentStudent) || {}
+      const { studentId } = unref(studentInfo) || {}
 
       // 第一步：创建订单
       if (userType !== USER_TYPE.PARENT || !studentId) {

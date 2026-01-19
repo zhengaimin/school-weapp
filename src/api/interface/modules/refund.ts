@@ -1,4 +1,4 @@
-import type { TRefundApplicationStatus } from '@/constant/modules'
+import type { TDeviceType, TRefundStatus } from '@/constant/modules'
 
 // src/api/interface/modules/refund.ts
 export namespace Refund {
@@ -12,8 +12,8 @@ export namespace Refund {
     applyAmount: string
     /** 实际退款金额 */
     actualAmount: string | null
-    /** 状态：0-待审核，1-审核通过，2-审核拒绝，3-退款完成 */
-    status: TRefundApplicationStatus
+    /** 状态：0-待审核，1-审核通过，2-退款处理中，3-退款完成，4-部分退款完成，5-审核拒绝，6-用户取消 */
+    status: TRefundStatus
     /** 状态文本 */
     statusText: string
     /** 申请原因 */
@@ -83,6 +83,20 @@ export namespace Refund {
       page?: number
       /** 每页数量，默认10，最大100 */
       pageSize?: number
+      /** 退款状态筛选：0-待审核，1-审核通过，2-退款处理中，3-退款完成，4-部分退款完成，5-审核拒绝，6-用户取消 */
+      status?: TRefundStatus
+      /** 设备类型筛选：VIDEO-视频话机，DRYER-吹风机 */
+      deviceType?: TDeviceType
+      /** 退款类型筛选：FULL-全额退款，SINGLE-单笔退款 */
+      refundType?: 'FULL' | 'SINGLE'
+      /** 开始时间筛选（格式：YYYY-MM-DD HH:mm:ss） */
+      startTime?: string
+      /** 结束时间筛选（格式：YYYY-MM-DD HH:mm:ss） */
+      endTime?: string
+      /** 最小金额筛选 */
+      minAmount?: string
+      /** 最大金额筛选 */
+      maxAmount?: string
     }
 
     /** 获取退款申请列表 - 响应 */

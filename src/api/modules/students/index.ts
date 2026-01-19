@@ -16,9 +16,12 @@ const STUDENTS_API = {
 export function postPublicStudentApi(params: Students.ReqPostPublicStudentApi) {
   return http.post<Students.ResPostPublicStudentApi>(STUDENTS_API.SEARCH, params)
 }
-/** 获取家长的绑定的孩子列表 */
-export function getStudentListByParentApi() {
-  return http.get<Students.ResGetStudentListByParent>(STUDENTS_API.LIST)
+/**
+ * @description 获取家长的孩子列表
+ * @returns {Promise<Students.ResGetListApi>}
+ */
+export function getStudentListApi() {
+  return http.get<Students.ResGetListApi>(STUDENTS_API.LIST)
 }
 
 /** 家长切换当前学生 */

@@ -3,58 +3,50 @@
   "layout": "default",
   "style": {
     "navigationStyle": "custom",
-    "navigationBarTitleText": "余额查询"
+    "navigationBarTitleText": "余额信息"
   }
 }
 </route>
 
 <script lang="ts" setup>
-// #region 导入
+import type { Gifts } from '@/api/interface/modules/gifts'
 import dayjs from 'dayjs'
 import { storeToRefs } from 'pinia'
 import { computed, ref } from 'vue'
+import { getValidGiftsApi } from '@/api/modules/gifts'
 import { getConsumptionStatisticsApi } from '@/api/modules/user/consumption'
-import GradientHeader from '@/components/common/gradient-header/index.vue'
 import Page from '@/components/common/page/index.vue'
-import WhiteCard from '@/components/common/white-card/index.vue'
 import Icon from '@/components/icon/index.vue'
 import { usePage } from '@/hooks/usePage'
 import { usePackage } from '@/pages-sub/package/hooks/usePackage'
-import ActivePackageCard from '@/pages-sub/package/list/components/ActivePackageCard.vue'
-import { useParentStore } from '@/store/auth/parent'
-import { useUserStore } from '@/store/user'
-// #endregion
+import { useCurrentStudentStore } from '@/store/business/currentStudent'
+import GiftCard from './components/GiftCard.vue'
+import PackageCard from './components/PackageCard.vue'
+import StatisticsCard from './components/StatisticsCard.vue'
 
-// #region 组件选项配置
 defineOptions({
   options: {
     styleIsolation: 'apply-shared',
   },
 })
-// #endregion
 
-// #region 使用 Hooks
 const { pageLoading, pageError, onLoginFail, batchRequestHandler, getContentHeight } = usePage()
 const { activePackage, axiosGetStudentActivePackageApi } = usePackage()
-// #endregion
+const currentStudentStore = useCurrentStudentStore()
+const {
+  studentInfo: currentStudent,
+  studentFullInfo,
+  balanceInfo,
+} = storeToRefs(currentStudentStore)
 
-// #region 使用 Store
-const userStore = useUserStore()
-const parentStore = useParentStore()
-const { currentStudent } = storeToRefs(userStore)
-const { balanceInfo } = storeToRefs(parentStore)
-// #endregion
-
-// #region 定义响应式数据
 const consumptionStatistics = ref()
-// #endregion
+const validGifts = ref<Gifts.Valid.ResGetValidGiftsApi>()
 
-// #region 定义计算属性
+/** 内容区域样式 */
 const contentStyle = computed(() => {
   return getContentHeight('0')
 })
 
-/** 上次更新 */
 const lastUpdateTimeFormatted = computed(() => {
   if (balanceInfo.value?.lastUpdateTime) {
     return balanceInfo.value.lastUpdateTime
@@ -64,17 +56,40 @@ const lastUpdateTimeFormatted = computed(() => {
   }
   return '--'
 })
-// #endregion
 
-// #region 接口请求函数
+/** 是否有生效套餐 */
+const hasActivePackage = computed(() => !!activePackage.value)
+
+/** 是否有有效赠费 */
+const hasValidGifts = computed(() => !!validGifts.value?.records?.length)
+
+/** 波浪背景图 */
+const waveSvgUrl = computed(() => {
+  const color = '#f9fafb'
+  const svgContent = `<svg viewBox="0 0 1440 320" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none"><path fill="${color}" fill-opacity="1" d="M0,192L48,197.3C96,203,192,213,288,229.3C384,245,480,267,576,250.7C672,235,768,181,864,181.3C960,181,1056,235,1152,234.7C1248,235,1344,181,1392,154.7L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path></svg>`
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgContent)}`
+})
+
+/** 获取消费统计 */
 async function axiosGetConsumptionStatisticsApi() {
   try {
     const result = await getConsumptionStatisticsApi()
-
     if (result.code === 0) {
       consumptionStatistics.value = result.data
     }
-
+    return result
+  }
+  catch (error) {
+    return { code: -1 }
+  }
+}
+/** 获取有效赠费记录 */
+async function axiosGetValidGiftsApi() {
+  try {
+    const result = await getValidGiftsApi()
+    if (result.code === 0) {
+      validGifts.value = result.data
+    }
     return result
   }
   catch (error) {
@@ -82,91 +97,103 @@ async function axiosGetConsumptionStatisticsApi() {
   }
 }
 
-// #endregion
-
-// #region 生命周期钩子
+/** 登录成功处理 */
 async function onLoginSuccess() {
-  await batchRequestHandler([axiosGetConsumptionStatisticsApi(), axiosGetStudentActivePackageApi()])
+  await batchRequestHandler([
+    axiosGetConsumptionStatisticsApi(),
+    axiosGetStudentActivePackageApi(),
+    axiosGetValidGiftsApi(),
+  ])
 }
-// #endregion
 </script>
 
 <template>
   <Page
-    :show="false"
+    title="余额信息"
     :loading="pageLoading"
     :error="pageError"
     :scroll-y="false"
+    :navbar="true"
+    nav-bg-color="#3269dd"
+    nav-text-color="#ffffff"
+    nav-icon-color="#ffffff"
     @login:success="onLoginSuccess"
     @login:fail="onLoginFail"
   >
-    <!-- 内容区域 -->
-    <scroll-view scroll-y :style="contentStyle">
-      <!-- 渐变头部 + 余额展示 -->
-      <GradientHeader title="账户信息" :show-back="true">
-        <view m="t-2" p="b-8">
-          <view text="sm opacity-90" m="b-2">
-            当前余额 (元)
-          </view>
-          <view text="4xl" font="bold" m="b-6">
-            {{ balanceInfo?.availableBalanceFormatted || (balanceInfo?.availableBalance ?? '--') }}
-          </view>
-          <view flex="~ items-center justify-between" text="sm opacity-90">
-            <view>
-              {{ currentStudent?.studentName || currentStudent?.fullClassName || '--' }}
+    <scroll-view scroll-y :style="contentStyle" bg-gray-50>
+      <!-- 蓝色背景区域 -->
+      <view relative overflow="hidden" bg="#3269dd" pt-safe>
+        <view relative z="10" p="t-4 b-8 x-6" text="white">
+          <view flex="~ col items-center" p="b-10">
+            <!-- 学生信息胶囊 -->
+            <view
+              flex="~ row items-center"
+              gap="1"
+              p="x-3 y-1"
+              bg="white/10"
+              rounded-full
+              m="b-6"
+              backdrop-blur-sm
+            >
+              <text text="sm white" font="medium" opacity-95>
+                {{ studentFullInfo || currentStudent?.studentName || '--' }}
+              </text>
             </view>
-            <view>
-              更新于:{{ lastUpdateTimeFormatted }}
+
+            <!-- 余额展示 -->
+            <view text="sm white/80" m="b-1">
+              当前可用余额
+            </view>
+            <view text="4xl white" font="bold" flex="~ items-baseline" tracking-tight>
+              <text text="xl" m="r-1" opacity-90>
+                ¥
+              </text>
+              {{
+                balanceInfo?.availableBalanceFormatted || (balanceInfo?.availableBalance ?? '--')
+              }}
+            </view>
+
+            <!-- 更新时间 -->
+            <view m="t-3" flex="~ row items-center" gap="1" opacity-70>
+              <Icon name="time-line" icon-color="#ffffff" icon-size="24rpx" />
+              <text text="xs">
+                更新于 {{ lastUpdateTimeFormatted }}
+              </text>
             </view>
           </view>
         </view>
-      </GradientHeader>
 
-      <view flex="~ col" gap="4" p="x-4 b-8" relative z-10 style="margin-top: -48rpx">
-        <!-- 分块：账户统计 -->
-        <WhiteCard>
-          <view text="base text-gray-900" font="bold" m="b-4">
-            账户统计
-          </view>
-          <view grid="~ cols-3" gap="4">
-            <view flex="~ col items-center" gap="2">
-              <view w="12" h="12" rounded-full bg="primary-50" flex="~ items-center justify-center">
-                <Icon name="file-list-3-line" icon-color="#3269dd" icon-size="44rpx" />
-              </view>
-              <view text="xl text-gray-900" font="bold" m="t-1">
-                {{ consumptionStatistics?.monthCount ?? '--' }}
-              </view>
-              <view text="xs text-gray-500">
-                本月消费次数
-              </view>
-            </view>
-            <view flex="~ col items-center" gap="2">
-              <view w="12" h="12" rounded-full bg="primary-50" flex="~ items-center justify-center">
-                <Icon name="money-cny-circle-line" icon-color="#3269dd" icon-size="44rpx" />
-              </view>
-              <view text="xl text-gray-900" font="bold" m="t-1">
-                {{ consumptionStatistics?.monthAmount ?? '--' }}
-              </view>
-              <view text="xs text-gray-500">
-                本月消费金额
-              </view>
-            </view>
-            <view flex="~ col items-center" gap="2">
-              <view w="12" h="12" rounded-full bg="primary-50" flex="~ items-center justify-center">
-                <Icon name="wallet-3-line" icon-color="#3269dd" icon-size="44rpx" />
-              </view>
-              <view text="xl text-gray-900" font="bold" m="t-1">
-                {{ balanceInfo?.totalRecharge ?? '--' }}
-              </view>
-              <view text="xs text-gray-500">
-                累计充值
-              </view>
-            </view>
-          </view>
-        </WhiteCard>
+        <!-- 底部波浪 -->
+        <view
+          absolute
+          bottom="[-2rpx]"
+          left-0
+          w-full
+          z="5"
+          style="height: 80rpx; pointer-events: none"
+        >
+          <image
+            :src="waveSvgUrl"
+            mode="scaleToFill"
+            style="width: 100%; height: 100%; display: block"
+          />
+        </view>
+      </view>
 
-        <!-- 分块：套餐信息 -->
-        <ActivePackageCard v-if="activePackage" :active-package="activePackage" />
+      <!-- 内容区域 (上浮重叠) -->
+      <view p="x-4 b-6 b-safe" relative z-10 flex="~ col gap-3" m="t-[-64rpx]">
+        <!-- 账户统计卡片 -->
+        <StatisticsCard
+          :month-count="consumptionStatistics?.monthCount"
+          :month-amount="consumptionStatistics?.monthAmount"
+          :total-recharge="balanceInfo?.totalRecharge"
+        />
+
+        <!-- 已购买套餐 -->
+        <PackageCard v-if="hasActivePackage" :package="activePackage!" />
+
+        <!-- 赠费信息 -->
+        <GiftCard v-if="hasValidGifts" :valid-gifts="validGifts" />
       </view>
     </scroll-view>
   </Page>

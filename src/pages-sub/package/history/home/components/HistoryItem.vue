@@ -5,14 +5,8 @@ import { computed } from 'vue'
 import TButton from '@/components/common/button/index.vue'
 import WhiteCard from '@/components/common/white-card/index.vue'
 import Icon from '@/components/icon/index.vue'
-import {
-  PACKAGE_BUY_STATUS,
-  PACKAGE_STATUS,
-  PACKAGE_STATUS_CONFIGS,
-  PACKAGE_TYPE_I18N,
-} from '@/constant/modules'
+import { PACKAGE_STATUS, PACKAGE_STATUS_CONFIGS, PACKAGE_TYPE_I18N } from '@/constant/modules'
 import { formatTime } from '@/utils/format'
-import { canShowRefundButton } from '../../../utils'
 
 const props = defineProps<{
   record: Pkg.Query.IPackagePurchaseVo
@@ -24,75 +18,48 @@ const emit = defineEmits<{
   cancel: [record: Pkg.Query.IPackagePurchaseVo]
   pay: [record: Pkg.Query.IPackagePurchaseVo]
   refund: [record: Pkg.Query.IPackagePurchaseVo]
-  cancelRefund: [record: Pkg.Query.IPackagePurchaseVo]
 }>()
 
-/** 判断是否为待审核的退款记录 */
-const isPendingRefund = computed(() => {
-  return props.record.status === PACKAGE_BUY_STATUS.REFUND_PENDING
-})
-
+/** 套餐状态 */
+const recordStatus = computed(() => props.record?.status ?? null)
 /** 判断是否为待支付状态 */
-const isUnpaid = computed(() => {
-  return props.record.status === PACKAGE_STATUS.PENDING
-})
-
+const isUnpaid = computed(() => recordStatus.value === PACKAGE_STATUS.PENDING)
 /** 是否显示退款按钮 */
 const showRefundButton = computed(() => {
-  return canShowRefundButton({
-    status: props.record.status,
-    endDate: props.record.endDate,
-    hasPendingRefund: props.hasPendingRefund,
-  })
+  if (props.hasPendingRefund) return false
+  return props.record?.canRefund
 })
-
 /** 获取状态配置 */
-const statusConfig = computed(() => {
-  return PACKAGE_STATUS_CONFIGS[props.record.status as TPackageStatus]
-})
-
+const statusConfig = computed(() => PACKAGE_STATUS_CONFIGS[recordStatus.value as TPackageStatus])
 /** 获取图标名称 */
-const iconName = computed(() => statusConfig.value.icon)
-
+const iconName = computed(() => statusConfig.value?.icon)
 /** 获取图标颜色 */
-const iconColor = computed(() => statusConfig.value.iconColor)
-
+const iconColor = computed(() => statusConfig.value?.iconColor)
 /** 获取状态标签 */
-const statusLabel = computed(() => statusConfig.value.label)
-
+const statusLabel = computed(() => statusConfig.value?.label)
 /** 获取套餐类型标签 */
-const packageTypeLabel = computed(() => {
-  return PACKAGE_TYPE_I18N[props.record.snapshotInfo.packageType]
-})
+const packageTypeLabel = computed(() => PACKAGE_TYPE_I18N[props.record?.snapshotInfo?.packageType])
 
 /** 处理点击事件 */
 function handleClick(event: Event) {
   emit('click', event, props.record)
 }
-
 /** 取消订单 */
 function handleCancel() {
   emit('cancel', props.record)
 }
-
 /** 支付订单 */
 function handlePay() {
   emit('pay', props.record)
 }
-
 /** 申请退款 */
 function handleRefund() {
   emit('refund', props.record)
 }
-
-/** 取消退款 */
-function handleCancelRefund() {
-  emit('cancelRefund', props.record)
-}
 </script>
 
 <template>
-  <view relative overflow="hidden" @click.stop="handleClick">
+  <view v-if="record" relative overflow="hidden" @click.stop="handleClick">
     <WhiteCard relative>
       <!-- 背景图标 -->
       <view absolute left--68rpx top-68rpx style="transform: translateY(-50%)">
@@ -123,16 +90,11 @@ function handleCancelRefund() {
             {{ statusLabel }}
           </view>
           <view text="xs gray-600">
-            {{ formatTime(record.purchaseDate) }}
+            {{ formatTime(record?.purchaseDate) }}
           </view>
         </view>
         <!-- 第三行：操作按钮 -->
-        <view
-          v-if="isUnpaid || showRefundButton || isPendingRefund"
-          flex="~ justify-end"
-          m="t-3"
-          gap="3"
-        >
+        <view v-if="isUnpaid || showRefundButton" flex="~ justify-end" m="t-3" gap="3">
           <!-- 待支付状态的按钮 -->
           <template v-if="isUnpaid">
             <TButton type="danger" size="small" plain @click.stop="handleCancel">
@@ -142,17 +104,6 @@ function handleCancelRefund() {
               继续支付
             </TButton>
           </template>
-
-          <!-- 取消退款按钮 -->
-          <TButton
-            v-if="isPendingRefund"
-            type="danger"
-            size="small"
-            plain
-            @click.stop="handleCancelRefund"
-          >
-            取消退款
-          </TButton>
 
           <!-- 退款按钮 -->
           <TButton

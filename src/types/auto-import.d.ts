@@ -82,6 +82,7 @@ declare global {
   const useConfig: typeof import('../hooks/useConfig')['useConfig']
   const useCssModule: typeof import('vue')['useCssModule']
   const useCssVars: typeof import('vue')['useCssVars']
+  const useDeviceType: typeof import('../hooks/useDeviceType')['useDeviceType']
   const useErrorHandler: typeof import('../hooks/useErrorHandler')['useErrorHandler']
   const useFRVExternal: typeof import('../hooks/useFRVExternal')['useFRVExternal']
   const useFaceCollect: typeof import('../hooks/useFaceCollect')['useFaceCollect']
@@ -191,6 +192,7 @@ declare module 'vue' {
     readonly useConfig: UnwrapRef<typeof import('../hooks/useConfig')['useConfig']>
     readonly useCssModule: UnwrapRef<typeof import('vue')['useCssModule']>
     readonly useCssVars: UnwrapRef<typeof import('vue')['useCssVars']>
+    readonly useDeviceType: UnwrapRef<typeof import('../hooks/useDeviceType')['useDeviceType']>
     readonly useErrorHandler: UnwrapRef<typeof import('../hooks/useErrorHandler')['useErrorHandler']>
     readonly useForm: UnwrapRef<typeof import('../hooks/useForm')['useForm']>
     readonly useId: UnwrapRef<typeof import('vue')['useId']>
@@ -200,7 +202,6 @@ declare module 'vue' {
     readonly useRequest: UnwrapRef<typeof import('../hooks/useRequest')['default']>
     readonly useSchoolModules: UnwrapRef<typeof import('../hooks/useSchoolModules')['useSchoolModules']>
     readonly useSlots: UnwrapRef<typeof import('vue')['useSlots']>
-    readonly useStudentId: UnwrapRef<typeof import('../hooks/useStudentId')['useStudentId']>
     readonly useTemplateRef: UnwrapRef<typeof import('vue')['useTemplateRef']>
     readonly useUpload: UnwrapRef<typeof import('../hooks/useUpload')['default']>
     readonly watch: UnwrapRef<typeof import('vue')['watch']>
