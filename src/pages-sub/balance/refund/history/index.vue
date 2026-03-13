@@ -10,9 +10,7 @@
 
 <script lang="ts" setup>
 import type { Refund } from '@/api/interface/modules/refund'
-import type { FilterConfig } from '@/components/common/filter-group/index.vue'
-import dayjs from 'dayjs'
-import { computed, onUnmounted, ref, watch } from 'vue'
+import { computed, onUnmounted } from 'vue'
 import { useMessage } from 'wot-design-uni'
 import { getRefundApplicationsApi, postCancelRefundApplicationApi } from '@/api/modules/refund'
 import FilterGroup from '@/components/common/filter-group/index.vue'
@@ -20,12 +18,12 @@ import Page from '@/components/common/page/index.vue'
 import RefreshList from '@/components/common/refresh-list/index.vue'
 import { ALL, REFUND_STATUS, REFUND_STATUS_I18N, REFUND_STATUS_OPTIONS } from '@/constant/modules'
 import { BALANCE_REFUND_RESULT_PATH } from '@/constant/router'
+import { useHistoryFilters } from '@/hooks/useHistoryFilters'
 import { usePage } from '@/hooks/usePage'
 import { useRefresh } from '@/hooks/useRefresh'
-import { useCurrentStudentStore } from '@/store/business/currentStudent'
 import { useRefundEmitter } from '@/utils/emit/refund'
 import { toast } from '@/utils/toast'
-import RefundRecordItem from './components/RefundRecordItem.vue'
+import Item from './components/Item.vue'
 
 defineOptions({
   options: {
@@ -36,7 +34,6 @@ defineOptions({
 const { pageLoading, pageError, getContentHeight, batchRequestHandler, onLoginFail } = usePage()
 const message = useMessage()
 const { onRefundSuccess, emitRefundSuccess } = useRefundEmitter()
-const currentStudentStore = useCurrentStudentStore()
 
 const {
   query,
@@ -53,27 +50,32 @@ const {
   immediate: false,
 })
 
-/** 筛选条件 */
-const filters = ref<(string | number | [number, number])[]>([
-  [dayjs().subtract(1, 'year').valueOf(), dayjs().valueOf()],
-  ALL,
-])
+const { filters, filterConfigs, onFilterChange, applyFiltersToQuery } = useHistoryFilters({
+  query,
+  onRefreshList,
+  dateRange: {
+    format: 'YYYY-MM-DD HH:mm:ss',
+    startField: 'startTime',
+    endField: 'endTime',
+  },
+  extraFilters: [
+    {
+      key: 'status',
+      title: '选择退款状态',
+      options: [{ label: '全部', value: ALL }, ...REFUND_STATUS_OPTIONS],
+      inDrawer: true,
+      defaultValue: ALL,
+      apply: (value, targetQuery) => {
+        if (value !== ALL) {
+          targetQuery.status = value
+          return
+        }
 
-/** 筛选器配置 */
-const filterConfigs = computed<FilterConfig[]>(() => [
-  {
-    key: 'daterange',
-    title: '选择时间范围',
-    type: 'daterange',
-    concise: true,
-    options: [],
-  },
-  {
-    key: 'status',
-    title: '选择退款状态',
-    options: [{ label: '全部', value: ALL }, ...REFUND_STATUS_OPTIONS],
-  },
-])
+        delete targetQuery.status
+      },
+    },
+  ],
+})
 
 /** 内容区域样式 */
 const contentStyle = computed(() => {
@@ -87,24 +89,6 @@ function changeHistoryStatusCancelled(id: number) {
     item.status = REFUND_STATUS.CANCELLED
     item.statusText = REFUND_STATUS_I18N[REFUND_STATUS.CANCELLED]
   }
-}
-
-/** 筛选变化处理 */
-function onFilterChange(key: string, value: string | number | [number, number]) {
-  if (key === 'daterange') {
-    const [startTime, endTime] = value as [number, number]
-    query.value.startTime = dayjs(startTime).format('YYYY-MM-DD HH:mm:ss')
-    query.value.endTime = dayjs(endTime).format('YYYY-MM-DD HH:mm:ss')
-  }
-  else if (key === 'status') {
-    if (value !== ALL) {
-      query.value.status = value
-    }
-    else {
-      delete query.value.status
-    }
-  }
-  onRefreshList()
 }
 
 /** 跳转到退款记录详情 */
@@ -139,37 +123,19 @@ async function handleCancelApplication(record: Refund.IRefundApplicationVo) {
 
       toast.show('取消成功')
     }
-  }
-  catch (error) {
+  } catch (error) {
     console.error('取消退款申请失败:', error)
     toast.show('取消失败，请重试')
-  }
-  finally {
+  } finally {
     uni.hideLoading()
   }
 }
 
 /** 登录成功处理 */
 async function onLoginSuccess() {
-  const daterange = filters.value[0] as [number, number]
-  const [startTime, endTime] = daterange
-  query.value.startTime = dayjs(startTime).format('YYYY-MM-DD HH:mm:ss')
-  query.value.endTime = dayjs(endTime).format('YYYY-MM-DD HH:mm:ss')
-
-  if (currentStudentStore.deviceType) {
-    query.value.deviceType = currentStudentStore.deviceType
-  }
-
+  applyFiltersToQuery()
   batchRequestHandler([onRefreshList()])
 }
-
-/** 监听 deviceType 变化，自动刷新列表 */
-watch(() => currentStudentStore.deviceType, (newDeviceType) => {
-  if (newDeviceType) {
-    query.value.deviceType = newDeviceType
-    onRefreshList()
-  }
-})
 
 const unsubscribeRefund = onRefundSuccess((data) => {
   console.log('退款历史页监听到退款成功事件:', data)
@@ -206,7 +172,7 @@ onUnmounted(() => {
       @loadmore="onLoadMore"
     >
       <view flex="~ col" p="x-4" gap="3">
-        <RefundRecordItem
+        <Item
           v-for="record in recordsList"
           :key="record.id"
           :record="record"

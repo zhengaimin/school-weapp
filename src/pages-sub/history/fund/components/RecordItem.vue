@@ -1,31 +1,26 @@
 <script lang="ts" setup>
 import type { User } from '@/api/interface/modules/user'
-// #region 导入
 import { computed } from 'vue'
 import WhiteCard from '@/components/common/white-card/index.vue'
 import Icon from '@/components/icon/index.vue'
+import { DEVICE_TYPE_I18N } from '@/constant/modules'
 import { formatTime } from '@/utils/format'
-// #endregion
 
-// #region 组件选项配置
 defineOptions({
   options: {
     styleIsolation: 'apply-shared',
   },
 })
-// #endregion
 
-// #region 定义 Props 和 Emits
 const props = defineProps<{
   record: User.Balance.IBalanceDetailRecordVo
+  showDeviceType?: boolean
 }>()
 
 const emit = defineEmits<{
   click: [event: MouseEvent]
 }>()
-// #endregion
 
-// #region 金额类型常量
 const AMOUNT_TYPE = {
   RECHARGE: 'RECHARGE',
   CONSUMPTION: 'CONSUMPTION',
@@ -82,9 +77,7 @@ const AMOUNT_TYPE_TEXT_COLOR_MAP: Record<string, string> = {
   [AMOUNT_TYPE.ADJUST]: 'text-red-600',
   [AMOUNT_TYPE.PACKAGE_PURCHASE]: 'text-red-600',
 }
-// #endregion
 
-// #region 计算属性
 const iconColor = computed(() => {
   return AMOUNT_TYPE_COLOR_MAP[props.record.amountType as TAmountType] || '#ef4444'
 })
@@ -92,9 +85,7 @@ const iconColor = computed(() => {
 const amountTextColorClass = computed(() => {
   return AMOUNT_TYPE_TEXT_COLOR_MAP[props.record.amountType as TAmountType] || 'text-red-600'
 })
-// #endregion
 
-// #region 方法实现
 // 获取交易类型的中文显示
 function getAmountTypeLabel(type: User.Balance.AmountType): string {
   return AMOUNT_TYPE_I18N[type as TAmountType] || type
@@ -112,7 +103,6 @@ function formatAmount(amount: string, type: User.Balance.AmountType): string {
   const prefix = isPositive ? '+' : '-'
   return `${prefix}¥${Math.abs(numAmount).toFixed(2)}`
 }
-// #endregion
 </script>
 
 <template>
@@ -147,6 +137,9 @@ function formatAmount(amount: string, type: User.Balance.AmountType): string {
         <!-- 第二行：描述和时间 -->
         <view flex="~ justify-between items-start" gap="4">
           <view text="xs gray-600">
+            <text v-if="props.showDeviceType && record.deviceType">
+              {{ DEVICE_TYPE_I18N[record.deviceType] }} ·
+            </text>
             {{ record.description }}
           </view>
           <view text="xs gray-600" whitespace-nowrap>

@@ -1,5 +1,4 @@
 <script lang="ts" setup>
-// #region 导入
 import type { Pkg } from '@/api/interface/modules/package'
 import { ref } from 'vue'
 import { postCancelPaymentApi, postContinuePaymentApi } from '@/api/modules/package'
@@ -8,17 +7,13 @@ import { PAYMENT_METHOD } from '@/constant/modules'
 import { isMpWeixin } from '@/utils/platform'
 import { toast } from '@/utils/toast'
 import { requestWxPayment } from '@/utils/uni'
-// #endregion
 
-// #region 组件选项配置
 defineOptions({
   options: {
     styleIsolation: 'apply-shared',
   },
 })
-// #endregion
 
-// #region 属性定义
 const props = defineProps<{
   pendingPayment: Pkg.Payment.ResGetPendingPaymentApi | undefined
 }>()
@@ -26,24 +21,15 @@ const props = defineProps<{
 const emit = defineEmits<{
   refresh: []
 }>()
-// #endregion
 
-// #region 使用 Hooks
-// #endregion
-
-// #region 定义响应式数据
 const continueLoading = ref(false)
 const cancelLoading = ref(false)
-// #endregion
 
-// #region 定义计算属性
 // 格式化价格显示（前缀人民币符号）
 function formatPrice(price: number): string {
   return `¥${price}`
 }
-// #endregion
 
-// #region 接口请求函数
 // 继续支付已有待支付订单
 async function axiosPostContinuePaymentApi() {
   try {
@@ -58,8 +44,7 @@ async function axiosPostContinuePaymentApi() {
 
     const result = await postContinuePaymentApi(params)
     return result
-  }
-  catch (error) {
+  } catch (error) {
     console.error('继续支付失败:', error)
     throw error
   }
@@ -76,15 +61,12 @@ async function axiosPostCancelPaymentApi() {
       orderNo: props.pendingPayment.orderNo,
     })
     return result
-  }
-  catch (error) {
+  } catch (error) {
     console.error('取消支付失败:', error)
     throw error
   }
 }
-// #endregion
 
-// #region 方法定义
 // 发起微信支付（在小程序环境下调用微信支付接口）
 async function handleWechatPayment(paymentParams: Pkg.Payment.IJsApiPayParams) {
   if (!isMpWeixin) {
@@ -107,8 +89,7 @@ async function handleWechatPayment(paymentParams: Pkg.Payment.IJsApiPayParams) {
     // 通知父组件刷新数据
     emit('refresh')
     return res
-  }
-  catch (err: any) {
+  } catch (err: any) {
     if (err.errMsg !== 'requestPayment:fail cancel') {
       uni.showToast({
         title: '支付失败',
@@ -118,9 +99,7 @@ async function handleWechatPayment(paymentParams: Pkg.Payment.IJsApiPayParams) {
     throw err
   }
 }
-// #endregion
 
-// #region 事件处理函数
 // 继续支付当前待支付订单
 async function handleContinuePayment() {
   try {
@@ -129,11 +108,9 @@ async function handleContinuePayment() {
     if (result.code === 0) {
       await handleWechatPayment(result.data.paymentParams)
     }
-  }
-  catch (error) {
+  } catch (error) {
     toast.show('支付失败，请重试')
-  }
-  finally {
+  } finally {
     continueLoading.value = false
   }
 }
@@ -148,15 +125,12 @@ async function handleCancelPayment() {
       // 通知父组件刷新数据
       emit('refresh')
     }
-  }
-  catch (error) {
+  } catch (error) {
     toast.show('取消失败，请重试')
-  }
-  finally {
+  } finally {
     cancelLoading.value = false
   }
 }
-// #endregion
 </script>
 
 <template>

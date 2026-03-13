@@ -9,27 +9,20 @@
 </route>
 
 <script lang="ts" setup>
-// #region 导入
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import TButton from '@/components/common/button/index.vue'
 import Page from '@/components/common/page/index.vue'
 import { usePage } from '@/hooks/usePage'
 import { getPrevPageExposed } from '@/utils/index'
-// #endregion
 
-// #region 组件选项配置
 defineOptions({
   options: {
     styleIsolation: 'apply-shared',
   },
 })
-// #endregion
 
-// #region 使用 Hooks
 const { pageLoading, pageError, onLoginSuccess, onLoginFail } = usePage()
-// #endregion
 
-// #region 定义响应式数据
 const cameraContext = ref<any>(null)
 const countdown = ref(3)
 const isCountingDown = ref(false)
@@ -37,9 +30,7 @@ const capturedPhoto = ref<string | null>(null)
 const showPreview = ref(false)
 const cameraAuthorized = ref(false)
 const countdownTimer = ref<any>(null)
-// #endregion
 
-// #region 定义计算属性
 const countdownText = computed(() => {
   return countdown.value > 0 ? countdown.value.toString() : '拍照'
 })
@@ -51,9 +42,7 @@ const isCameraReady = computed(() => {
 const countdownDisplay = computed(() => {
   return countdown.value > 0 ? countdown.value.toString() : ''
 })
-// #endregion
 
-// #region 方法定义
 // 初始化摄像头
 async function initCamera() {
   try {
@@ -69,8 +58,7 @@ async function initCamera() {
 
     // 开始倒计时
     startCountdown()
-  }
-  catch (error) {
+  } catch (error) {
     console.error('摄像头权限获取失败:', error)
     cameraAuthorized.value = false
     uni.showModal({
@@ -83,8 +71,7 @@ async function initCamera() {
 
 // 开始倒计时
 function startCountdown() {
-  if (isCountingDown.value)
-    return
+  if (isCountingDown.value) return
 
   isCountingDown.value = true
   countdown.value = 5
@@ -101,8 +88,7 @@ function startCountdown() {
 
 // 拍照
 function takePhoto() {
-  if (!cameraContext.value)
-    return
+  if (!cameraContext.value) return
 
   cameraContext.value.takePhoto({
     quality: 'high',
@@ -137,8 +123,7 @@ function retakePhoto() {
 
 // 确认上传照片
 function confirmUpload() {
-  if (!capturedPhoto.value)
-    return
+  if (!capturedPhoto.value) return
 
   try {
     // 使用 getPrevPageExposed 调用上一个页面的方法
@@ -147,8 +132,7 @@ function confirmUpload() {
     if (prevPageExposed && prevPageExposed.acceptParams) {
       // 调用上一个页面暴露的 showImageDialog 方法
       prevPageExposed.acceptParams(capturedPhoto.value)
-    }
-    else {
+    } else {
       // 兼容旧的调用方式
       const pages = getCurrentPages()
       const prevPage = pages[pages.length - 2]
@@ -160,8 +144,7 @@ function confirmUpload() {
 
     // 返回上一页
     uni.navigateBack()
-  }
-  catch (error) {
+  } catch (error) {
     console.error('调用上一页方法失败:', error)
     uni.navigateBack()
   }
@@ -179,9 +162,7 @@ function cleanupTimer() {
     countdownTimer.value = null
   }
 }
-// #endregion
 
-// #region 事件处理函数
 function handleCameraError(error: any) {
   console.error('摄像头错误:', error)
   cameraAuthorized.value = false
@@ -190,9 +171,7 @@ function handleCameraError(error: any) {
     icon: 'none',
   })
 }
-// #endregion
 
-// #region 生命周期钩子
 onMounted(() => {
   pageLoading.value = false
   initCamera()
@@ -201,7 +180,6 @@ onMounted(() => {
 onUnmounted(() => {
   cleanupTimer()
 })
-// #endregion
 </script>
 
 <template>

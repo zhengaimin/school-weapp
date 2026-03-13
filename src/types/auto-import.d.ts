@@ -87,6 +87,7 @@ declare global {
   const useFRVExternal: typeof import('../hooks/useFRVExternal')['useFRVExternal']
   const useFaceCollect: typeof import('../hooks/useFaceCollect')['useFaceCollect']
   const useForm: typeof import('../hooks/useForm')['useForm']
+  const useHistoryFilters: typeof import('../hooks/useHistoryFilters')['useHistoryFilters']
   const useId: typeof import('vue')['useId']
   const useModel: typeof import('vue')['useModel']
   const usePage: typeof import('../hooks/usePage')['usePage']
@@ -195,6 +196,7 @@ declare module 'vue' {
     readonly useDeviceType: UnwrapRef<typeof import('../hooks/useDeviceType')['useDeviceType']>
     readonly useErrorHandler: UnwrapRef<typeof import('../hooks/useErrorHandler')['useErrorHandler']>
     readonly useForm: UnwrapRef<typeof import('../hooks/useForm')['useForm']>
+    readonly useHistoryFilters: UnwrapRef<typeof import('../hooks/useHistoryFilters')['useHistoryFilters']>
     readonly useId: UnwrapRef<typeof import('vue')['useId']>
     readonly useModel: UnwrapRef<typeof import('vue')['useModel']>
     readonly usePage: UnwrapRef<typeof import('../hooks/usePage')['usePage']>

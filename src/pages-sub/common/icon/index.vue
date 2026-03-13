@@ -9,27 +9,20 @@
 </route>
 
 <script lang="ts" setup>
-// #region 导入
 import { ref } from 'vue'
 import Page from '@/components/common/page/index.vue'
 import Icon from '@/components/icon/index.vue'
 import { usePage } from '@/hooks/usePage'
 import { toast } from '@/utils/toast'
-// #endregion
 
-// #region 组件选项配置
 defineOptions({
   options: {
     styleIsolation: 'apply-shared',
   },
 })
-// #endregion
 
-// #region 使用 Hooks
 const { pageLoading, pageError, onLoginSuccess, onLoginFail } = usePage()
-// #endregion
 
-// #region 定义响应式数据
 const iconList = ref([
   // arrows
   'arrow-left-right-fill',
@@ -111,9 +104,7 @@ const iconList = ref([
   'user-add-line',
   'user-line',
 ])
-// #endregion
 
-// #region 事件处理函数
 // 复制图标名称
 function handleCopyIconName(iconName: string) {
   uni.setClipboardData({
@@ -126,7 +117,6 @@ function handleCopyIconName(iconName: string) {
     },
   })
 }
-// #endregion
 </script>
 
 <template>

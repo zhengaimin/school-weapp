@@ -17,7 +17,6 @@ import WhiteCard from '@/components/common/white-card/index.vue'
 import Icon from '@/components/icon/index.vue'
 import { FACE_STATUS_I18N } from '@/constant/modules/business'
 import { usePage } from '@/hooks/usePage'
-import { useParentStore } from '@/store/auth/parent'
 import { useCurrentStudentStore } from '@/store/business/currentStudent'
 import { copyToClipboard } from '@/utils/clipboard'
 
@@ -29,10 +28,8 @@ defineOptions({
 
 const { pageLoading, pageError, onLoginFail } = usePage()
 
-const parentStore = useParentStore()
 const currentStudentStore = useCurrentStudentStore()
-const { currentStudent } = storeToRefs(parentStore)
-const { studentInfo } = storeToRefs(currentStudentStore)
+const { studentInfo, studentFullInfo } = storeToRefs(currentStudentStore)
 
 interface StudentDetailItem {
   key: string
@@ -57,19 +54,18 @@ function pushStudentDetailItem(items: StudentDetailItem[], item: StudentDetailIt
 /** 学生详细信息配置 */
 const studentDetailItems = computed(() => {
   const items: StudentDetailItem[] = []
-  const current = currentStudent.value
   const info = studentInfo.value
 
   pushStudentDetailItem(items, {
     key: 'school',
     label: '学校',
-    value: current?.schoolName || '',
+    value: info?.schoolName || '',
     copyable: false,
   })
   pushStudentDetailItem(items, {
     key: 'grade',
     label: '年级',
-    value: info?.grade || current?.grade || '',
+    value: info?.grade || '',
     copyable: false,
   })
   pushStudentDetailItem(items, {
@@ -81,7 +77,7 @@ const studentDetailItems = computed(() => {
   pushStudentDetailItem(items, {
     key: 'class',
     label: '班级',
-    value: info?.className || current?.className || '',
+    value: info?.className || '',
     copyable: false,
   })
   pushStudentDetailItem(items, {
@@ -133,11 +129,10 @@ function handleCopyStudentInfo(field: string, label: string) {
 
 /** 登录成功处理 */
 function onLoginSuccess() {
-  if (unref(currentStudent)) {
+  if (unref(studentInfo)) {
     pageLoading.value = false
     pageError.value = ''
-  }
-  else {
+  } else {
     pageLoading.value = false
     pageError.value = '网络异常，请稍后重试'
   }
@@ -152,7 +147,7 @@ function onLoginSuccess() {
     @login:success="onLoginSuccess"
     @login:fail="onLoginFail"
   >
-    <view v-if="currentStudent" flex="~ col" gap="4" p="4 t-2!">
+    <view v-if="studentInfo" flex="~ col" gap="4" p="4 t-2!">
       <!-- 学生头像和基本信息 -->
       <WhiteCard>
         <view flex="~ items-center" gap="4">
@@ -162,7 +157,7 @@ function onLoginSuccess() {
               {{ studentInfo?.studentName }}
             </view>
             <view text="sm gray-500">
-              {{ currentStudent?.fullClassName }}
+              {{ studentFullInfo }}
             </view>
           </view>
         </view>

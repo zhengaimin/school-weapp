@@ -1,11 +1,8 @@
 <script lang="ts" setup>
-// #region 导入
 import { computed } from 'vue'
 import Icon from '@/components/icon/index.vue'
 import { typeConfig } from './config'
-// #endregion
 
-// #region 属性定义
 const props = withDefaults(
   defineProps<{
     /** 通知类型 */
@@ -26,9 +23,7 @@ const emit = defineEmits<{
   /** 点击事件 */
   click: [event: Event]
 }>()
-// #endregion
 
-// #region 计算属性
 // 获取当前类型的配置
 const currentConfig = computed(() => typeConfig[props.type])
 
@@ -46,13 +41,10 @@ const bgColor = computed(() => currentConfig.value.bgColor)
 
 // 根据类型获取文本颜色
 const textColor = computed(() => currentConfig.value.textColor)
-// #endregion
 
-// #region 事件处理函数
 function handleClick(event: Event) {
   emit('click', event)
 }
-// #endregion
 </script>
 
 <template>

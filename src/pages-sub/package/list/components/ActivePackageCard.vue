@@ -2,9 +2,11 @@
 import type { Pkg } from '@/api/interface/modules/package'
 import dayjs from 'dayjs'
 import { storeToRefs } from 'pinia'
+import { computed } from 'vue'
 import WhiteCard from '@/components/common/white-card/index.vue'
 import { DEVICE_TYPE, PACKAGE_TYPE_I18N } from '@/constant/modules'
 import { PACKAGE_HISTORY_RESULT_PATH } from '@/constant/router'
+import { useDeviceType } from '@/hooks/useDeviceType'
 import { useCurrentStudentStore } from '@/store/business/currentStudent'
 
 const props = defineProps<{
@@ -12,9 +14,11 @@ const props = defineProps<{
 }>()
 
 const currentStudentStore = useCurrentStudentStore()
-const { deviceType } = storeToRefs(currentStudentStore)
+const { devices } = storeToRefs(currentStudentStore)
+const { defaultDeviceType } = useDeviceType()
 
-const isVideoDevice = computed(() => deviceType.value === DEVICE_TYPE.VIDEO)
+const primaryDeviceType = computed(() => devices.value?.[0]?.deviceType || defaultDeviceType.value)
+const isVideoDevice = computed(() => primaryDeviceType.value === DEVICE_TYPE.VIDEO)
 
 function handleClick() {
   const { id, paymentOrderNo } = props.package

@@ -2,7 +2,6 @@ import type { User } from '@/api/interface/modules/user'
 import type { TAmountType } from '@/constant/modules'
 import { AMOUNT_TYPE_I18N, AMOUNT_TYPE_ICON_MAP, POSITIVE_AMOUNT_TYPES } from '@/constant/modules'
 
-// #region 格式化函数
 // 获取交易类型的中文显示
 export function getAmountTypeLabel(type: User.Balance.AmountType): string {
   return AMOUNT_TYPE_I18N[type as TAmountType] || type
@@ -20,5 +19,3 @@ export function formatAmount(amount: string, type: User.Balance.AmountType): str
   const prefix = isPositive ? '+' : '-'
   return `${prefix}¥${Math.abs(numAmount).toFixed(2)}`
 }
-
-// #endregion

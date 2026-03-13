@@ -27,7 +27,6 @@ import Picker from '@/components/form/picker/index.vue'
 import { useForm } from '@/hooks/useForm'
 import { usePage } from '@/hooks/usePage'
 import { useCurrentStudentStore } from '@/store/business/currentStudent'
-import { useConfigStore } from '@/store/config'
 import { currRoute } from '@/utils'
 import { useFamily } from '@/utils/emit/family'
 import { toast } from '@/utils/toast'
@@ -38,9 +37,8 @@ defineOptions({
   },
 })
 
-const configStore = useConfigStore()
 const currentStudentStore = useCurrentStudentStore()
-const { relationshipOptions } = storeToRefs(configStore)
+const { relationshipOptions } = storeToRefs(currentStudentStore)
 const { familyContactsRelationshipMap } = storeToRefs(currentStudentStore)
 
 const { pageLoading, pageError, batchRequestHandler, onLoginFail, getContentHeight } = usePage()
@@ -100,8 +98,7 @@ async function axiosGetFamilyContactDetailApi(id: number) {
     }
 
     return result
-  }
-  catch (error) {
+  } catch (error) {
     console.log('获取亲情号详情失败', error)
     return { code: -1, message: '获取信息失败', data: null }
   }
@@ -129,11 +126,9 @@ async function handleSubmit() {
       emitRefreshFamilyList()
       uni.navigateBack()
     }
-  }
-  catch (error) {
+  } catch (error) {
     console.error('操作失败:', error)
-  }
-  finally {
+  } finally {
     submitLoading.value = false
   }
 }
@@ -143,7 +138,7 @@ function onLoginSuccess() {
   const { query } = currRoute()
 
   const reqList: TBatchRequestList = [
-    configStore.axiosGetRelationshipOptionsApi(),
+    currentStudentStore.axiosGetRelationshipOptionsApi(),
     currentStudentStore.axiosGetFamilyContactsApi(),
   ]
 

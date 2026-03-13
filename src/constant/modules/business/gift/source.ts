@@ -1,4 +1,3 @@
-// #region 赠费来源类型
 // Types
 export const GIFT_SOURCE = {
   ADMIN_GIFT: 'ADMIN_GIFT',
@@ -24,4 +23,3 @@ export const GIFT_SOURCE_OPTIONS = [
   { label: GIFT_SOURCE_I18N[GIFT_SOURCE.COMPENSATION], value: GIFT_SOURCE.COMPENSATION },
   { label: GIFT_SOURCE_I18N[GIFT_SOURCE.REWARD], value: GIFT_SOURCE.REWARD },
 ]
-// #endregion

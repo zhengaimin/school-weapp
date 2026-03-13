@@ -8,6 +8,8 @@ export namespace Refund {
     id: number
     /** 退款申请单号 */
     refundNo: string
+    /** 设备类型 */
+    deviceType?: TDeviceType
     /** 申请退款金额 */
     applyAmount: string
     /** 实际退款金额 */
@@ -114,6 +116,8 @@ export namespace Refund {
 
     /** 获取退款申请详情 - 响应 */
     export interface ResGetDetailApi extends IRefundApplicationVo {
+      /** 设备类型 */
+      deviceType?: TDeviceType
       /** 退款详情列表 */
       refundDetails: IRefundDetailVo[]
     }

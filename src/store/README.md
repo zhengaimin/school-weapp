@@ -247,9 +247,9 @@ const currentStudentStore = useCurrentStudentStore()
 
 A: 因为未来学生登录时，也需要使用 `currentStudent` 的业务数据。如果放在 `parent` 里，学生模式就无法复用。
 
-### Q: `deviceType` 应该放在哪里？
+### Q: `devices` 应该放在哪里？
 
-A: 根据需求，`deviceType` 是每个学生独立的设置，所以放在 `business/currentStudent.ts` 中。
+A: 根据需求，`devices` 是每个学生独立的业务数据，所以放在 `business/currentStudent.ts` 中。
 
 ### Q: 切换学生时为什么要清空数据？
 

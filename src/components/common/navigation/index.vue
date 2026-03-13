@@ -1,5 +1,4 @@
 <script lang="ts" setup>
-// #region 导入
 import { storeToRefs } from 'pinia'
 import { computed, unref } from 'vue'
 import { bool, object, string } from 'vue-types'
@@ -10,9 +9,7 @@ import { LAUNCH_PATH, TABBAR_HOME_PATH } from '@/constant/router'
 
 import { useAppStore } from '@/store/app'
 import { isMpWeixin } from '@/utils/platform'
-// #endregion
 
-// #region 属性定义
 const props = defineProps({
   title: string().def(''),
   // 是否显示导航栏（默认显示）
@@ -27,13 +24,14 @@ const props = defineProps({
   textColor: string(),
   iconColor: string(),
 })
-// #endregion
 
-// #region 使用 Store
+const emit = defineEmits<{
+  click: [event: Event]
+}>()
+
 const { navBarInfo } = storeToRefs(useAppStore())
-// #endregion
 
-// #region 定义计算属性
+/** 是否显示回到首页按钮 */
 const showHomeButton = computed(() => {
   const pages = getCurrentPages()
   if (pages.length > 1) {
@@ -44,7 +42,7 @@ const showHomeButton = computed(() => {
   return currentPage.fullPath !== LAUNCH_PATH
 })
 
-// 计算导航栏样式
+/** 导航栏样式 */
 const navStyle = computed(() => {
   const info = unref(navBarInfo)
 
@@ -61,7 +59,8 @@ const navStyle = computed(() => {
 
   return style
 })
-// 计算标题样式
+
+/** 标题区域样式 */
 const titleStyle = computed(() => {
   const info = unref(navBarInfo)
   if (!info) return {}
@@ -75,6 +74,8 @@ const titleStyle = computed(() => {
     bottom: `${menuBottom}px`,
   }
 })
+
+/** 标题文本样式 */
 const titleTextStyle = computed(() => {
   const info = unref(navBarInfo)
   if (!info) return {}
@@ -90,6 +91,8 @@ const titleTextStyle = computed(() => {
 
   return style
 })
+
+/** 返回按钮样式 */
 const backStyle = computed(() => {
   const info = unref(navBarInfo)
   if (!info) return {}
@@ -103,6 +106,8 @@ const backStyle = computed(() => {
     width: '100rpx',
   }
 })
+
+/** 右侧区域样式 */
 const rightStyle = computed(() => {
   const info = unref(navBarInfo)
   if (!info) return {}
@@ -123,11 +128,10 @@ const rightStyle = computed(() => {
   return result
 })
 
+/** 图标颜色 */
 const resolvedIconColor = computed(() => props.iconColor || 'currentColor')
-// #endregion
 
-// #region 事件处理函数
-// 返回上一页
+/** 返回上一页 */
 function handleBack() {
   if (showHomeButton.value) {
     uni.reLaunch({ url: isMpWeixin ? LAUNCH_PATH : TABBAR_HOME_PATH })
@@ -142,7 +146,6 @@ function handleBack() {
     },
   })
 }
-// #endregion
 </script>
 
 <template>
@@ -150,6 +153,7 @@ function handleBack() {
     class="navigation relative w-full flex shrink-0 items-center justify-center"
     :style="navStyle"
     :class="customClass"
+    @click.stop="e => emit('click', e)"
   >
     <!-- 前置图标插槽或返回/回到首页按钮 -->
     <view class="absolute z-9999 h-full flex items-center justify-center" :style="backStyle">

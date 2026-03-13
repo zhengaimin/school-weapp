@@ -8,8 +8,6 @@ import type {
 
 export namespace User {
   export namespace Common {
-    // #region Common - 基本接口定义
-    // #region 微信信息
     /** 微信信息 */
     export interface IWechatInfoVo {
       /** 用户 openid */
@@ -20,9 +18,7 @@ export namespace User {
       /** 微信头像 */
       avatarUrl: string
     }
-    // #endregion
 
-    // #region 余额信息
     /** 余额信息 */
     export interface IBalanceInfoVo {
       /** 总余额 */
@@ -42,9 +38,6 @@ export namespace User {
       /** 余额更新时间 */
       updatedAt: string | null
     }
-    // #endregion
-
-    // #endregion Common - 基本接口定义
 
     /** 当前孩子信息 */
     export interface ICurrentChildVo {
@@ -180,7 +173,6 @@ export namespace User {
     /** 更新微信用户信息响应 */
     export interface ResPutUpdateWxUserInfoApi {}
 
-    // #region 获取用户余额
     /** 获取用户余额 - 请求参数 */
     export interface ReqGetBalanceApi {
       /** 设备类型：VIDEO-视频话机，DRYER-吹风机 */
@@ -223,7 +215,6 @@ export namespace User {
 
     /** 获取用户余额响应 */
     export type ResGetBalanceApi = IStudentBalanceInfoVo
-    // #endregion
   }
 
   export namespace Parent {
@@ -294,6 +285,8 @@ export namespace User {
     export interface IConsumptionRecordVo {
       id: number
       consumeId: string
+      /** 设备类型 */
+      deviceType?: TDeviceType
       serviceType: TServiceType
       amount: string
       unitPrice: string
@@ -353,6 +346,8 @@ export namespace User {
       id: number
       /** 流水号 */
       transactionId: string
+      /** 设备类型 */
+      deviceType?: TDeviceType
       /** 金额类型 */
       amountType: AmountType
       /** 金额类型名称 */

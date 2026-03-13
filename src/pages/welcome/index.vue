@@ -11,9 +11,10 @@
 <script lang="ts" setup>
 import type { IdentityOption } from './components/IdentityCard.vue'
 import { storeToRefs } from 'pinia'
+import { unref } from 'vue'
 import { getWxCode, postWxPhoneApi } from '@/api/modules/user'
 import Page from '@/components/common/page/index.vue'
-import { PARENT_OVERVIEW_PATH, STUDENT_BIND_PATH } from '@/constant/router'
+import { PARENT_HOME_PATH, STUDENT_BIND_PATH } from '@/constant/router'
 import { usePage } from '@/hooks/usePage'
 import { useParentStore } from '@/store/auth/parent'
 import { useUserStore } from '@/store/user'
@@ -32,7 +33,7 @@ const { userInfo } = storeToRefs(userStore)
 const { needBind, students } = storeToRefs(parentStore)
 const { pageLoading, pageError, onLoginSuccess, onLoginFail } = usePage()
 
-// 绑定手机号
+/** 绑定手机号 */
 async function axiosPostWxPhoneApi(phoneCode: string) {
   const { code: loginCode } = await getWxCode()
 
@@ -46,7 +47,12 @@ async function axiosPostWxPhoneApi(phoneCode: string) {
   }
 }
 
-// 选择身份
+/**
+ * 选择身份
+ *  1) 设置角色与手机号
+ *  2) 判断是否需要绑定
+ *  3) 获取信息并跳转
+ */
 async function selectIdentity(identity: IdentityOption) {
   try {
     uni.showLoading({
@@ -83,13 +89,11 @@ async function selectIdentity(identity: IdentityOption) {
     }
 
     uni.redirectTo({
-      url: PARENT_OVERVIEW_PATH,
+      url: PARENT_HOME_PATH,
     })
-  }
-  catch (error) {
+  } catch (error) {
     console.log('selectIdentity', error)
-  }
-  finally {
+  } finally {
     uni.hideLoading()
   }
 }

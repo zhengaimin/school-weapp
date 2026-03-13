@@ -1,6 +1,5 @@
 import type { TI18NMap, TOptions } from '@/types'
 
-// #region 服务类型
 // Types
 export const SERVICE_TYPE = {
   MESSAGE: 'MESSAGE',
@@ -23,4 +22,3 @@ export const SERVICE_TYPE_OPTIONS: TOptions<TServiceType> = [
   { label: SERVICE_TYPE_I18N[SERVICE_TYPE.CALL], value: SERVICE_TYPE.CALL },
   { label: SERVICE_TYPE_I18N[SERVICE_TYPE.DRYER], value: SERVICE_TYPE.DRYER },
 ]
-// #endregion

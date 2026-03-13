@@ -5,12 +5,13 @@ import { computed } from 'vue'
 import TButton from '@/components/common/button/index.vue'
 import WhiteCard from '@/components/common/white-card/index.vue'
 import Icon from '@/components/icon/index.vue'
-import { PACKAGE_STATUS, PACKAGE_STATUS_CONFIGS, PACKAGE_TYPE_I18N } from '@/constant/modules'
+import { DEVICE_TYPE_I18N, PACKAGE_STATUS, PACKAGE_STATUS_CONFIGS, PACKAGE_TYPE_I18N } from '@/constant/modules'
 import { formatTime } from '@/utils/format'
 
 const props = defineProps<{
   record: Pkg.Query.IPackagePurchaseVo
   hasPendingRefund?: boolean
+  showDeviceType?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -39,6 +40,10 @@ const iconColor = computed(() => statusConfig.value?.iconColor)
 const statusLabel = computed(() => statusConfig.value?.label)
 /** 获取套餐类型标签 */
 const packageTypeLabel = computed(() => PACKAGE_TYPE_I18N[props.record?.snapshotInfo?.packageType])
+const deviceTypeLabel = computed(() => {
+  const deviceType = props.record?.snapshotInfo?.deviceType || props.record?.packageContent?.deviceType
+  return deviceType ? DEVICE_TYPE_I18N[deviceType as keyof typeof DEVICE_TYPE_I18N] : ''
+})
 
 /** 处理点击事件 */
 function handleClick(event: Event) {
@@ -87,6 +92,9 @@ function handleRefund() {
         <!-- 第二行：状态和时间 -->
         <view flex="~ justify-between items-center" m="b-2">
           <view text="xs gray-600">
+            <text v-if="props.showDeviceType && deviceTypeLabel">
+              {{ deviceTypeLabel }} ·
+            </text>
             {{ statusLabel }}
           </view>
           <view text="xs gray-600">

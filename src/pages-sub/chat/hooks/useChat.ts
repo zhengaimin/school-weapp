@@ -1,33 +1,96 @@
 import type ChatRefreshList from '../components/ChatRefreshList.vue'
-import type { MessageSendConfig } from '../components/MessageInput.vue'
+import type { TMediaMessagePayload, TMessageSendConfig } from '../components/MessageInput.vue'
 import type MessageInput from '../components/MessageInput.vue'
-import type { IMessage } from '../components/MessageList.vue'
+import type { TMessage } from '../components/MessageList.vue'
+import type { File } from '@/api/interface/modules/file'
 import type { Message } from '@/api/interface/modules/message'
-// #region 导入
 import { storeToRefs } from 'pinia'
 import { computed, nextTick, reactive, ref } from 'vue'
 import { getMessagesApi, postMessageApi, putReadMessagesApi } from '@/api/modules/message'
+import { FILE_TYPE } from '@/constant/modules'
 import { usePage } from '@/hooks/usePage'
 import { useCurrentStudentStore } from '@/store/business/currentStudent'
+import { useUserStore } from '@/store/user'
+import { uploadFilePromise, uploadFileUrl } from '@/utils/file'
 import { isNumber } from '@/utils/is'
 import { MessageCache } from '../utils/cache'
-// #endregion
+
+/**
+ * @description 判断是否为图片 URL
+ */
+function isImageUrl(url: string): boolean {
+  if (!url) return false
+  return /\.(?:png|jpe?g|gif|webp|bmp|svg)(?:\?.*)?$/i.test(url)
+}
+
+/**
+ * @description 判断是否为视频 URL
+ */
+function isVideoUrl(url: string): boolean {
+  if (!url) return false
+  return /\.(?:mp4|mov|m4v|avi|mkv|webm)(?:\?.*)?$/i.test(url)
+}
+
+/**
+ * @description 拼接上传后的完整文件 URL
+ * @param fileUrl - 相对或完整地址
+ */
+function getUploadFullFileUrl(fileUrl?: string): string {
+  if (!fileUrl) return ''
+  if (/^https?:\/\//i.test(fileUrl)) return fileUrl
+  return `${import.meta.env.VITE_UPLOAD_BASEURL}${fileUrl}`
+}
+
+/**
+ * @description 本地压缩图片
+ * @param tempFilePath - 原始图片路径
+ */
+async function axiosCompressImageFileApi(tempFilePath: string): Promise<string> {
+  return await new Promise((resolve) => {
+    uni.compressImage({
+      src: tempFilePath,
+      quality: 75,
+      success: (result) => {
+        resolve(result.tempFilePath || tempFilePath)
+      },
+      fail: () => {
+        resolve(tempFilePath)
+      },
+    })
+  })
+}
+
+/**
+ * @description 本地压缩视频
+ * @param tempFilePath - 原始视频路径
+ */
+async function axiosCompressVideoFileApi(tempFilePath: string): Promise<string> {
+  if (!uni.compressVideo) return tempFilePath
+  return await new Promise((resolve) => {
+    uni.compressVideo({
+      src: tempFilePath,
+      quality: 'medium',
+      success: (result) => {
+        resolve(result.tempFilePath || tempFilePath)
+      },
+      fail: () => {
+        resolve(tempFilePath)
+      },
+    })
+  })
+}
 
 export function useChat() {
-  // #region 使用 Hooks
-  const { pageLoading, pageError, batchRequestHandler, onLoginFail, getContentHeight } = usePage()
-  // #endregion
+  const { pageLoading, pageError, batchRequestHandler, onLoginFail: handleLoginFail, getContentHeight } = usePage()
 
-  // #region 使用 Store
+  const userStore = useUserStore()
   const currentStudentStore = useCurrentStudentStore()
   const { studentInfo } = storeToRefs(currentStudentStore)
-  // #endregion
 
-  // #region 定义响应式数据
   const voiceMessageData = ref<Message.IMessageItemVo | null>(null)
 
   // 扩展 API 消息类型以包含前端状态
-  type ChatMessage = Message.IMessageItemVo & { _status?: 'sending' | 'sent' | 'failed' }
+  type TChatMessage = Message.IMessageItemVo & { _status?: 'sending' | 'sent' | 'failed' }
 
   const inputRef = ref<InstanceType<typeof MessageInput>>()
   const chatRefreshListRef = ref<InstanceType<typeof ChatRefreshList>>()
@@ -37,31 +100,29 @@ export function useChat() {
   const isKeyboardShow = ref<boolean>(false) // 键盘是否显示
 
   // 消息列表相关状态
-  const messages = ref<ChatMessage[]>([])
+  const messages = ref<TChatMessage[]>([])
   const listLoading = ref<boolean>(false)
   const listLoaded = ref<boolean>(false)
 
   // API 请求参数
-  interface IQueryParams {
+  interface TQueryParams {
     page: 1
     pageSize: number
     loadMoreMessages: boolean // 是否为加载更多
     lastMessageId?: number | string
   }
-  const queryParams = reactive<IQueryParams>({
+  const queryParams = reactive<TQueryParams>({
     page: 1,
     pageSize: 10,
     loadMoreMessages: false,
   })
 
   // 消息输入框配置
-  const sendConfig: MessageSendConfig = {
+  const sendConfig: TMessageSendConfig = {
     canSendText: true,
     maxTextLength: 1000,
   }
-  // #endregion
 
-  // #region 定义计算属性
   // 当前学生信息
   const studentName = computed(() => studentInfo.value?.studentName || '聊天')
   const studentId = computed(() => studentInfo.value?.studentId)
@@ -75,9 +136,7 @@ export function useChat() {
   const messagesForComponent = computed(() => {
     return messages.value.map(transformApiMessageToComponentMessage)
   })
-  // #endregion
 
-  // #region 接口请求函数
   /**
    * @description 加载初始消息 (缓存 + API)
    */
@@ -95,8 +154,7 @@ export function useChat() {
       messages.value = cachedMessages
       scrollToBottom()
       pageLoading.value = false // 有缓存，不显示整页加载
-    }
-    else {
+    } else {
       pageLoading.value = true // 无缓存，显示整页加载
     }
 
@@ -122,20 +180,18 @@ export function useChat() {
           listLoaded.value = messages.value.length >= data.total
 
           // 4. 标记未读消息为已读
-          await markMessagesAsRead(apiMessages)
+          await axiosPutReadMessagesApi(apiMessages)
 
           // 5. 保存最新消息到缓存
           saveCachedMessages(studentId.value, messages.value)
         }
       }
       return result
-    }
-    catch (error) {
+    } catch (error) {
       console.error('加载初始消息失败:', error)
       listLoaded.value = true // 即使接口失败，也要确保 loaded 状态为 true，防止无限上拉
       return { code: -1, error }
-    }
-    finally {
+    } finally {
       listLoading.value = false
       pageLoading.value = false
     }
@@ -171,7 +227,7 @@ export function useChat() {
           listLoaded.value = messages.value.length >= data.total
 
           // 标记未读消息为已读
-          await markMessagesAsRead(newMessages)
+          await axiosPutReadMessagesApi(newMessages)
 
           // 更新缓存
           saveCachedMessages(studentId.value, messages.value)
@@ -183,12 +239,10 @@ export function useChat() {
           }
         }
       }
-    }
-    catch (error) {
+    } catch (error) {
       console.error('加载更多消息失败:', error)
       queryParams.loadMoreMessages = false
-    }
-    finally {
+    } finally {
       listLoading.value = false
     }
   }
@@ -197,7 +251,7 @@ export function useChat() {
    * @description 标记未读消息为已读
    * @param messages - 消息列表
    */
-  async function markMessagesAsRead(messages: Message.IMessageItemVo[]) {
+  async function axiosPutReadMessagesApi(messages: Message.IMessageItemVo[]) {
     if (!studentId.value) {
       return
     }
@@ -226,15 +280,12 @@ export function useChat() {
       })
 
       // 更新缓存
-      saveCachedMessages(studentId.value, messages as ChatMessage[])
-    }
-    catch (error) {
+      saveCachedMessages(studentId.value, messages as TChatMessage[])
+    } catch (error) {
       console.error('标记消息为已读失败:', error)
     }
   }
-  // #endregion
 
-  // #region 方法定义
   /**
    * @description 从缓存获取消息
    * @param studentId - 学生ID
@@ -250,7 +301,7 @@ export function useChat() {
    * @param studentId - 学生ID
    * @param messageList - 消息列表
    */
-  function saveCachedMessages(studentId: number, messageList: ChatMessage[]) {
+  function saveCachedMessages(studentId: number, messageList: TChatMessage[]) {
     // 移除前端状态字段，只缓存标准 API V_o
     const messageListForCache = messageList.map((msg) => {
       const { _status, ...rest } = msg
@@ -264,29 +315,38 @@ export function useChat() {
    * @param apiMessage - API返回的单个消息对象
    * @returns 组件所需的IMessage格式对象
    */
-  function transformApiMessageToComponentMessage(apiMessage: Message.IMessageItemVo): IMessage {
+  function transformApiMessageToComponentMessage(apiMessage: Message.IMessageItemVo): TMessage {
     if (!apiMessage || typeof apiMessage !== 'object') {
       throw new Error('Invalid API message object')
     }
 
-    let messageType: IMessage['type'] = 'text'
-    const validTypes: Array<IMessage['type']> = ['text', 'image', 'video', 'gif', 'file']
-    if (apiMessage.fileType === 'audio') {
+    let messageType: TMessage['type'] = 'text'
+    const validTypes: Array<TMessage['type']> = ['text', 'image', 'video', 'gif', 'file']
+    const rawFileType = String(apiMessage.fileType || '').toLowerCase()
+    if (rawFileType === 'audio') {
       messageType = 'voice'
+    } else if (validTypes.includes(rawFileType as TMessage['type'])) {
+      messageType = rawFileType as TMessage['type']
+    } else if (isImageUrl(apiMessage.fileUrl || apiMessage.content || '')) {
+      // 后端 fileType 异常时，基于文件 URL 兜底识别图片消息
+      messageType = 'image'
+    } else if (isVideoUrl(apiMessage.fileUrl || apiMessage.content || '')) {
+      // 后端 fileType 异常时，基于文件 URL 兜底识别视频消息
+      messageType = 'video'
     }
-    else if (validTypes.includes(apiMessage.fileType as any)) {
-      messageType = apiMessage.fileType as IMessage['type']
-    }
+    const messageContent = messageType === 'text'
+      ? (apiMessage.content || '')
+      : (apiMessage.fileUrl || apiMessage.content || '')
 
     return {
       id: apiMessage.id,
       type: messageType,
-      content: apiMessage.content || apiMessage.fileUrl || '',
+      content: messageContent,
       isMine: Boolean(apiMessage.isSelf),
       avatar: apiMessage?.sender?.avatar || apiMessage.senderAvatar || '',
       username: apiMessage?.sender?.name || apiMessage.senderName || '',
       timestamp: apiMessage.createdAt || new Date().toISOString(),
-      status: (apiMessage as ChatMessage)._status || 'sent',
+      status: (apiMessage as TChatMessage)._status || 'sent',
       fileDuration: apiMessage.fileDuration,
       isRead: apiMessage.isRead,
     }
@@ -299,26 +359,25 @@ export function useChat() {
    * @returns 处理后的消息数组
    */
   function mergeAndSortMessages(
-    apiMessages: ChatMessage[],
-    localMessages?: ChatMessage[],
-  ): ChatMessage[] {
+    apiMessages: TChatMessage[],
+    localMessages?: TChatMessage[],
+  ): TChatMessage[] {
     if (!Array.isArray(apiMessages)) {
       throw new TypeError('apiMessages must be an array')
     }
 
-    let allMessages: ChatMessage[] = []
+    let allMessages: TChatMessage[] = []
 
     // 如果只传入接口数据，直接返回
     if (!localMessages || localMessages.length === 0) {
       allMessages = [...apiMessages]
-    }
-    else {
+    } else {
       if (!Array.isArray(localMessages)) {
         throw new TypeError('localMessages must be an array')
       }
 
       // 合并并去重，接口有的用接口的，接口没有的才用本地的
-      const messageMap = new Map<string | number, ChatMessage>()
+      const messageMap = new Map<string | number, TChatMessage>()
 
       // 首先添加本地数据
       localMessages.forEach((message) => {
@@ -352,9 +411,7 @@ export function useChat() {
       chatRefreshListRef.value?.scrollToBottom()
     }
   }
-  // #endregion
 
-  // #region 事件处理函数
   /**
    * @description 处理发送文本消息事件
    * @param content - 文本内容
@@ -365,7 +422,7 @@ export function useChat() {
     }
 
     const tempId = Date.now()
-    const newMessage: ChatMessage = {
+    const newMessage: TChatMessage = {
       id: tempId,
       content,
       fileType: 'text',
@@ -374,7 +431,7 @@ export function useChat() {
       senderAvatar: '', // TODO: 获取当前用户头像
       createdAt: new Date().toISOString(),
       _status: 'sending',
-    } as ChatMessage
+    } as TChatMessage
 
     messages.value.push(newMessage)
     scrollToBottom()
@@ -400,8 +457,7 @@ export function useChat() {
 
       // 发送成功后收起键盘
       uni.hideKeyboard()
-    }
-    catch (error) {
+    } catch (error) {
       const failedMessage = messages.value.find(m => m.id === tempId)
       if (failedMessage) {
         failedMessage._status = 'failed'
@@ -440,8 +496,7 @@ export function useChat() {
       failedMessage.id = res.data.messageId
       failedMessage._status = 'sent'
       saveCachedMessages(studentId.value, messages.value)
-    }
-    catch (error) {
+    } catch (error) {
       failedMessage._status = 'failed' // 重发失败，状态回到失败
       saveCachedMessages(studentId.value, messages.value)
       uni.showToast({ title: '重新发送失败', icon: 'none' })
@@ -501,7 +556,7 @@ export function useChat() {
     }
 
     // 添加消息到消息队列
-    const newMessage: ChatMessage = {
+    const newMessage: TChatMessage = {
       ...messageData,
       _status: 'sent', // 标记为已发送状态
       senderId: userStore.userInfo?.userId || 0, // 设置发送方ID为当前用户ID
@@ -509,7 +564,7 @@ export function useChat() {
       senderName: userStore.userInfo?.userName || '我', // 设置发送方姓名
       senderAvatar: userStore.userInfo?.wechatInfo?.avatarUrl || '', // 设置发送方头像
       receiverName: studentInfo.value.studentName, // 设置接收方姓名
-      receiverAvatar: studentInfo.value.faceImageUrl || '', // 设置接收方头像
+      receiverAvatar: studentInfo.value.avatar || '', // 设置接收方头像
     }
 
     // 添加到消息列表
@@ -521,22 +576,106 @@ export function useChat() {
     // 更新缓存
     saveCachedMessages(studentId.value, messages.value)
   }
-  // #endregion
 
-  // #region 生命周期钩子
+  /**
+   * @description 上传媒体文件
+   * @param tempFilePath - 媒体临时路径
+   */
+  async function axiosPostUploadMediaApi(tempFilePath: string): Promise<File.Upload.ResPostUploadApi> {
+    const uploadResult = await uploadFilePromise<File.Upload.ResPostUploadApi>(
+      uploadFileUrl.UPLOAD,
+      tempFilePath,
+      { bizType: 'VOICE_MESSAGE' },
+    )
+    return uploadResult.data
+  }
+
+  /**
+   * @description 处理拍照/录像发送
+   * @param mediaPayload - 媒体消息参数
+   */
+  async function handleSendMedia(mediaPayload: TMediaMessagePayload): Promise<void> {
+    if (!studentId.value) {
+      return
+    }
+    const mediaCompressTitle = mediaPayload.fileType === FILE_TYPE.IMAGE ? '压缩图片中...' : '压缩视频中...'
+    uni.showLoading({
+      title: mediaCompressTitle,
+      mask: true,
+    })
+    try {
+      const compressedMediaPath = mediaPayload.fileType === FILE_TYPE.IMAGE
+        ? await axiosCompressImageFileApi(mediaPayload.tempFilePath)
+        : await axiosCompressVideoFileApi(mediaPayload.tempFilePath)
+      uni.showLoading({
+        title: mediaPayload.fileType === FILE_TYPE.IMAGE ? '发送图片中...' : '发送视频中...',
+        mask: true,
+      })
+      const uploadData = await axiosPostUploadMediaApi(compressedMediaPath)
+      const messageFileUrl = getUploadFullFileUrl(uploadData.fileUrl || uploadData.url)
+      if (!messageFileUrl) {
+        throw new Error('文件上传失败，未返回可用地址')
+      }
+      const mediaMessageData: Message.ReqPostMessageApi = {
+        content: '',
+        fileType: mediaPayload.fileType,
+        fileUrl: messageFileUrl,
+        fileName: mediaPayload.fileName || uploadData.filename || '',
+        fileDuration: mediaPayload.fileType === FILE_TYPE.VIDEO ? Number(mediaPayload.duration || 0) : undefined,
+      }
+      const messageResult = await postMessageApi(mediaMessageData)
+      if (messageResult.code !== 0) {
+        throw new Error(messageResult.msg || '媒体消息发送失败')
+      }
+      const createdMessage: TChatMessage = {
+        id: messageResult.data.messageId || Date.now(),
+        content: '',
+        fileUrl: mediaMessageData.fileUrl || '',
+        fileType: mediaMessageData.fileType || FILE_TYPE.IMAGE,
+        fileDuration: mediaMessageData.fileDuration || 0,
+        fileName: mediaMessageData.fileName || '',
+        fileSize: uploadData.size || 0,
+        isRead: false,
+        createdAt: new Date().toISOString(),
+        readAt: null,
+        isSelf: true,
+        messageDirection: 'GUARDIAN_TO_STUDENT',
+        priority: 0,
+        status: 1,
+        title: '',
+        guardianName: '',
+        senderId: userStore.userInfo?.userId || 0,
+        senderName: userStore.userInfo?.userName || '我',
+        senderAvatar: userStore.userInfo?.wechatInfo?.avatarUrl || '',
+        receiverId: studentId.value,
+        receiverName: studentInfo.value?.studentName || '',
+        receiverAvatar: studentInfo.value?.avatar || '',
+      }
+      messages.value.push(createdMessage)
+      await scrollToBottom()
+      saveCachedMessages(studentId.value, messages.value)
+    } catch (error) {
+      uni.showToast({
+        title: mediaPayload.fileType === FILE_TYPE.IMAGE ? '图片发送失败' : '视频发送失败',
+        icon: 'none',
+      })
+    } finally {
+      uni.hideLoading()
+    }
+  }
+
   /**
    * @description 登录成功后的初始化加载
    */
-  async function onLoginSuccess() {
+  async function handleLoginSuccess() {
     batchRequestHandler([axiosLoadInitialMessages()])
   }
-  // #endregion
 
   return {
     pageLoading,
     pageError,
-    onLoginFail,
-    onLoginSuccess,
+    handleLoginFail,
+    handleLoginSuccess,
     studentName,
     listLoading,
     listLoaded,
@@ -552,6 +691,7 @@ export function useChat() {
     axiosLoadMoreMessages,
     handleResendMessage,
     handleSendText,
+    handleSendMedia,
     handleInputFocus,
     handleInputBlur,
     handleInputChange,

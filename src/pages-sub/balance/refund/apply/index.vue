@@ -10,8 +10,9 @@
 
 <script lang="ts" setup>
 import type { Refund } from '@/api/interface/modules/refund'
+import type { TDeviceType } from '@/constant/modules'
 import { storeToRefs } from 'pinia'
-import { computed, onUnmounted, ref, unref } from 'vue'
+import { computed, onUnmounted, ref, unref, watch } from 'vue'
 import { useMessage } from 'wot-design-uni'
 import { getPendingRefundApi, postApplyRefundApi } from '@/api/modules/refund'
 import TButton from '@/components/common/button/index.vue'
@@ -22,13 +23,13 @@ import WhiteCard from '@/components/common/white-card/index.vue'
 import Cell from '@/components/form/cell/index.vue'
 import Form from '@/components/form/index/index.vue'
 import Radio from '@/components/form/radio/index.vue'
-import { REFUND_TYPE, REFUND_TYPE_OPTIONS } from '@/constant/modules'
+import { DEVICE_TYPE, REFUND_TYPE, REFUND_TYPE_OPTIONS } from '@/constant/modules'
 import { BALANCE_REFUND_HISTORY_PATH, BALANCE_REFUND_RESULT_PATH } from '@/constant/router'
 import { useBalance } from '@/hooks/useBalance'
+import { useDeviceType } from '@/hooks/useDeviceType'
 import { useForm } from '@/hooks/useForm'
 import { usePage } from '@/hooks/usePage'
 import { useCurrentStudentStore } from '@/store/business/currentStudent'
-import { useUserStore } from '@/store/user'
 import { useRefundEmitter } from '@/utils/emit/refund'
 import { toast } from '@/utils/toast'
 
@@ -38,46 +39,115 @@ defineOptions({
   },
 })
 
-const { pageLoading, pageError, pageLoaded, batchRequestHandler, onLoginFail, getContentHeight }
-  = usePage()
-const { formRef, validate, submitLoading, scrollToFirstError, scrollIntoView }
-  = useForm('.apply-scroll')
+const { pageLoading, pageError, pageLoaded, batchRequestHandler, onLoginFail, getContentHeight } = usePage()
+const { formRef, validate, submitLoading, scrollToFirstError, scrollIntoView } = useForm('.apply-scroll')
 const message = useMessage()
-const { axiosGetUserBalanceApi } = useBalance()
+const {
+  axiosGetUserBalanceApi,
+  getBalanceByDeviceType,
+  dryerBalanceInfo,
+  videoBalanceInfo,
+} = useBalance()
+const { supportedDeviceTypes, defaultDeviceType, deviceTypeRadioOptions } = useDeviceType()
 const { onRefundSuccess } = useRefundEmitter()
 
-const userStore = useUserStore()
 const currentStudentStore = useCurrentStudentStore()
-const { studentInfo, balanceInfo, deviceType } = storeToRefs(currentStudentStore)
+const { studentInfo, studentFullInfo, devices } = storeToRefs(currentStudentStore)
 
+/** 待处理退款信息 */
 const pendingRefundInfo = ref<Refund.Application.ResGetPendingApi | null>(null)
+/** 优先使用的设备类型 */
+const primaryDeviceType = computed<TDeviceType>(() => {
+  return devices.value?.[0]?.deviceType || defaultDeviceType.value
+})
+/** 设备类型兜底选项 */
+const fallbackDeviceType = computed<TDeviceType | undefined>(() => {
+  if (supportedDeviceTypes.value.length === 0) return undefined
+  if (supportedDeviceTypes.value.length === 1) {
+    return supportedDeviceTypes.value[0] as TDeviceType
+  }
+
+  const candidate = primaryDeviceType.value
+  if (supportedDeviceTypes.value.includes(candidate)) return candidate
+  return supportedDeviceTypes.value[0] as TDeviceType
+})
+/** 是否有可用设备类型 */
+const hasSupportedDeviceTypes = computed(() => supportedDeviceTypes.value.length > 0)
+/** 是否展示设备类型选项 */
+const showDeviceTypeOptions = computed(() => (deviceTypeRadioOptions.value?.length ?? 0) > 0)
+
+/** 表单数据 */
 const formData = ref({
+  deviceType: fallbackDeviceType.value,
   refundType: REFUND_TYPE.FULL,
   reason: '',
 })
 
-const availableBalance = computed(() => +balanceInfo.value?.availableBalance || 0)
+/** 当前选中的设备类型 */
+const selectedDeviceType = computed(() => formData.value.deviceType || fallbackDeviceType.value)
+
+/** 当前展示的余额信息 */
+const currentBalanceInfo = computed(() => {
+  if (selectedDeviceType.value === DEVICE_TYPE.DRYER) {
+    return dryerBalanceInfo?.value
+  }
+  return videoBalanceInfo?.value
+})
+/** 当前可用余额 */
+const availableBalance = computed(() => +currentBalanceInfo.value?.availableBalance || 0)
+/** 可用余额文案 */
 const availableBalanceText = computed(() => `¥${Number(availableBalance.value).toFixed(2)}`)
+/** 退费金额选项 */
 const refundTypeOptions = computed(() => {
   return REFUND_TYPE_OPTIONS.map(option => ({
     ...option,
     suffix: availableBalanceText.value,
   }))
 })
+/** 是否存在待处理退款 */
 const hasPendingRefund = computed(() => !!pendingRefundInfo.value?.hasPending)
+/** 是否余额不足 */
 const hasInsufficientBalance = computed(() => Number(availableBalance.value) <= 0)
+/** 是否禁止提交 */
 const cannotSubmit = computed(
   () =>
-    hasPendingRefund.value
+    !hasSupportedDeviceTypes.value
+    || hasPendingRefund.value
     || hasInsufficientBalance.value
+    || !formData.value.deviceType
     || !formData.value.refundType
     || !formData.value.reason,
 )
+/** 内容区域高度 */
 const contentHeight = computed(() => {
   return getContentHeight('164rpx')
 })
 
+/** 设备类型选项 */
+const deviceTypeOptions = computed(() => deviceTypeRadioOptions.value ?? [])
+/** 提交按钮文案 */
+const submitText = computed(() => {
+  if (!hasSupportedDeviceTypes.value) return '不支持退款'
+  return '提交退费申请'
+})
+
+watch(
+  fallbackDeviceType,
+  (value) => {
+    if (!value) {
+      formData.value.deviceType = undefined
+      return
+    }
+
+    if (!formData.value.deviceType || !supportedDeviceTypes.value.includes(formData.value.deviceType)) {
+      formData.value.deviceType = value
+    }
+  },
+  { immediate: true },
+)
+
 const rules = {
+  deviceType: [{ required: true, message: '请选择设备类型' }],
   refundType: [{ required: true, message: '请选择退费金额' }],
   reason: [
     { required: true, message: '请输入退费原因' },
@@ -88,19 +158,19 @@ const rules = {
 /** 获取待处理退款信息 */
 async function axiosGetPendingRefundApi() {
   try {
+    if (!selectedDeviceType.value) return { code: -1 }
+
     const result = await getPendingRefundApi({
-      deviceType: deviceType.value,
+      deviceType: selectedDeviceType.value,
     })
     if (result.code === 0) {
       pendingRefundInfo.value = result.data
     }
     return result
-  }
-  catch (error) {
+  } catch (error) {
     console.error('获取待处理退款信息失败:', error)
     return { code: -1 }
-  }
-  finally {
+  } finally {
     pageLoading.value = false
   }
 }
@@ -131,15 +201,17 @@ function handleViewHistory() {
 /** 提交退费申请 */
 async function handleSubmitRefund() {
   try {
-    const { valid } = await validate(['refundType', 'reason'])
+    if (!hasSupportedDeviceTypes.value) return
+
+    const { valid } = await validate(['deviceType', 'refundType', 'reason'])
     if (!valid) {
       scrollToFirstError()
       return
     }
     submitLoading.value = true
-    const { reason, refundType } = unref(formData)
+    const { reason, refundType, deviceType: submitDeviceType } = unref(formData)
     const submissionData = {
-      deviceType: deviceType.value,
+      deviceType: submitDeviceType,
       refundType,
       applyReason: reason,
     }
@@ -149,7 +221,9 @@ async function handleSubmitRefund() {
       const refundResult = result.data
 
       const pendingResult = await axiosGetPendingRefundApi()
-      await axiosGetUserBalanceApi()
+      if (selectedDeviceType.value) {
+        await axiosGetUserBalanceApi(selectedDeviceType.value)
+      }
       submitLoading.value = false
 
       await message.alert({
@@ -169,24 +243,42 @@ async function handleSubmitRefund() {
         })
       }
     }
-  }
-  catch (error) {
+  } catch (error) {
     console.error('提交退费申请失败:', error)
     toast.show('提交失败，请重试')
-  }
-  finally {
+  } finally {
     submitLoading.value = false
   }
 }
 
-/** 登录成功处理 */
-async function onLoginSuccess() {
-  batchRequestHandler([axiosGetPendingRefundApi()])
+/** 处理设备类型切换 */
+async function handleDeviceTypeChange(value: string | number) {
+  if (!value) return
+  await batchRequestHandler([axiosGetPendingRefundApi(), getBalanceByDeviceType(value as TDeviceType)], {
+    auto: false,
+  })
 }
 
+/** 登录成功处理 */
+async function onLoginSuccess() {
+  if (hasSupportedDeviceTypes.value) {
+    const requests = [axiosGetPendingRefundApi()]
+    if (selectedDeviceType.value) {
+      requests.push(axiosGetUserBalanceApi(selectedDeviceType.value))
+    }
+    batchRequestHandler(requests)
+  }
+}
+
+/** 监听退款成功事件 */
 const unsubscribeRefund = onRefundSuccess((data) => {
   console.log('监听到退款成功事件:', data)
-  batchRequestHandler([axiosGetPendingRefundApi(), axiosGetUserBalanceApi()])
+  if (selectedDeviceType.value) {
+    batchRequestHandler([
+      axiosGetPendingRefundApi(),
+      getBalanceByDeviceType(selectedDeviceType.value),
+    ])
+  }
 })
 
 onUnmounted(() => {
@@ -195,7 +287,12 @@ onUnmounted(() => {
 
 onShow(() => {
   if (unref(pageLoaded)) {
-    batchRequestHandler([axiosGetPendingRefundApi(), axiosGetUserBalanceApi()])
+    if (!hasSupportedDeviceTypes.value || !selectedDeviceType.value) return
+
+    batchRequestHandler([
+      axiosGetPendingRefundApi(),
+      axiosGetUserBalanceApi(selectedDeviceType.value),
+    ])
   }
 })
 
@@ -258,7 +355,7 @@ defineExpose({
               </view>
               <view flex="~ items-center justify-between">
                 <view text="xs text-secondary">
-                  {{ studentInfo?.className }}
+                  {{ studentFullInfo }}
                 </view>
                 <view text="sm primary" font="medium">
                   {{ availableBalanceText }}
@@ -272,6 +369,16 @@ defineExpose({
         <WhiteCard>
           <Form ref="formRef" :model="formData" :rules="rules">
             <view flex="~ col" gap="2.5">
+              <!-- 设备类型 -->
+              <Cell v-if="showDeviceTypeOptions" id="deviceType" required label="设备类型" prop="deviceType">
+                <Radio
+                  v-model="formData.deviceType"
+                  :options="deviceTypeOptions"
+                  :columns="2"
+                  @change="handleDeviceTypeChange"
+                />
+              </Cell>
+
               <!-- 退费金额 -->
               <Cell id="refundType" required label="退费金额" prop="refundType">
                 <Radio v-model="formData.refundType" :options="refundTypeOptions" />
@@ -309,7 +416,7 @@ defineExpose({
           :loading="submitLoading"
           @click="handleSubmitRefund"
         >
-          提交退费申请
+          {{ submitText }}
         </TButton>
       </view>
     </view>

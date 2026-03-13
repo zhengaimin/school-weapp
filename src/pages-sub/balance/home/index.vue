@@ -10,6 +10,7 @@
 
 <script lang="ts" setup>
 import type { Gifts } from '@/api/interface/modules/gifts'
+import type { TDeviceType } from '@/constant/modules'
 import dayjs from 'dayjs'
 import { storeToRefs } from 'pinia'
 import { computed, ref } from 'vue'
@@ -17,6 +18,9 @@ import { getValidGiftsApi } from '@/api/modules/gifts'
 import { getConsumptionStatisticsApi } from '@/api/modules/user/consumption'
 import Page from '@/components/common/page/index.vue'
 import Icon from '@/components/icon/index.vue'
+import { DEVICE_TYPE } from '@/constant/modules'
+import { useBalance } from '@/hooks/useBalance'
+import { useDeviceType } from '@/hooks/useDeviceType'
 import { usePage } from '@/hooks/usePage'
 import { usePackage } from '@/pages-sub/package/hooks/usePackage'
 import { useCurrentStudentStore } from '@/store/business/currentStudent'
@@ -32,11 +36,13 @@ defineOptions({
 
 const { pageLoading, pageError, onLoginFail, batchRequestHandler, getContentHeight } = usePage()
 const { activePackage, axiosGetStudentActivePackageApi } = usePackage()
+const { getBalanceByDeviceType, dryerBalanceInfo, videoBalanceInfo } = useBalance()
+const { defaultDeviceType } = useDeviceType()
 const currentStudentStore = useCurrentStudentStore()
 const {
   studentInfo: currentStudent,
   studentFullInfo,
-  balanceInfo,
+  devices,
 } = storeToRefs(currentStudentStore)
 
 const consumptionStatistics = ref()
@@ -47,12 +53,24 @@ const contentStyle = computed(() => {
   return getContentHeight('0')
 })
 
-const lastUpdateTimeFormatted = computed(() => {
-  if (balanceInfo.value?.lastUpdateTime) {
-    return balanceInfo.value.lastUpdateTime
+/** 优先使用的设备类型 */
+const primaryDeviceType = computed<TDeviceType>(() => {
+  return devices.value?.[0]?.deviceType || defaultDeviceType.value || DEVICE_TYPE.VIDEO
+})
+/** 当前展示的余额信息 */
+const currentBalanceInfo = computed(() => {
+  if (primaryDeviceType.value === DEVICE_TYPE.DRYER) {
+    return dryerBalanceInfo.value
   }
-  if (balanceInfo.value?.updatedAt) {
-    return dayjs(balanceInfo.value.updatedAt).format('YYYY-MM-DD HH:mm')
+  return videoBalanceInfo.value
+})
+
+const lastUpdateTimeFormatted = computed(() => {
+  if (currentBalanceInfo.value?.lastUpdateTime) {
+    return currentBalanceInfo.value.lastUpdateTime
+  }
+  if (currentBalanceInfo.value?.updatedAt) {
+    return dayjs(currentBalanceInfo.value.updatedAt).format('YYYY-MM-DD HH:mm')
   }
   return '--'
 })
@@ -78,8 +96,7 @@ async function axiosGetConsumptionStatisticsApi() {
       consumptionStatistics.value = result.data
     }
     return result
-  }
-  catch (error) {
+  } catch (error) {
     return { code: -1 }
   }
 }
@@ -91,8 +108,7 @@ async function axiosGetValidGiftsApi() {
       validGifts.value = result.data
     }
     return result
-  }
-  catch (error) {
+  } catch (error) {
     return { code: -1 }
   }
 }
@@ -103,6 +119,7 @@ async function onLoginSuccess() {
     axiosGetConsumptionStatisticsApi(),
     axiosGetStudentActivePackageApi(),
     axiosGetValidGiftsApi(),
+    getBalanceByDeviceType(primaryDeviceType.value),
   ])
 }
 </script>
@@ -149,7 +166,8 @@ async function onLoginSuccess() {
                 ¥
               </text>
               {{
-                balanceInfo?.availableBalanceFormatted || (balanceInfo?.availableBalance ?? '--')
+                currentBalanceInfo?.availableBalanceFormatted
+                  || (currentBalanceInfo?.availableBalance ?? '--')
               }}
             </view>
 
@@ -186,11 +204,16 @@ async function onLoginSuccess() {
         <StatisticsCard
           :month-count="consumptionStatistics?.monthCount"
           :month-amount="consumptionStatistics?.monthAmount"
-          :total-recharge="balanceInfo?.totalRecharge"
+          :total-recharge="currentBalanceInfo?.totalRecharge"
         />
 
         <!-- 已购买套餐 -->
-        <PackageCard v-if="hasActivePackage" :package="activePackage!" />
+        <PackageCard
+          v-if="hasActivePackage"
+          :package="activePackage!"
+          :device-type="primaryDeviceType"
+          :balance-info="currentBalanceInfo"
+        />
 
         <!-- 赠费信息 -->
         <GiftCard v-if="hasValidGifts" :valid-gifts="validGifts" />

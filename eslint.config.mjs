@@ -34,6 +34,7 @@ export default uniHelper({
     'style/nonblock-statement-body-position': ['error', 'beside'],
     'style/max-statements-per-line': ['error', { max: 2 }],
     'style/indent': 'off',
+    'style/brace-style': ['error', '1tbs', { allowSingleLine: true }],
     'antfu/if-newline': 'off',
   },
   formatters: {

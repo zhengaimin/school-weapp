@@ -5,22 +5,22 @@
  * - 当前选中的学生
  * - 绑定状态
  */
-import type { Students } from '@/api/interface/modules/students'
+import type { Overview } from '@/api/interface/modules/overview'
 
 import { defineStore } from 'pinia'
-import { getStudentListApi } from '@/api/modules/students'
+import { getOverviewStudentsApi } from '@/api/modules/overview'
 
 export const useParentStore = defineStore(
   'parent',
   () => {
-    const students = ref<Students.IStudentVo[]>([])
+    const students = ref<Overview.IStudentVo[]>([])
 
     // 是否需要绑定学生
     const needBind = ref<boolean>(true)
     // 当前选中的学生ID
     const currentStudentId = ref<number | null>(null)
 
-    const setStudents = (list: Students.IStudentVo[]) => {
+    const setStudents = (list: Overview.IStudentVo[]) => {
       students.value = list
     }
     const setNeedBind = (val: boolean) => {
@@ -31,42 +31,15 @@ export const useParentStore = defineStore(
     }
 
     const studentsIdMap = computed(() => {
-      const map: Record<number, Students.IStudentVo> = {}
+      const map: Record<number, Overview.IStudentVo> = {}
       students.value.forEach((student) => {
         map[student.id] = student
       })
       return map
     })
 
-    // 当前选中的学生信息
-    const currentStudent = computed(() => {
-      if (currentStudentId.value === null) {
-        return null
-      }
-      const student = studentsIdMap.value[currentStudentId.value]
-      if (!student) {
-        return null
-      }
-
-      const list = []
-      if (student.grade) {
-        list.push(student.grade)
-      }
-      if (student.departmentName) {
-        list.push(student.departmentName)
-      }
-      if (student.className) {
-        list.push(student.className)
-      }
-
-      return {
-        ...student,
-        fullClassName: list.join(' · '),
-      }
-    })
-
     const axiosGetStudentListApi = async () => {
-      const result = await getStudentListApi()
+      const result = await getOverviewStudentsApi()
 
       if (result.code === 0) {
         const list = result.data.students || []
@@ -79,8 +52,7 @@ export const useParentStore = defineStore(
           const nextId
             = existingId !== null && list.some(s => s.id === existingId) ? existingId : list[0].id
           setCurrentStudentId(nextId)
-        }
-        else {
+        } else {
           setCurrentStudentId(null)
         }
 
@@ -99,8 +71,6 @@ export const useParentStore = defineStore(
       setCurrentStudentId,
 
       studentsIdMap,
-      currentStudent,
-
       axiosGetStudentListApi,
     }
   },

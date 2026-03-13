@@ -10,7 +10,6 @@
 
 <script lang="ts" setup>
 import { storeToRefs } from 'pinia'
-// #region 导入
 import { computed, ref } from 'vue'
 import { putAgreementApi } from '@/api/modules/user/common'
 import TButton from '@/components/common/button/index.vue'
@@ -23,41 +22,29 @@ import { useCurrentStudentStore } from '@/store/business/currentStudent'
 import { useUserStore } from '@/store/user'
 import { uploadBase64Promise, uploadFilePromise, uploadFileUrl } from '@/utils/file/upload'
 import { toast } from '@/utils/toast'
-// #endregion
 
-// #region 组件选项配置
 defineOptions({
   options: {
     styleIsolation: 'apply-shared',
   },
 })
-// #endregion
 
-// #region 使用 Hooks
 const { pageLoading, pageError, onLoginSuccess, onLoginFail, getContentHeight } = usePage()
-// #endregion
 
-// #region 使用 Store
 const parentStore = useParentStore()
 const userStore = useUserStore()
 const currentStudentStore = useCurrentStudentStore()
 const { userInfo } = storeToRefs(userStore)
 const { studentInfo } = storeToRefs(currentStudentStore)
-// #endregion
 
-// #region 定义响应式数据
 const signatureImage = ref('')
 const submitLoading = ref(false)
-// #endregion
 
-// #region 定义计算属性
 const hasSigned = computed(() => !!signatureImage.value)
 const contentStyle = computed(() => {
   return getContentHeight(hasSigned.value ? '164rpx' : '0')
 })
-// #endregion
 
-// #region 接口请求函数
 async function axiosUploadSignatureImageApi(imageData: string): Promise<string> {
   try {
     // 生成文件名：用户id_学生id_时间戳+随机值.png
@@ -87,12 +74,10 @@ async function axiosUploadSignatureImageApi(imageData: string): Promise<string> 
 
     if (uploadResult.code === 0 && uploadResult.data?.fileUrl) {
       return import.meta.env.VITE_UPLOAD_BASEURL + uploadResult.data.fileUrl
-    }
-    else {
+    } else {
       throw new Error(`上传失败：${uploadResult.data || '未知错误'}`)
     }
-  }
-  catch (error) {
+  } catch (error) {
     console.error('上传签名图片失败:', error)
     throw error
   }
@@ -104,15 +89,12 @@ async function axiosPutAgreementApi(agreementUrl: string) {
       agreementUrl,
     })
     return result
-  }
-  catch (error) {
+  } catch (error) {
     console.error('提交协议失败:', error)
     throw error
   }
 }
-// #endregion
 
-// #region 事件处理函数
 async function handleSubmitAgreement() {
   if (!hasSigned.value) {
     toast.show('请先签名')
@@ -137,12 +119,10 @@ async function handleSubmitAgreement() {
         url: FACE_COLLECTION_PATH,
       })
     }
-  }
-  catch (error) {
+  } catch (error) {
     console.error('提交协议失败:', error)
     toast.show('提交失败，请重试')
-  }
-  finally {
+  } finally {
     submitLoading.value = false
   }
 }
@@ -167,7 +147,6 @@ function handleAcceptParams(imgPath: string) {
 defineExpose({
   acceptParams: handleAcceptParams,
 })
-// #endregion
 </script>
 
 <template>

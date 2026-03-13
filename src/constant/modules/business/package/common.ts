@@ -1,6 +1,5 @@
 import type { TI18NMap, TOptions, TStatusConfigMap } from '@/types'
 
-// #region 设备类型
 export const DEVICE_TYPE = {
   VIDEO: 'VIDEO',
   DRYER: 'DRYER',
@@ -17,9 +16,7 @@ export const DEVICE_TYPE_OPTIONS: TOptions<TDeviceType> = [
   { label: DEVICE_TYPE_I18N[DEVICE_TYPE.VIDEO], value: DEVICE_TYPE.VIDEO },
   { label: DEVICE_TYPE_I18N[DEVICE_TYPE.DRYER], value: DEVICE_TYPE.DRYER },
 ]
-// #endregion
 
-// #region 套餐类型
 // Types
 export const PACKAGE_TYPE = {
   GENERAL: 'GENERAL',
@@ -39,9 +36,7 @@ export const PACKAGE_TYPE_OPTIONS: TOptions<TPackageType> = [
   { label: PACKAGE_TYPE_I18N[PACKAGE_TYPE.GENERAL], value: PACKAGE_TYPE.GENERAL },
   { label: PACKAGE_TYPE_I18N[PACKAGE_TYPE.FIXED], value: PACKAGE_TYPE.FIXED },
 ]
-// #endregion
 
-// #region 套餐状态
 // Types
 export const PACKAGE_STATUS = {
   PENDING: 0,
@@ -147,4 +142,3 @@ export const PACKAGE_STATUS_CONFIGS: TStatusConfigMap<TPackageStatus> = {
     bgColor: '#fef3c7',
   },
 }
-// #endregion

@@ -1,5 +1,5 @@
 // ==================== Tabbar ====================
-export const TABBAR_HOME_PATH = '/pages/parent/index'
+export const TABBAR_HOME_PATH = '/pages/parent/home/index'
 export const TABBAR_PROFILE_PATH = '/pages/profile/index'
 
 // ==================== 家长 (parent) ====================

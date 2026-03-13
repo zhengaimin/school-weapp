@@ -1,12 +1,14 @@
 <script lang="ts" setup>
 import type { Refund } from '@/api/interface/modules/refund'
+import { computed } from 'vue'
 import TButton from '@/components/common/button/index.vue'
 import WhiteCard from '@/components/common/white-card/index.vue'
 import Icon from '@/components/icon/index.vue'
-import { REFUND_STATUS, REFUND_STATUS_CONFIGS } from '@/constant/modules'
+import { DEVICE_TYPE_I18N, REFUND_STATUS, REFUND_STATUS_CONFIGS } from '@/constant/modules'
+import { useDeviceType } from '@/hooks/useDeviceType'
 import { formatTime } from '@/utils/format'
 
-defineProps<{
+const props = defineProps<{
   record: Refund.IRefundApplicationVo
 }>()
 
@@ -14,6 +16,16 @@ const emit = defineEmits<{
   click: [event: Event]
   cancel: [record: Refund.IRefundApplicationVo]
 }>()
+
+const { supportedDeviceTypes } = useDeviceType()
+
+const showDeviceType = computed(() => supportedDeviceTypes.value.length > 1)
+
+const descriptionText = computed(() => {
+  return props.record.status === REFUND_STATUS.REJECTED
+    ? props.record.adminRemark
+    : props.record.applyReason
+})
 
 /** 处理取消操作 */
 function handleCancel(record: Refund.IRefundApplicationVo) {
@@ -50,9 +62,10 @@ function handleCancel(record: Refund.IRefundApplicationVo) {
         <view flex="~ justify-between items-center" m="b-2">
           <view flex-1 overflow-hidden text="xs gray-600">
             <view overflow-hidden text-ellipsis whitespace-nowrap>
-              {{
-                record.status === REFUND_STATUS.REJECTED ? record.adminRemark : record.applyReason
-              }}
+              <text v-if="showDeviceType && record.deviceType">
+                {{ DEVICE_TYPE_I18N[record.deviceType] }}&nbsp;
+              </text>
+              {{ descriptionText }}
             </view>
           </view>
           <view text="xs gray-600" whitespace-nowrap m="l-2">

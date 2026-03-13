@@ -1,4 +1,4 @@
-<route lang="jsonc" type="page">
+<route lang="jsonc" type="home">
 {
   "layout": "default",
   "style": {
@@ -10,20 +10,22 @@
 
 <script setup lang="ts">
 import type { User } from '@/api/interface/modules/user'
-import type { TDeviceType } from '@/constant/modules/business/package/common'
 
 import dayjs from 'dayjs'
 import { storeToRefs } from 'pinia'
 import { computed, nextTick, ref, unref } from 'vue'
 import { getCheckSelfApi } from '@/api/modules/family/contacts'
 import { postParentSwitchChildApi } from '@/api/modules/students'
-import { getConsumptionStatisticsApi } from '@/api/modules/user/consumption'
-import TButton from '@/components/common/button/index.vue'
-import Navigation from '@/components/common/navigation/index.vue'
 import Notice from '@/components/common/notice/index.vue'
 import Page from '@/components/common/page/index.vue'
 import Icon from '@/components/icon/index.vue'
-import { DEVICE_TYPE_I18N } from '@/constant/modules'
+import {
+  DEVICE_TYPE,
+  MENU_LIST,
+  MINIAPP_MODULE_KEY_ACCOUNT_INFO,
+  MINIAPP_MODULE_KEY_FACE_COLLECTION,
+  MINIAPP_MODULE_KEY_RECHARGE,
+} from '@/constant/modules'
 import {
   BALANCE_RECHARGE_PATH,
   COMMON_FOLLOW_PATH,
@@ -33,15 +35,13 @@ import {
 import { useBalance } from '@/hooks/useBalance'
 import { useDeviceType } from '@/hooks/useDeviceType'
 import { usePage } from '@/hooks/usePage'
-import { useSchoolModules } from '@/hooks/useSchoolModules'
 import { useAppStore } from '@/store/app'
 import { useParentStore } from '@/store/auth/parent'
 import { useCurrentStudentStore } from '@/store/business/currentStudent'
-import { useConfigStore } from '@/store/config'
 import { useUserStore } from '@/store/user'
 import { toast } from '@/utils/toast'
 
-import StudentSelect from './components/StudentSelect.vue'
+import StudentSelector from './components/StudentSelector.vue'
 import { getGreeting } from './data'
 
 defineOptions({
@@ -52,22 +52,21 @@ defineOptions({
 
 const { pageLoading, pageError, pageLoaded, getContentHeight, batchRequestHandler, onLoginFail }
   = usePage()
-const { axiosGetUserBalanceApi } = useBalance()
-const { hasAccountModules, hasRechargeModules, filteredMenuList } = useSchoolModules()
-const { supportedDeviceTypes } = useDeviceType()
 
 const userStore = useUserStore()
 const parentStore = useParentStore()
 const currentStudentStore = useCurrentStudentStore()
-const configStore = useConfigStore()
 const { userInfo, phone } = storeToRefs(userStore)
-const { currentStudent } = storeToRefs(parentStore)
-const { balanceInfo, deviceType, studentInfo } = storeToRefs(currentStudentStore)
+const { students } = storeToRefs(parentStore)
+const { studentInfo, devices } = storeToRefs(currentStudentStore)
 const { navBarInfo } = storeToRefs(useAppStore())
+const { dryerBalanceInfo, videoBalanceInfo } = useBalance()
+const { defaultDeviceType } = useDeviceType()
 
-const showStudentSelector = ref(false)
 const consumptionStats = ref<User.Consumption.IConsumptionStatisticsVo>()
 const isInFamilyContact = ref<boolean>(false)
+// Feature flag: hide balance display but keep the code for later use.
+const showBalanceSection = false
 
 const headerHeight = computed(() => {
   return `calc(260rpx + ${navBarInfo.value.navBarHeight}px)`
@@ -92,33 +91,46 @@ const hasAgreementSigned = computed(() => {
   const info = unref(userInfo) as any
   return !!info?.agreementUrl
 })
-const displayStudentName = computed(() => {
-  const studentName = currentStudent.value?.name || ''
-  if (supportedDeviceTypes.value.length > 1 && deviceType.value) {
-    const deviceName = DEVICE_TYPE_I18N[deviceType.value]
-    if (deviceName) {
-      return `${deviceName}·${studentName}`
-    }
+const studentModules = computed(() => {
+  return studentInfo.value?.modules || []
+})
+const primaryDeviceType = computed(() => {
+  return devices.value?.[0]?.deviceType || defaultDeviceType.value || DEVICE_TYPE.VIDEO
+})
+const currentBalanceInfo = computed(() => {
+  if (primaryDeviceType.value === DEVICE_TYPE.DRYER) {
+    return dryerBalanceInfo.value
   }
-  return studentName
+  return videoBalanceInfo.value
+})
+const hasAccountModules = computed(() => {
+  return studentModules.value.includes(MINIAPP_MODULE_KEY_ACCOUNT_INFO)
+})
+const hasRechargeModules = computed(() => {
+  return studentModules.value.includes(MINIAPP_MODULE_KEY_RECHARGE)
+})
+const filteredMenuList = computed(() => {
+  const modules = new Set(studentModules.value)
+  return MENU_LIST.filter((item) => {
+    if (item.id === MINIAPP_MODULE_KEY_FACE_COLLECTION) return false
+    if (!item.id) return true
+    return modules.has(item.id)
+  })
+})
+const accountInfoMenuItem = computed(() => {
+  return filteredMenuList.value.find(item => item.id === MINIAPP_MODULE_KEY_ACCOUNT_INFO) || null
+})
+const otherMenuList = computed(() => {
+  return filteredMenuList.value.filter(item => item.id !== MINIAPP_MODULE_KEY_ACCOUNT_INFO)
+})
+const selectedStudentId = computed<number | null>({
+  get: () => studentInfo.value?.studentId ?? null,
+  set: (id) => {
+    if (id == null || id === studentInfo.value?.studentId) return
+    handleStudentChange(id)
+  },
 })
 
-/** 获取统计数据 */
-async function axiosGetConsumptionStatisticsApi() {
-  try {
-    const result = await getConsumptionStatisticsApi()
-
-    if (result.code === 0) {
-      consumptionStats.value = result.data
-    }
-
-    return result
-  }
-  catch (error) {
-    console.error('获取消费统计失败:', error)
-    return { code: -1 }
-  }
-}
 /** 查询手机号是否存在于亲情号列表中 */
 async function axiosGetCheckSelfApi() {
   try {
@@ -136,8 +148,7 @@ async function axiosGetCheckSelfApi() {
     }
 
     return result
-  }
-  catch (error) {
+  } catch (error) {
     console.error('获取联系人信息失败:', error)
     isInFamilyContact.value = false
     return { code: -1 }
@@ -183,12 +194,8 @@ function handleNavigationToPath(path: string, item: any = null) {
     url: path,
   })
 }
-/** 显示切换学生弹框 */
-function handleShowStudentSelector() {
-  showStudentSelector.value = true
-}
 /** 切换学生和设备 */
-async function handleStudentChange(childId: number, deviceType: TDeviceType) {
+async function handleStudentChange(childId: number) {
   pageError.value = ''
   pageLoading.value = true
 
@@ -202,58 +209,38 @@ async function handleStudentChange(childId: number, deviceType: TDeviceType) {
         currentStudentStore.clearStudentData()
       }
 
-      // 设置新的学生ID和设备类型
+      // 设置新的学生ID
       parentStore.setCurrentStudentId(childId)
-      currentStudentStore.setDeviceType(deviceType)
+      const selectedStudent = students.value.find(student => student.id === childId)
+      currentStudentStore.setDevices(selectedStudent?.devices ?? [])
 
       const { token } = result.data
 
       if (token) {
         userStore.setToken(token)
         await userStore.getUserInfo()
-        await axiosGetUserBalanceApi()
       }
 
       await nextTick()
-      await batchRequestHandler(
-        [
-          configStore.axiosGetSchoolModulesApi(),
-          axiosGetConsumptionStatisticsApi(),
-          axiosGetCheckSelfApi(),
-        ],
-        {
-          auto: false,
-        },
-      )
+      await batchRequestHandler([axiosGetCheckSelfApi()], {
+        auto: false,
+      })
     }
-  }
-  catch (error) {
+  } catch (error) {
     console.error('切换学生失败', error)
-  }
-  finally {
+  } finally {
     pageError.value = ''
     pageLoading.value = false
   }
 }
 /** 登录成功处理 */
 async function handleLoginSuccess() {
-  // 批量处理其他接口
-  await batchRequestHandler([
-    configStore.axiosGetSchoolModulesApi(),
-    axiosGetConsumptionStatisticsApi(),
-    axiosGetCheckSelfApi(),
-    axiosGetUserBalanceApi(),
-  ])
+  await batchRequestHandler([axiosGetCheckSelfApi()])
 }
 
 onShow(() => {
   if (unref(pageLoaded)) {
-    batchRequestHandler([
-      userStore.getUserInfo(),
-      axiosGetConsumptionStatisticsApi(),
-      axiosGetCheckSelfApi(),
-      axiosGetUserBalanceApi(),
-    ])
+    batchRequestHandler([userStore.getUserInfo(), axiosGetCheckSelfApi()])
   }
 })
 </script>
@@ -272,21 +259,6 @@ onShow(() => {
     <view relative z-10>
       <!-- 顶部背景区域 -->
       <view :style="{ height: headerHeight }" relative class="header-bg">
-        <Navigation
-          title=""
-          :show-back="true"
-          bg-color="transparent"
-          text-color="#ffffff"
-          icon-color="#ffffff"
-          :custom-style="{
-            position: 'absolute',
-            top: '0',
-            left: '0',
-            right: '0',
-            zIndex: 2,
-          }"
-        />
-
         <!-- 装饰性圆形背景 -->
         <view absolute right-8 top-4 h-16 w-16 rounded-full bg="white opacity-10" />
         <view absolute right-16 top-8 h-10 w-10 rounded-full bg="white opacity-15" />
@@ -298,16 +270,6 @@ onShow(() => {
             <text text="2xl white" font="bold">
               {{ getGreeting() }}
             </text>
-
-            <!-- 孩子切换区域 - 绝对定位在右上角 -->
-            <view relative flex="~ items-center" @click="handleShowStudentSelector">
-              <text text="sm white" font="medium">
-                {{ displayStudentName }}
-              </text>
-              <view m="l-1" h-5 w-5 flex="~ items-center justify-center" border="rounded-full">
-                <Icon name="arrow-left-right-fill" icon-color="#ffffff" icon-size="36rpx" />
-              </view>
-            </view>
           </view>
           <text text="lg white" font="medium">
             {{ userInfo?.userName }}
@@ -339,12 +301,15 @@ onShow(() => {
         </view>
       </view>
 
-      <!-- 学生选择器组件 -->
-      <StudentSelect v-model="showStudentSelector" @change="handleStudentChange" />
-
       <view relative z-10 mt--6 border="rounded-t-2xl" bg="gray-50">
         <scroll-view scroll-y :style="contentHeight">
           <view flex="~ col" gap="4" p="4 t-6">
+            <!-- 学生信息模块 -->
+            <StudentSelector
+              v-if="students.length"
+              v-model="selectedStudentId"
+              :students="students"
+            />
             <Notice
               v-if="showOfficialAccountNotice"
               type="warning"
@@ -353,117 +318,139 @@ onShow(() => {
               @click="handleGoToOfficialAccount"
             />
 
-            <!-- 当前孩子账户信息 -->
-            <view border="~ bg-muted solid rounded-2xl" bg="white" p="4">
-              <!-- 当前孩子账户 -->
-              <view flex="~ items-center justify-between" m="b-3">
-                <view flex="1">
-                  <view text="sm gray-900" font="medium">
-                    {{ currentStudent?.name }}
+            <!-- 余额和消费信息（暂不展示） -->
+            <view
+              v-if="showBalanceSection && currentBalanceInfo && hasAccountModules"
+              border="rounded-xl"
+              bg="bg-secondary"
+              p="3"
+            >
+              <view flex="~ items-center justify-between">
+                <view>
+                  <view m="b-1" text="xs primary" font="medium">
+                    账户余额
                   </view>
+                  <view text="xl gray-900" font="bold">
+                    ￥{{ currentBalanceInfo.availableBalanceFormatted }}
+                  </view>
+                </view>
+                <view text="right">
                   <view text="xs gray-500">
-                    {{ currentStudent?.fullClassName }}
+                    今日消费
                   </view>
-                </view>
-                <TButton
-                  v-if="hasRechargeModules"
-                  size="small"
-                  type="primary"
-                  custom-class="w-auto!"
-                  @click="handleNavigationToPath(`${BALANCE_RECHARGE_PATH}`)"
-                >
-                  充值
-                </TButton>
-              </view>
-
-              <!-- 余额和消费信息 -->
-              <view
-                v-if="balanceInfo && hasAccountModules"
-                border="rounded-xl"
-                bg="bg-secondary"
-                p="3"
-              >
-                <view flex="~ items-center justify-between">
-                  <view>
-                    <view m="b-1" text="xs primary" font="medium">
-                      账户余额
-                    </view>
-                    <view text="xl gray-900" font="bold">
-                      ￥{{ balanceInfo.availableBalanceFormatted }}
-                    </view>
-                  </view>
-                  <view text="right">
-                    <view text="xs gray-500">
-                      今日消费
-                    </view>
-                    <view text="sm gray-700" font="medium">
-                      ￥{{ consumptionStats?.todayAmount || '--' }}
-                    </view>
-                  </view>
-                </view>
-
-                <view m="t-2" p="t-2" border-t="1 bg-muted solid">
-                  <view flex="~ justify-between" text="xs gray-500">
-                    <text>本月消费: ￥{{ consumptionStats?.monthAmount || '--' }}</text>
-                    <text>
-                      上次充值:
-                      {{
-                        balanceInfo.updatedAt
-                          ? dayjs(balanceInfo.updatedAt).format('YYYY-MM-DD')
-                          : '--'
-                      }}
-                    </text>
+                  <view text="sm gray-700" font="medium">
+                    ￥{{ consumptionStats?.todayAmount || '--' }}
                   </view>
                 </view>
               </view>
 
-              <!-- 冻结金额信息 -->
-              <view
-                v-if="Number(balanceInfo?.frozenBalance) > 0"
-                m="t-3"
-                p="2"
-                border="rounded-lg"
-                bg="orange-50"
-              >
-                <view flex="~ items-center justify-between">
-                  <view flex="~ items-center" gap="2">
-                    <Icon name="lock-line" icon-color="#f59e0b" icon-size="24rpx" />
-                    <view text="xs #f59e0b">
-                      冻结金额
-                    </view>
-                  </view>
-                  <view text="sm #f59e0b">
-                    ￥{{ Number(balanceInfo?.frozenBalance).toFixed(2) }}
-                  </view>
+              <view m="t-2" p="t-2" border-t="1 bg-muted solid">
+                <view flex="~ justify-between" text="xs gray-500">
+                  <text>本月消费: ￥{{ consumptionStats?.monthAmount || '--' }}</text>
+                  <text>
+                    上次充值:
+                    {{
+                      currentBalanceInfo.updatedAt
+                        ? dayjs(currentBalanceInfo.updatedAt).format('YYYY-MM-DD')
+                        : '--'
+                    }}
+                  </text>
                 </view>
               </view>
             </view>
 
-            <!-- 功能按钮网格 -->
-            <view grid="~ cols-4 gap-4">
-              <!-- 其他菜单项 -->
-              <view
-                v-for="(item, index) in filteredMenuList"
-                :key="index"
-                flex="~ col items-center"
-                @click="handleNavigationToPath(item.path, item)"
-              >
-                <view
-                  flex="~ col items-center justify-center"
-                  border="rounded-2xl"
-                  m="b-2"
-                  h-12
-                  w-12
-                  :style="{ backgroundColor: item.bgColor }"
-                >
-                  <Icon :name="item.icon" :icon-color="item.color" icon-size="36rpx" />
+            <!-- 冻结金额信息（暂不展示） -->
+            <view
+              v-if="showBalanceSection && Number(currentBalanceInfo?.frozenBalance) > 0"
+              m="t-3"
+              p="2"
+              border="rounded-lg"
+              bg="orange-50"
+            >
+              <view flex="~ items-center justify-between">
+                <view flex="~ items-center" gap="2">
+                  <Icon name="lock-line" icon-color="#f59e0b" icon-size="24rpx" />
+                  <view text="xs #f59e0b">
+                    冻结金额
+                  </view>
                 </view>
-                <text text="xs gray-700" font="medium">
-                  {{ item.title }}
-                </text>
+                <view text="sm #f59e0b">
+                  ￥{{ Number(currentBalanceInfo?.frozenBalance).toFixed(2) }}
+                </view>
               </view>
-              <!-- 成绩按钮 -->
-              <!-- <view flex="~ col items-center" @click="handleNavigationToWebview">
+            </view>
+          </view>
+
+          <!-- 功能按钮网格 -->
+          <view grid="~ cols-4 gap-4">
+            <!-- 账户信息 -->
+            <view
+              v-if="accountInfoMenuItem"
+              flex="~ col items-center"
+              @click="handleNavigationToPath(accountInfoMenuItem.path, accountInfoMenuItem)"
+            >
+              <view
+                flex="~ col items-center justify-center"
+                border="rounded-2xl"
+                m="b-2"
+                h-12
+                w-12
+                :style="{ backgroundColor: accountInfoMenuItem.bgColor }"
+              >
+                <Icon
+                  :name="accountInfoMenuItem.icon"
+                  :icon-color="accountInfoMenuItem.color"
+                  icon-size="36rpx"
+                />
+              </view>
+              <text text="xs gray-700" font="medium">
+                {{ accountInfoMenuItem.title }}
+              </text>
+            </view>
+
+            <!-- 充值 -->
+            <view
+              v-if="hasRechargeModules"
+              flex="~ col items-center"
+              @click="handleNavigationToPath(`${BALANCE_RECHARGE_PATH}`)"
+            >
+              <view
+                flex="~ col items-center justify-center"
+                border="rounded-2xl"
+                m="b-2"
+                h-12
+                w-12
+                :style="{ backgroundColor: '#dbeafe' }"
+              >
+                <Icon name="wallet-3-line" icon-color="#3b82f6" icon-size="36rpx" />
+              </view>
+              <text text="xs gray-700" font="medium">
+                充值
+              </text>
+            </view>
+            <!-- 其他菜单项 -->
+            <view
+              v-for="(item, index) in otherMenuList"
+              :key="index"
+              flex="~ col items-center"
+              @click="handleNavigationToPath(item.path, item)"
+            >
+              <view
+                flex="~ col items-center justify-center"
+                border="rounded-2xl"
+                m="b-2"
+                h-12
+                w-12
+                :style="{ backgroundColor: item.bgColor }"
+              >
+                <Icon :name="item.icon" :icon-color="item.color" icon-size="36rpx" />
+              </view>
+              <text text="xs gray-700" font="medium">
+                {{ item.title }}
+              </text>
+            </view>
+            <!-- 成绩按钮 -->
+            <!-- <view flex="~ col items-center" @click="handleNavigationToWebview">
                 <view
                   flex="~ col items-center justify-center"
                   border="rounded-2xl"
@@ -478,7 +465,6 @@ onShow(() => {
                   {{ MENU_SCORE.title }}
                 </text>
               </view> -->
-            </view>
           </view>
         </scroll-view>
       </view>

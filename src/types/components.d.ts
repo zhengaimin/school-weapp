@@ -30,6 +30,7 @@ declare module 'vue' {
     PieChart: typeof import('./../components/common/pie-chart/index.vue')['default']
     Radio: typeof import('./../components/form/radio/index.vue')['default']
     RefreshList: typeof import('./../components/common/refresh-list/index.vue')['default']
+    ResultView: typeof import('./../components/common/result-view/index.vue')['default']
     RoleAvatar: typeof import('./../components/common/role-avatar/index.vue')['default']
     SelectorPopup: typeof import('./../components/popup/selector-popup/index.vue')['default']
     SimpleTabs: typeof import('./../components/common/simple-tabs/index.vue')['default']

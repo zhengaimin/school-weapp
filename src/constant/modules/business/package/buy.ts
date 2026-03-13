@@ -1,6 +1,5 @@
 import type { IOption, TI18NMap } from '@/types'
 
-// #region 套餐购买状态
 // Types
 export const PACKAGE_BUY_STATUS = {
   PENDING: 0, // 待支付
@@ -63,4 +62,3 @@ export const PACKAGE_BUY_STATUS_OPTIONS: IOption<string | TPackageBuyStatus>[] =
     value: PACKAGE_BUY_STATUS.REFUND_PENDING,
   },
 ]
-// #endregion

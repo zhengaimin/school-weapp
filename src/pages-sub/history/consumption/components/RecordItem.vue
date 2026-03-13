@@ -2,11 +2,12 @@
 import type { User } from '@/api/interface/modules/user'
 import { computed } from 'vue'
 import WhiteCard from '@/components/common/white-card/index.vue'
-import { CONSUMPTION_SOURCE_I18N, SERVICE_TYPE_I18N } from '@/constant/modules'
+import { CONSUMPTION_SOURCE_I18N, DEVICE_TYPE_I18N, SERVICE_TYPE_I18N } from '@/constant/modules'
 import { formatTime } from '@/utils/format'
 
 const props = defineProps<{
   record: User.Consumption.IConsumptionRecordVo
+  showDeviceType?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -55,6 +56,9 @@ function formatAmount(amount: string): string {
           {{ displayInfo.title }}
         </view>
         <view text="xs text-secondary" m="t-1">
+          <text v-if="props.showDeviceType && record.deviceType">
+            {{ DEVICE_TYPE_I18N[record.deviceType] }} ·
+          </text>
           {{ displayInfo.subtitle }}
         </view>
       </view>

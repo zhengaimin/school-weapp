@@ -5,7 +5,6 @@ import { computed } from 'vue'
 import Icon from '@/components/icon/index.vue'
 import { useCurrentStudentStore } from '@/store/business/currentStudent'
 
-// 组件属性
 const props = withDefaults(defineProps<AvatarProps>(), {
   path: '',
   faceImg: true,
@@ -14,10 +13,15 @@ const props = withDefaults(defineProps<AvatarProps>(), {
   customStyle: '',
   customClass: '',
 })
+
+const emit = defineEmits<{
+  click: [event: Event]
+}>()
+
 const currentStudentStore = useCurrentStudentStore()
 const { studentInfo } = storeToRefs(currentStudentStore)
 
-// 默认头像配置
+/** 默认头像配置 */
 const defaultAvatars: Record<AvatarType, { icon: string, bgColor: string, iconColor: string }> = {
   parent: {
     icon: 'parent-line',
@@ -36,7 +40,7 @@ const defaultAvatars: Record<AvatarType, { icon: string, bgColor: string, iconCo
   },
 }
 
-// 尺寸配置
+/** 尺寸配置 */
 const sizeConfig: Record<AvatarSize, { container: string, icon: string }> = {
   small: {
     container: 'w-10 h-10',
@@ -52,7 +56,7 @@ const sizeConfig: Record<AvatarSize, { container: string, icon: string }> = {
   },
 }
 
-// 计算容器样式
+/** 容器样式 */
 const containerClass = computed(() => {
   const sizeClass = sizeConfig[props.size].container
   const baseClasses = 'rounded-full flex items-center justify-center overflow-hidden'
@@ -60,19 +64,19 @@ const containerClass = computed(() => {
   return `${baseClasses} ${sizeClass} ${bgColor} ${props.customClass}`
 })
 
-// 计算图标尺寸
+/** 图标尺寸 */
 const iconSize = computed(() => {
   return sizeConfig[props.size].icon
 })
 
-// 获取默认头像信息
+/** 默认头像信息 */
 const defaultAvatar = computed(() => {
   return defaultAvatars[props.type]
 })
 </script>
 
 <template>
-  <view :class="containerClass" :style="customStyle">
+  <view :class="containerClass" :style="customStyle" @click.stop="e => emit('click', e)">
     <image
       v-if="props.faceImg && studentInfo?.faceImageUrl"
       :src="studentInfo.faceImageUrl"

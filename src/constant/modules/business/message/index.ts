@@ -2,7 +2,6 @@
  * @file 消息相关的常量
  */
 
-// #region 文件类型
 // Types
 export const FILE_TYPE = {
   /** 文本 */
@@ -32,9 +31,7 @@ export const FILE_TYPE_OPTIONS = [
   { label: FILE_TYPE_I18N[FILE_TYPE.IMAGE], value: FILE_TYPE.IMAGE },
   { label: FILE_TYPE_I18N[FILE_TYPE.VIDEO], value: FILE_TYPE.VIDEO },
 ]
-// #endregion
 
-// #region 消息方向
 // Types
 export const MESSAGE_DIRECTION = {
   /** 学生到家长 */
@@ -56,4 +53,3 @@ export const MESSAGE_DIRECTION_OPTIONS = [
   { label: MESSAGE_DIRECTION_I18N[MESSAGE_DIRECTION.STUDENT_TO_GUARDIAN], value: MESSAGE_DIRECTION.STUDENT_TO_GUARDIAN },
   { label: MESSAGE_DIRECTION_I18N[MESSAGE_DIRECTION.GUARDIAN_TO_STUDENT], value: MESSAGE_DIRECTION.GUARDIAN_TO_STUDENT },
 ]
-// #endregion

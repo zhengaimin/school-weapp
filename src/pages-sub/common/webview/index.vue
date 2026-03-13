@@ -9,30 +9,21 @@
 </route>
 
 <script lang="ts" setup>
-// #region 导入
 import { onMounted, ref } from 'vue'
 import Page from '@/components/common/page/index.vue'
 import { usePage } from '@/hooks/usePage'
 import { currRoute } from '@/utils'
-// #endregion
 
-// #region 组件选项配置
 defineOptions({
   options: {
     styleIsolation: 'apply-shared',
   },
 })
-// #endregion
 
-// #region 使用 Hooks
 const { pageLoading, pageError, onLoginSuccess, onLoginFail } = usePage()
-// #endregion
 
-// #region 定义响应式数据
 const url = ref('')
-// #endregion
 
-// #region 方法定义
 /**
  * 智能解码 URL，自动检测并执行必要次数的 decodeURIComponent
  * @param encodedUrl 可能被编码的 URL 字符串
@@ -56,8 +47,7 @@ function decodeUrl(encodedUrl: string): string {
         break
       }
       currentUrl = decoded
-    }
-    catch (error) {
+    } catch (error) {
       // 如果解码失败，说明已经是解码后的字符串或格式不正确
       console.warn('URL 解码失败:', error)
       break
@@ -66,16 +56,12 @@ function decodeUrl(encodedUrl: string): string {
 
   return currentUrl
 }
-// #endregion
 
-// #region 事件处理函数
 // 处理fab按钮点击
 function handleFabClick() {
   console.log('fab按钮被点击')
 }
-// #endregion
 
-// #region 生命周期钩子
 onMounted(() => {
   const { query } = currRoute()
 
@@ -86,7 +72,6 @@ onMounted(() => {
     url.value = decodeUrl(path)
   }
 })
-// #endregion
 </script>
 
 <template>

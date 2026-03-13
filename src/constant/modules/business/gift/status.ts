@@ -1,4 +1,3 @@
-// #region 赠费状态
 // Types
 export const GIFT_STATUS = {
   VALID: 'VALID',
@@ -64,4 +63,3 @@ export const GIFT_STATUS_CONFIGS: Record<TGiftStatus, StatusConfig> = {
     bgColor: '#f3f4f6',
   },
 }
-// #endregion

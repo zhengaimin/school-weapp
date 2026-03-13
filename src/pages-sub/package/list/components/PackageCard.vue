@@ -4,6 +4,7 @@ import { storeToRefs } from 'pinia'
 import { computed } from 'vue'
 import WhiteCard from '@/components/common/white-card/index.vue'
 import { DEVICE_TYPE, PACKAGE_TYPE, PACKAGE_TYPE_I18N } from '@/constant/modules'
+import { useDeviceType } from '@/hooks/useDeviceType'
 import { useCurrentStudentStore } from '@/store/business/currentStudent'
 
 interface Props {
@@ -17,10 +18,12 @@ const emit = defineEmits<{
 }>()
 
 const currentStudentStore = useCurrentStudentStore()
-const { deviceType } = storeToRefs(currentStudentStore)
+const { devices } = storeToRefs(currentStudentStore)
+const { defaultDeviceType } = useDeviceType()
 
 const isFixed = computed(() => props.package.packageType === PACKAGE_TYPE.FIXED)
-const isVideoDevice = computed(() => deviceType.value === DEVICE_TYPE.VIDEO)
+const primaryDeviceType = computed(() => devices.value?.[0]?.deviceType || defaultDeviceType.value)
+const isVideoDevice = computed(() => primaryDeviceType.value === DEVICE_TYPE.VIDEO)
 
 const messageCountDisplay = computed(() => {
   const count = props.package.packageContent?.messageCount

@@ -20,6 +20,7 @@ import StatusTip from '@/components/common/status-tip/index.vue'
 import WhiteCard from '@/components/common/white-card/index.vue'
 import { DEVICE_TYPE, PACKAGE_TYPE, PACKAGE_TYPE_I18N, PAYMENT_METHOD } from '@/constant/modules'
 import { PACKAGE_HISTORY_RESULT_PATH } from '@/constant/router'
+import { useDeviceType } from '@/hooks/useDeviceType'
 import { usePage } from '@/hooks/usePage'
 import { useCurrentStudentStore } from '@/store/business/currentStudent'
 import { currRoute } from '@/utils'
@@ -37,11 +38,13 @@ defineOptions({
 const { pageLoading, pageError, batchRequestHandler, onLoginFail, getContentHeight } = usePage()
 const { emitPackageTransaction } = usePackageEmitter()
 const currentStudentStore = useCurrentStudentStore()
-const { deviceType } = storeToRefs(currentStudentStore)
+const { devices } = storeToRefs(currentStudentStore)
+const { defaultDeviceType } = useDeviceType()
 
 const packageDetail = ref<Pkg.Query.ResGetPackageDetailApi>()
 
-const isVideoDevice = computed(() => deviceType.value === DEVICE_TYPE.VIDEO)
+const primaryDeviceType = computed(() => devices.value?.[0]?.deviceType || defaultDeviceType.value)
+const isVideoDevice = computed(() => primaryDeviceType.value === DEVICE_TYPE.VIDEO)
 
 const {
   activePackage,
@@ -110,8 +113,7 @@ async function axiosGetPackageDetailApi(id: number) {
       packageDetail.value = result.data
     }
     return result
-  }
-  catch (error) {
+  } catch (error) {
     console.error('获取套餐详情失败:', error)
     throw error
   }

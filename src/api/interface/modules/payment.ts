@@ -1,3 +1,5 @@
+import type { TDeviceType } from '@/constant/modules'
+
 export namespace Payment {
   export namespace Recharge {
     export interface ReqPostRechargeApi {
@@ -87,6 +89,8 @@ export namespace Payment {
       amount: string
       /** 创建时间 */
       createdAt: string
+      /** 设备类型 */
+      deviceType?: TDeviceType
       /** 订单ID */
       id: number
       /** 订单号 */
@@ -127,6 +131,8 @@ export namespace Payment {
       amount: string
       /** 创建时间 */
       createdAt: string
+      /** 设备类型 */
+      deviceType?: TDeviceType
       /** 订单ID */
       id: number
       /** 订单号 */

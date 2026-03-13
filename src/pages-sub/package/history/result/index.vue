@@ -10,13 +10,13 @@
 
 <script lang="ts" setup>
 import type { Pkg } from '@/api/interface/modules/package'
+import type { ResultCard, ResultItem } from '@/components/common/result-view/index.vue'
 import dayjs from 'dayjs'
 import { computed, ref, unref } from 'vue'
 import { getPackageOrderDetailApi } from '@/api/modules/package/payment'
 import TButton from '@/components/common/button/index.vue'
 import Page from '@/components/common/page/index.vue'
-import WhiteCard from '@/components/common/white-card/index.vue'
-import Icon from '@/components/icon/index.vue'
+import ResultView from '@/components/common/result-view/index.vue'
 import {
   DEVICE_TYPE,
   PACKAGE_STATUS_CONFIGS,
@@ -63,6 +63,105 @@ const contentHeight = computed(() => {
   return getContentHeight(unref(showButtonArea) ? '164rpx' : '0')
 })
 
+const orderCards = computed<ResultCard[]>(() => {
+  if (!orderDetail.value) return []
+
+  const items: ResultItem[] = [
+    {
+      key: 'orderNo',
+      label: '订单号',
+      value: orderDetail.value.orderNo,
+    },
+    {
+      key: 'status',
+      label: '购买状态',
+      value: PACKAGE_STATUS_CONFIGS[orderDetail.value.status].label,
+    },
+    {
+      key: 'amount',
+      label: '支付金额',
+      value: `¥${orderDetail.value.amount}`,
+      valueClass: 'text-base text-primary font-medium',
+    },
+  ]
+
+  if (orderDetail.value.payTime) {
+    items.push({
+      key: 'payTime',
+      label: '支付时间',
+      value: formatDateTime(orderDetail.value.payTime),
+    })
+  }
+
+  items.push(
+    { key: 'divider-1', type: 'divider' },
+    {
+      key: 'studentName',
+      label: '学生姓名',
+      value: orderDetail.value.studentName,
+    },
+    {
+      key: 'studentCode',
+      label: '学号',
+      value: orderDetail.value.studentCode,
+    },
+    {
+      key: 'schoolName',
+      label: '学校',
+      value: orderDetail.value.schoolName,
+    },
+    {
+      key: 'className',
+      label: '班级',
+      value: orderDetail.value.className,
+    },
+    { key: 'divider-2', type: 'divider' },
+    {
+      key: 'packageType',
+      label: '套餐名称',
+      value: PACKAGE_TYPE_I18N[orderDetail.value.packageType],
+    },
+    {
+      key: 'totalMonths',
+      label: '套餐时长',
+      value: `${orderDetail.value.totalMonths}个月`,
+    },
+  )
+
+  if (orderDetail.value.startDate && orderDetail.value.endDate) {
+    items.push({
+      key: 'validDate',
+      label: '有效期',
+      value: `${formatDate(orderDetail.value.startDate)} ~ ${formatDate(orderDetail.value.endDate)}`,
+    })
+  }
+
+  if (orderDetail.value.packageContent.deviceType === DEVICE_TYPE.DRYER) {
+    items.push({
+      key: 'dryerMinutes',
+      label: '吹风时长',
+      value: `${orderDetail.value.packageContent.dryerMinutes}分钟`,
+    })
+  } else {
+    items.push(
+      {
+        key: 'videoCallMinutes',
+        label: '视频通话',
+        value: `${orderDetail.value.packageContent.videoCallMinutes}分钟`,
+      },
+      {
+        key: 'messageCount',
+        label: '留言条数',
+        value: orderDetail.value.packageContent.messageCount === -1
+          ? '不限'
+          : `${orderDetail.value.packageContent.messageCount}条`,
+      },
+    )
+  }
+
+  return [{ key: 'package', items }]
+})
+
 /** 格式化日期（只保留年月日） */
 function formatDate(date: string | null) {
   if (!date) return ''
@@ -83,8 +182,7 @@ async function axiosGetPackageOrderDetailApi(orderNo: string) {
       orderDetail.value = result.data
     }
     return result
-  }
-  catch (error) {
+  } catch (error) {
     console.error('获取套餐订单详情失败:', error)
     throw error
   }
@@ -161,160 +259,13 @@ function onLoginSuccess() {
     <!-- 内容区域 -->
     <scroll-view scroll-y :enhanced="true" :show-scrollbar="false" :style="contentHeight">
       <view p="x-4 t-2 b-4" relative z-1>
-        <!-- 结果图标和状态 -->
-        <view v-if="orderDetail" flex="~ row items-center justify-center" gap="3" p="t-4 b-6">
-          <Icon
-            :name="PACKAGE_STATUS_CONFIGS[orderDetail.status].icon"
-            :icon-color="PACKAGE_STATUS_CONFIGS[orderDetail.status].iconColor"
-            icon-size="64rpx"
-          />
-          <view text="xl gray-900" font="medium">
-            {{ PACKAGE_STATUS_CONFIGS[orderDetail.status].label }}
-          </view>
-        </view>
-
-        <!-- 详情卡片 -->
-        <WhiteCard v-if="orderDetail">
-          <view flex="~ col" gap="3">
-            <!-- 订单信息 -->
-            <view flex="~ row justify-between items-center">
-              <text text="sm gray-500">
-                订单号
-              </text>
-              <text text="sm gray-900">
-                {{ orderDetail.orderNo }}
-              </text>
-            </view>
-            <view flex="~ row justify-between items-center">
-              <text text="sm gray-500">
-                购买状态
-              </text>
-              <text text="sm gray-900">
-                {{ PACKAGE_STATUS_CONFIGS[orderDetail.status].label }}
-              </text>
-            </view>
-            <view flex="~ row justify-between items-center">
-              <text text="sm gray-500">
-                支付金额
-              </text>
-              <text text="base primary" font="medium">
-                ¥{{ orderDetail.amount }}
-              </text>
-            </view>
-            <view v-if="orderDetail.payTime" flex="~ row justify-between items-center">
-              <text text="sm gray-500">
-                支付时间
-              </text>
-              <text text="sm gray-900">
-                {{ formatDateTime(orderDetail.payTime) }}
-              </text>
-            </view>
-
-            <!-- 分隔线 -->
-            <view h="1px" bg="gray-100" m="y-1" />
-
-            <!-- 学生信息 -->
-            <view flex="~ row justify-between items-center">
-              <text text="sm gray-500">
-                学生姓名
-              </text>
-              <text text="sm gray-900">
-                {{ orderDetail.studentName }}
-              </text>
-            </view>
-            <view flex="~ row justify-between items-center">
-              <text text="sm gray-500">
-                学号
-              </text>
-              <text text="sm gray-900">
-                {{ orderDetail.studentCode }}
-              </text>
-            </view>
-            <view flex="~ row justify-between items-center">
-              <text text="sm gray-500">
-                学校
-              </text>
-              <text text="sm gray-900">
-                {{ orderDetail.schoolName }}
-              </text>
-            </view>
-            <view flex="~ row justify-between items-center">
-              <text text="sm gray-500">
-                班级
-              </text>
-              <text text="sm gray-900">
-                {{ orderDetail.className }}
-              </text>
-            </view>
-
-            <!-- 分隔线 -->
-            <view h="1px" bg="gray-100" m="y-1" />
-
-            <!-- 套餐信息 -->
-            <view flex="~ row justify-between items-center">
-              <text text="sm gray-500">
-                套餐名称
-              </text>
-              <text text="sm gray-900">
-                {{ PACKAGE_TYPE_I18N[orderDetail.packageType] }}
-              </text>
-            </view>
-            <view flex="~ row justify-between items-center">
-              <text text="sm gray-500">
-                套餐时长
-              </text>
-              <text text="sm gray-900">
-                {{ orderDetail.totalMonths }}个月
-              </text>
-            </view>
-            <view
-              v-if="orderDetail.startDate && orderDetail.endDate"
-              flex="~ row justify-between items-center"
-            >
-              <text text="sm gray-500">
-                有效期
-              </text>
-              <text text="sm gray-900">
-                {{ formatDate(orderDetail.startDate) }} ~ {{ formatDate(orderDetail.endDate) }}
-              </text>
-            </view>
-
-            <!-- 套餐内容 - 吹风机 -->
-            <template v-if="orderDetail.packageContent.deviceType === DEVICE_TYPE.DRYER">
-              <view flex="~ row justify-between items-center">
-                <text text="sm gray-500">
-                  吹风时长
-                </text>
-                <text text="sm gray-900">
-                  {{ orderDetail.packageContent.dryerMinutes }}分钟
-                </text>
-              </view>
-            </template>
-            <!-- 套餐内容 - 话机 -->
-            <template v-else>
-              <view flex="~ row justify-between items-center">
-                <text text="sm gray-500">
-                  视频通话
-                </text>
-                <text text="sm gray-900">
-                  {{ orderDetail.packageContent.videoCallMinutes }}分钟
-                </text>
-              </view>
-              <view flex="~ row justify-between items-center">
-                <text text="sm gray-500">
-                  留言条数
-                </text>
-                <text text="sm gray-900">
-                  {{
-                    orderDetail.packageContent.messageCount === -1
-                      ? '不限'
-                      : `${orderDetail.packageContent.messageCount}条`
-                  }}
-                </text>
-              </view>
-            </template>
-          </view>
-        </WhiteCard>
+        <ResultView
+          v-if="orderDetail"
+          :icon-name="PACKAGE_STATUS_CONFIGS[orderDetail.status].icon"
+          :icon-color="PACKAGE_STATUS_CONFIGS[orderDetail.status].iconColor"
+          :status-text="PACKAGE_STATUS_CONFIGS[orderDetail.status].label"
+          :cards="orderCards"
+        />
       </view>
     </scroll-view>
 

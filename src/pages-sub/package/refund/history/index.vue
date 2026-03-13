@@ -10,9 +10,7 @@
 
 <script lang="ts" setup>
 import type { Pkg } from '@/api/interface/modules/package'
-import type { FilterConfig } from '@/components/common/filter-group/index.vue'
-import dayjs from 'dayjs'
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import { getPackageRefundListApi } from '@/api/modules/package/refund'
 import FilterGroup from '@/components/common/filter-group/index.vue'
 import Page from '@/components/common/page/index.vue'
@@ -23,9 +21,10 @@ import {
   REFUND_STATUS_I18N,
   REFUND_STATUS_OPTIONS,
 } from '@/constant/modules'
+import { useDeviceType } from '@/hooks/useDeviceType'
+import { useHistoryFilters } from '@/hooks/useHistoryFilters'
 import { usePage } from '@/hooks/usePage'
 import { useRefresh } from '@/hooks/useRefresh'
-import { useCurrentStudentStore } from '@/store/business/currentStudent'
 import { usePackageEmitter } from '@/utils/emit/package'
 import RefundHistoryItem from './components/RefundHistoryItem.vue'
 
@@ -35,11 +34,9 @@ defineOptions({
   },
 })
 
-type FilterValue = string | number | number[] | [number, number]
-
 const { pageLoading, pageError, getContentHeight, batchRequestHandler, onLoginFail } = usePage()
 const { emitPackageRefund, onPackageRefund } = usePackageEmitter()
-const currentStudentStore = useCurrentStudentStore()
+const { hasVideoDevice, hasDryerDevice } = useDeviceType()
 
 const {
   query,
@@ -51,48 +48,32 @@ const {
   onRefreshList,
   onLoadMore,
 } = useRefresh<Pkg.Refund.IRefundApplicationRecord>({
-  get: params => getPackageRefundListApi({ ...params, deviceType: currentStudentStore.deviceType }),
+  get: getPackageRefundListApi,
   listField: 'list',
   immediate: false,
 })
 
-/** 筛选条件 */
-const filters = ref<FilterValue[]>([
-  [dayjs().subtract(1, 'year').valueOf(), dayjs().valueOf()],
-  ALL,
-])
-
-/** 筛选配置 */
-const filterConfigs = computed<FilterConfig[]>(() => [
-  {
-    key: 'daterange',
-    title: '选择时间范围',
-    type: 'daterange',
-    concise: true,
-    options: [],
-  },
-  {
-    key: 'status',
-    title: '退款状态',
-    type: 'select',
-    options: [{ label: '全部', value: ALL }, ...REFUND_STATUS_OPTIONS],
-  },
-])
 /** 内容区域样式 */
 const contentStyle = computed(() => getContentHeight('140rpx'))
 
-/** 筛选条件变化 */
-function onFilterChange(key: string, value: [number, number] | string | number) {
-  if (key === 'daterange') {
-    const [startTime, endTime] = value as [number, number]
-    query.value.startDate = dayjs(startTime).format('YYYY-MM-DD')
-    query.value.endDate = dayjs(endTime).format('YYYY-MM-DD')
-  }
-  else if (key === 'status') {
-    query.value.status = value === ALL ? undefined : value
-  }
-  onRefreshList()
-}
+const { filters, filterConfigs, onFilterChange, applyFiltersToQuery } = useHistoryFilters({
+  query,
+  onRefreshList,
+  extraFilters: [
+    {
+      key: 'status',
+      title: '退款状态',
+      type: 'select',
+      concise: false,
+      options: [{ label: '全部', value: ALL }, ...REFUND_STATUS_OPTIONS],
+      inDrawer: true,
+      defaultValue: ALL,
+      apply: (value, targetQuery) => {
+        targetQuery.status = value === ALL ? undefined : value
+      },
+    },
+  ],
+})
 
 /** 处理取消申请成功 */
 function handleCancelSuccess(record: Pkg.Refund.IRefundApplicationRecord) {
@@ -105,13 +86,14 @@ function handleCancelSuccess(record: Pkg.Refund.IRefundApplicationRecord) {
 }
 /** 登录成功处理 */
 function handleLoginSuccess() {
-  const daterange = filters.value[0] as [number, number]
-  const [startTime, endTime] = daterange
-  query.value.startDate = dayjs(startTime).format('YYYY-MM-DD')
-  query.value.endDate = dayjs(endTime).format('YYYY-MM-DD')
-  query.value.status = filters.value[1] === ALL ? undefined : filters.value[1]
+  applyFiltersToQuery()
   batchRequestHandler([onRefreshList()])
 }
+
+const showDeviceType = computed(() => {
+  const count = Number(hasVideoDevice.value) + Number(hasDryerDevice.value)
+  return count > 1
+})
 
 onShow(() => {
   onPackageRefund((id) => {
@@ -155,6 +137,7 @@ onShow(() => {
           v-for="record in recordsList"
           :key="record.id"
           :record="record"
+          :show-device-type="showDeviceType"
           @cancel="handleCancelSuccess"
         />
       </view>

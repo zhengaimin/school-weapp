@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { computed, nextTick, ref, watch } from 'vue'
+import { computed, nextTick, onUnmounted, ref, watch } from 'vue'
 
 const props = defineProps({
   // 是否正在加载
@@ -49,10 +49,12 @@ const listHeight = computed(() => {
 
 const scrollViewId = 'chat-scroll-view'
 const currentScrollIntoView = ref('')
+const hasInitScrollCompleted = ref(false)
+const hasLoadingStarted = ref(false)
+let initScrollTimer: ReturnType<typeof setTimeout> | null = null
 // 滚动到顶部时触发
-function onScrollToUpper() {
-  if (props.loading || props.loaded)
-    return
+function handleScrollToUpper() {
+  if (props.loading || props.loaded) return
   emit('load-more')
 }
 
@@ -64,6 +66,36 @@ watch(
       scrollTo(newValue)
     }
   },
+)
+
+// 初始化：等待首轮数据加载完成后，先立即滚动，再延迟 500ms 再滚动一次
+watch(
+  () => props.loading,
+  (isLoading) => {
+    if (hasInitScrollCompleted.value) {
+      return
+    }
+    if (isLoading) {
+      hasLoadingStarted.value = true
+      return
+    }
+    if (!hasLoadingStarted.value) {
+      return
+    }
+    if (initScrollTimer) {
+      clearTimeout(initScrollTimer)
+    }
+    nextTick(() => {
+      scrollToBottom()
+    })
+    initScrollTimer = setTimeout(() => {
+      nextTick(() => {
+        scrollToBottom()
+        hasInitScrollCompleted.value = true
+      })
+    }, 500)
+  },
+  { immediate: true },
 )
 
 // 滚动到指定位置
@@ -83,6 +115,13 @@ function scrollToBottom() {
   scrollTo('chat-bottom')
 }
 
+onUnmounted(() => {
+  if (initScrollTimer) {
+    clearTimeout(initScrollTimer)
+    initScrollTimer = null
+  }
+})
+
 defineExpose({
   scrollTo,
   scrollToBottom,
@@ -97,7 +136,7 @@ defineExpose({
     scroll-y
     :scroll-into-view="currentScrollIntoView"
     upper-threshold="50"
-    @scrolltoupper="onScrollToUpper"
+    @scrolltoupper="handleScrollToUpper"
   >
     <!-- 自定义加载指示器 -->
     <view v-if="loading" p="y-3" flex="~ justify-center items-center">

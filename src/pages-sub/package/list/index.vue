@@ -10,20 +10,24 @@
 
 <script lang="ts" setup>
 import type { Pkg } from '@/api/interface/modules/package'
+import type { TDeviceType } from '@/constant/modules'
+import type { FilterValue } from '@/hooks/useHistoryFilters'
 import { storeToRefs } from 'pinia'
 import { computed, ref, unref } from 'vue'
 import { getAvailablePackagesApi } from '@/api/modules/package'
 import TButton from '@/components/common/button/index.vue'
+import FilterGroup from '@/components/common/filter-group/index.vue'
 import Notice from '@/components/common/notice/index.vue'
 import Page from '@/components/common/page/index.vue'
 import RefreshList from '@/components/common/refresh-list/index.vue'
-import SimpleTabs from '@/components/common/simple-tabs/index.vue'
 import StatusTip from '@/components/common/status-tip/index.vue'
 import {
   PACKAGE_DETAIL_PATH,
   PACKAGE_HISTORY_PATH,
   PACKAGE_REFUND_HISTORY_PATH,
 } from '@/constant/router'
+import { useDeviceType } from '@/hooks/useDeviceType'
+import { useHistoryFilters } from '@/hooks/useHistoryFilters'
 import { usePage } from '@/hooks/usePage'
 import { useRefresh } from '@/hooks/useRefresh'
 import { useCurrentStudentStore } from '@/store/business/currentStudent'
@@ -41,11 +45,21 @@ defineOptions({
 const { pageLoading, pageError, pageLoaded, batchRequestHandler, onLoginFail, getContentHeight }
   = usePage()
 const currentStudentStore = useCurrentStudentStore()
-const { deviceType } = storeToRefs(currentStudentStore)
+const { devices } = storeToRefs(currentStudentStore)
+const { defaultDeviceType } = useDeviceType()
+const primaryDeviceType = computed(() => devices.value?.[0]?.deviceType || defaultDeviceType.value)
 
-/** Tab 状态 */
-const currentTab = ref(0)
-const tabs = ['生效中', '待生效', '可购买']
+const STATUS_TAB = {
+  ACTIVE: 0,
+  WAITING: 1,
+  AVAILABLE: 2,
+} as const
+
+const statusOptions = [
+  { label: '生效中', value: STATUS_TAB.ACTIVE },
+  { label: '待生效', value: STATUS_TAB.WAITING },
+  { label: '可购买', value: STATUS_TAB.AVAILABLE },
+]
 
 /** 生效中/待生效套餐的加载状态 */
 const activeLoading = ref(false)
@@ -53,6 +67,7 @@ const activeRefreshLoading = ref(false)
 const activeListBusy = computed(() => activeLoading.value || activeRefreshLoading.value)
 
 const {
+  query,
   loading,
   refreshLoading,
   loaded,
@@ -61,9 +76,39 @@ const {
   onRefreshList,
   onLoadMore,
 } = useRefresh<Pkg.Query.IPackage>({
-  get: params => getAvailablePackagesApi({ ...params, deviceType: deviceType.value }),
+  get: getAvailablePackagesApi,
   immediate: false,
   listField: 'packages',
+})
+
+const { filters, filterConfigs, onFilterChange, applyFiltersToQuery } = useHistoryFilters({
+  query,
+  onRefreshList,
+  dateRange: {
+    enabled: false,
+  },
+  deviceType: {
+    includeAll: false,
+  },
+  extraFilters: [
+    {
+      key: 'status',
+      title: '套餐状态',
+      type: 'select',
+      concise: false,
+      options: statusOptions,
+      inDrawer: false,
+      defaultValue: STATUS_TAB.ACTIVE,
+      apply: () => {},
+    },
+  ],
+})
+
+const currentStatus = computed(() => (filters.value[0] ?? STATUS_TAB.ACTIVE) as number)
+const selectedDeviceType = computed<TDeviceType>(() => {
+  return (filters.value[1] as TDeviceType | undefined)
+    || (query.value.deviceType as TDeviceType | undefined)
+    || primaryDeviceType.value
 })
 
 const { onPackageRefund, onPackageTransaction } = usePackageEmitter()
@@ -97,22 +142,21 @@ const pendingEmpty = computed(
 )
 
 /** 获取生效/待生效套餐 */
-async function fetchActivePackages(isRefresh = false) {
+async function fetchActivePackages(isRefresh = false, deviceType?: TDeviceType) {
   if (isRefresh) {
     activeRefreshLoading.value = true
-  }
-  else {
+  } else {
     activeLoading.value = true
   }
   try {
-    const result = await axiosGetStudentActivePackageApi()
+    const resolvedDeviceType = deviceType ?? selectedDeviceType.value
+    const result = await axiosGetStudentActivePackageApi(resolvedDeviceType)
     if (result.code === 0 && result.data) {
       activePackages.value = result.data?.activePackages || []
       waitingPackages.value = result.data?.waitingPackages || []
     }
     return result
-  }
-  finally {
+  } finally {
     activeRefreshLoading.value = false
     activeLoading.value = false
   }
@@ -138,32 +182,52 @@ function handleGoToPackageDetail(id: number) {
   uni.navigateTo({ url: `${PACKAGE_DETAIL_PATH}?id=${id}` })
 }
 
+function handleFilterChange(key: string, value: FilterValue) {
+  onFilterChange(key, value)
+
+  if (key !== 'deviceType') return
+
+  const deviceType = value as TDeviceType
+  batchRequestHandler([
+    fetchActivePackages(false, deviceType),
+    axiosGetPendingPaymentApi(deviceType),
+    axiosGetCheckPendingApi(deviceType),
+  ])
+}
+
 /** 登录成功处理 */
 async function onLoginSuccess() {
+  applyFiltersToQuery()
   batchRequestHandler([
     onRefreshList(),
-    fetchActivePackages(),
-    axiosGetPendingPaymentApi(),
-    axiosGetCheckPendingApi(),
+    fetchActivePackages(false, selectedDeviceType.value),
+    axiosGetPendingPaymentApi(selectedDeviceType.value),
+    axiosGetCheckPendingApi(selectedDeviceType.value),
   ])
 }
 
 onShow(() => {
   if (unref(pageLoaded)) {
     batchRequestHandler([
-      fetchActivePackages(),
-      axiosGetCheckPendingApi(),
-      axiosGetPendingPaymentApi(),
+      fetchActivePackages(false, selectedDeviceType.value),
+      axiosGetCheckPendingApi(selectedDeviceType.value),
+      axiosGetPendingPaymentApi(selectedDeviceType.value),
     ])
   }
 })
 
 onPackageRefund(() => {
-  batchRequestHandler([fetchActivePackages(), axiosGetCheckPendingApi()])
+  batchRequestHandler([
+    fetchActivePackages(false, selectedDeviceType.value),
+    axiosGetCheckPendingApi(selectedDeviceType.value),
+  ])
 })
 
 onPackageTransaction(() => {
-  batchRequestHandler([fetchActivePackages(), axiosGetPendingPaymentApi()])
+  batchRequestHandler([
+    fetchActivePackages(false, selectedDeviceType.value),
+    axiosGetPendingPaymentApi(selectedDeviceType.value),
+  ])
 })
 </script>
 
@@ -195,14 +259,16 @@ onPackageTransaction(() => {
         />
       </view>
 
-      <!-- Tab 切换 -->
-      <SimpleTabs v-model="currentTab" :tabs="tabs" />
+      <!-- 筛选区域 -->
+      <view p="4 t-2!">
+        <FilterGroup v-model="filters" :filters="filterConfigs" @change="handleFilterChange" />
+      </view>
 
-      <!-- Tab 内容区域 -->
+      <!-- 内容区域 -->
       <view relative w-full flex-1 overflow-hidden>
         <!-- 生效中 -->
         <RefreshList
-          v-if="currentTab === 0"
+          v-if="currentStatus === STATUS_TAB.ACTIVE"
           loaded
           :loading="activeLoading"
           :refresh-loading="activeRefreshLoading"
@@ -217,7 +283,7 @@ onPackageTransaction(() => {
 
         <!-- 待生效 -->
         <RefreshList
-          v-if="currentTab === 1"
+          v-if="currentStatus === STATUS_TAB.WAITING"
           loaded
           :loading="activeLoading"
           :refresh-loading="activeRefreshLoading"
@@ -232,7 +298,7 @@ onPackageTransaction(() => {
 
         <!-- 可购买 -->
         <RefreshList
-          v-if="currentTab === 2"
+          v-if="currentStatus === STATUS_TAB.AVAILABLE"
           :loading="loading"
           :refresh-loading="refreshLoading"
           :loaded="loaded"

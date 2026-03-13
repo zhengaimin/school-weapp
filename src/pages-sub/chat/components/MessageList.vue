@@ -1,16 +1,12 @@
 <script lang="ts" setup>
 import { storeToRefs } from 'pinia'
-// #region 导入
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import Loading from '@/components/common/loading/index.vue'
 import Icon from '@/components/icon/index.vue'
 import { useCurrentStudentStore } from '@/store/business/currentStudent'
-import { useCachedMedia } from '@/utils/file'
 import { formatTime } from '@/utils/format'
-// #endregion
 
-// #region 类型定义
-export interface IMessage {
+export interface TMessage {
   id?: string | number
   type: 'text' | 'image' | 'video' | 'gif' | 'voice' | 'file'
   content: string
@@ -24,12 +20,10 @@ export interface IMessage {
   fileDuration?: number // 文件时长（语音、视频）
   isRead?: boolean
 }
-// #endregion
 
-// #region 属性定义
 withDefaults(
   defineProps<{
-    messages?: IMessage[]
+    messages?: TMessage[]
   }>(),
   {
     messages: () => [],
@@ -40,34 +34,27 @@ const emit = defineEmits<{
   resend: [messageId: string | number]
   click: []
 }>()
-// #endregion
 
 const currentStudentStore = useCurrentStudentStore()
 const { studentInfo } = storeToRefs(currentStudentStore)
 
-// #region 响应式数据
 const showVideoPlayer = ref(false)
 const currentVideoUrl = ref('')
 const playingMessageId = ref<string | number | null>(null)
 let innerAudioContext: UniApp.InnerAudioContext | null = null
-// #endregion
+let closeVideoPlayerTimer: ReturnType<typeof setTimeout> | null = null
 
-// #region 方法
 // 格式化文件大小
 function formatFileSize(bytes?: number): string {
-  if (!bytes)
-    return '未知大小'
-  if (bytes < 1024)
-    return `${bytes} B`
-  if (bytes < 1024 * 1024)
-    return `${(bytes / 1024).toFixed(1)} KB`
-  if (bytes < 1024 * 1024 * 1024)
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+  if (!bytes) return '未知大小'
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
   return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`
 }
 
 // 预览图片
-function previewImage(url: string) {
+function handlePreviewImage(url: string) {
   uni.previewImage({
     urls: [url],
     current: url,
@@ -75,50 +62,54 @@ function previewImage(url: string) {
 }
 
 // 打开视频播放器
-function openVideoPlayer(url: string) {
+function handleOpenVideoPlayer(url: string) {
   currentVideoUrl.value = url
   showVideoPlayer.value = true
 }
 
 // 关闭视频播放器
-function closeVideoPlayer() {
+function handleCloseVideoPlayer() {
+  if (closeVideoPlayerTimer) {
+    clearTimeout(closeVideoPlayerTimer)
+    closeVideoPlayerTimer = null
+  }
   showVideoPlayer.value = false
   currentVideoUrl.value = ''
 }
-
-function getCachedPath(url: string) {
-  return useCachedMedia(url).localPath.value
+function handleCloseVideoPlayerWithDelay() {
+  if (closeVideoPlayerTimer) {
+    clearTimeout(closeVideoPlayerTimer)
+  }
+  closeVideoPlayerTimer = setTimeout(() => {
+    handleCloseVideoPlayer()
+  }, 500)
 }
-// #endregion
 
-// #region 语音处理
+function getMediaPath(url: string) {
+  return url
+}
+
 const isPlaying = computed(() => (messageId: string | number) => {
   return playingMessageId.value === messageId
 })
 
 // 播放语音
-function handlePlayVoice(message: IMessage) {
-  if (!innerAudioContext || !message.content)
-    return
+function handlePlayVoice(message: TMessage) {
+  if (!innerAudioContext || !message.content) return
 
   const messageId = message.id!
   const isCurrentlyPlaying = playingMessageId.value === messageId
 
   // 如果有音频正在播放，先停止它
-  if (playingMessageId.value !== null)
-    innerAudioContext.stop()
+  if (playingMessageId.value !== null) innerAudioContext.stop()
 
   // 如果点击的不是当前播放的语音，则开始播放新的语音
   if (!isCurrentlyPlaying) {
-    const cachedPath = getCachedPath(message.content)
-    // 优先使用缓存路径，如果不存在则使用原始 URL
-    // useCachedMedia 会在后台下载并缓存，下次点击即可使用缓存
-    const audioSrc = cachedPath || message.content
+    const audioSrc = getMediaPath(message.content)
     innerAudioContext.src = audioSrc
     innerAudioContext.play()
     playingMessageId.value = messageId
-  }
-  else {
+  } else {
     // 如果点击的是当前播放的语音，我们已经停止了它，所以只需清除ID
     playingMessageId.value = null
   }
@@ -126,14 +117,11 @@ function handlePlayVoice(message: IMessage) {
 
 // 获取语音时长
 function getDurationText(duration?: number) {
-  if (duration)
-    return `${Math.ceil(duration)}"`
+  if (duration) return `${Math.ceil(duration)}"`
 
   return ''
 }
-// #endregion
 
-// #region 生命周期
 onMounted(() => {
   innerAudioContext = uni.createInnerAudioContext()
   innerAudioContext.autoplay = false
@@ -155,12 +143,15 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  if (closeVideoPlayerTimer) {
+    clearTimeout(closeVideoPlayerTimer)
+    closeVideoPlayerTimer = null
+  }
   if (innerAudioContext) {
     innerAudioContext.destroy()
     innerAudioContext = null
   }
 })
-// #endregion
 </script>
 
 <template>
@@ -182,8 +173,8 @@ onUnmounted(() => {
               bg-gray-200
             >
               <image
-                v-if="studentInfo?.faceImageUrl"
-                :src="studentInfo.faceImageUrl"
+                v-if="studentInfo?.avatar"
+                :src="studentInfo.avatar"
                 mode="aspectFill"
                 lazy-load
                 h-full
@@ -218,13 +209,12 @@ onUnmounted(() => {
                 <!-- 图片消息 -->
                 <image
                   v-else-if="item.type === 'image'"
-                  :src="getCachedPath(item.content)"
+                  :src="getMediaPath(item.content)"
                   mode="widthFix"
                   lazy-load
-                  max-h-200rpx
-                  max-w-200rpx
+                  w-300rpx
                   rounded-lg
-                  @click="previewImage(item.content)"
+                  @click="handlePreviewImage(item.content)"
                   @load="() => {}"
                 />
 
@@ -237,10 +227,10 @@ onUnmounted(() => {
                   overflow-hidden
                   rounded-lg
                   bg-black
-                  @click="openVideoPlayer(item.content)"
+                  @click="handleOpenVideoPlayer(item.content)"
                 >
                   <image
-                    :src="`${getCachedPath(item.content)}?vframe/jpg/offset/1`"
+                    :src="`${getMediaPath(item.content)}?vframe/jpg/offset/1`"
                     mode="aspectFill"
                     lazy-load
                     h-full
@@ -264,13 +254,13 @@ onUnmounted(() => {
                 <!-- 动图消息 -->
                 <image
                   v-else-if="item.type === 'gif'"
-                  :src="getCachedPath(item.content)"
+                  :src="getMediaPath(item.content)"
                   mode="widthFix"
                   lazy-load
                   max-h-200rpx
                   max-w-200rpx
                   rounded-lg
-                  @click="previewImage(item.content)"
+                  @click="handlePreviewImage(item.content)"
                   @load="() => {}"
                 />
                 <!-- 语音消息 -->
@@ -375,13 +365,12 @@ onUnmounted(() => {
                   <!-- 图片消息 -->
                   <image
                     v-else-if="item.type === 'image'"
-                    :src="getCachedPath(item.content)"
+                    :src="getMediaPath(item.content)"
                     mode="widthFix"
                     lazy-load
-                    max-h-200rpx
-                    max-w-200rpx
+                    w-300rpx
                     rounded-lg
-                    @click="previewImage(item.content)"
+                    @click="handlePreviewImage(item.content)"
                     @load="() => {}"
                   />
 
@@ -394,10 +383,10 @@ onUnmounted(() => {
                     overflow-hidden
                     rounded-lg
                     bg-black
-                    @click="openVideoPlayer(item.content)"
+                    @click="handleOpenVideoPlayer(item.content)"
                   >
                     <image
-                      :src="`${getCachedPath(item.content)}?vframe/jpg/offset/1`"
+                      :src="`${getMediaPath(item.content)}?vframe/jpg/offset/1`"
                       mode="aspectFill"
                       lazy-load
                       h-full
@@ -421,13 +410,13 @@ onUnmounted(() => {
                   <!-- 动图消息 -->
                   <image
                     v-else-if="item.type === 'gif'"
-                    :src="getCachedPath(item.content)"
+                    :src="getMediaPath(item.content)"
                     mode="widthFix"
                     lazy-load
                     max-h-200rpx
                     max-w-200rpx
                     rounded-lg
-                    @click="previewImage(item.content)"
+                    @click="handlePreviewImage(item.content)"
                     @load="() => {}"
                   />
                   <!-- 语音消息 -->
@@ -491,21 +480,25 @@ onUnmounted(() => {
   <!-- 视频播放器 -->
   <wd-popup
     v-model="showVideoPlayer"
-
-    custom-class="bg-transparent!"
-    closable root-portal
-    @close="closeVideoPlayer"
+    custom-class="bg-transparent! chat-video-popup"
+    root-portal
+    @close="handleCloseVideoPlayer"
   >
-    <view h-screen w-screen flex items-center justify-center bg-black>
+    <view class="video-player-mask" h-screen w-screen flex items-center justify-center bg-black>
+      <view class="video-player-close" @click="handleCloseVideoPlayer">
+        <text class="video-player-close-icon">
+          ×
+        </text>
+      </view>
       <video
         v-if="showVideoPlayer"
-        :src="getCachedPath(currentVideoUrl)"
+        :src="getMediaPath(currentVideoUrl)"
         autoplay
         controls
         h-500rpx
         max-h-full
         w-full
-        @ended="closeVideoPlayer"
+        @ended="handleCloseVideoPlayerWithDelay"
       />
     </view>
   </wd-popup>
@@ -526,5 +519,29 @@ onUnmounted(() => {
   video {
     object-fit: contain;
   }
+}
+
+.video-player-mask {
+  position: relative;
+}
+
+.video-player-close {
+  position: absolute;
+  left: 24rpx;
+  top: calc(env(safe-area-inset-top) + 24rpx);
+  z-index: 20;
+  display: flex;
+  width: 64rpx;
+  height: 64rpx;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999rpx;
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.video-player-close-icon {
+  color: #fff;
+  font-size: 48rpx;
+  line-height: 1;
 }
 </style>

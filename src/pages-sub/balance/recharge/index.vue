@@ -10,9 +10,12 @@
 
 <script lang="ts" setup>
 import type { Payment } from '@/api/interface/modules/payment'
+import type { TDeviceType } from '@/constant/modules'
+import type { TBatchRequestList } from '@/hooks/usePage'
+
 import { onShow } from '@dcloudio/uni-app'
 import { storeToRefs } from 'pinia'
-import { computed, ref, unref } from 'vue'
+import { computed, ref, unref, watch } from 'vue'
 import { getPaymentConfigApi, getPendingBalancePaymentApi } from '@/api/modules/payment'
 import TButton from '@/components/common/button/index.vue'
 import Notice from '@/components/common/notice/index.vue'
@@ -22,15 +25,16 @@ import WhiteCard from '@/components/common/white-card/index.vue'
 import Cell from '@/components/form/cell/index.vue'
 import Form from '@/components/form/index/index.vue'
 import InputNumber from '@/components/form/input-number/index.vue'
-import { PAYMENT_METHOD } from '@/constant/modules'
+import Radio from '@/components/form/radio/index.vue'
+import { DEVICE_TYPE, PAYMENT_METHOD } from '@/constant/modules'
 import { BALANCE_RECHARGE_HISTORY_PATH, BALANCE_RECHARGE_RESULT_PATH } from '@/constant/router'
 import { useBalance } from '@/hooks/useBalance'
+import { useDeviceType } from '@/hooks/useDeviceType'
 import { useForm } from '@/hooks/useForm'
 import { usePage } from '@/hooks/usePage'
 import { useSchoolModules } from '@/hooks/useSchoolModules'
 import { usePayment } from '@/pages-sub/balance/hooks/usePayment'
 import { useCurrentStudentStore } from '@/store/business/currentStudent'
-import { useUserStore } from '@/store/user'
 import { toast } from '@/utils/toast'
 
 defineOptions({
@@ -39,16 +43,20 @@ defineOptions({
   },
 })
 
-const { pageLoading, pageError, pageLoaded, batchRequestHandler, onLoginFail, getContentHeight }
-  = usePage()
+const { pageLoading, pageError, pageLoaded, batchRequestHandler, onLoginFail, getContentHeight } = usePage()
 const { formRef, validate, resetValidate } = useForm()
 const { axiosPostRechargeApi, rechargeLoading } = usePayment()
-const { axiosGetUserBalanceApi } = useBalance()
+const {
+  axiosGetUserBalanceApi,
+  getBalanceByDeviceType,
+  dryerBalanceInfo,
+  videoBalanceInfo,
+} = useBalance()
+const { supportedDeviceTypes, defaultDeviceType, deviceTypeRadioOptions } = useDeviceType()
 const { hasSelectRechargeAmountModules, hasInputRechargeAmountModules } = useSchoolModules()
 
-const userStore = useUserStore()
 const currentStudentStore = useCurrentStudentStore()
-const { studentInfo, balanceInfo, deviceType } = storeToRefs(currentStudentStore)
+const { studentInfo, studentFullInfo, devices } = storeToRefs(currentStudentStore)
 
 /** 是否存在待支付订单 */
 const hasPendingOrder = ref(false)
@@ -58,10 +66,31 @@ const pendingOrderInfo = ref<Payment.Order.Pending.ResGetPendingApi | null>(null
 const amountOptions = ref<{ value: number, label: string, selected: boolean }[]>([])
 /** 当前选中的金额 */
 const currentAmount = ref(0)
+/** 优先使用的设备类型 */
+const primaryDeviceType = computed<TDeviceType>(() => {
+  return devices.value?.[0]?.deviceType || defaultDeviceType.value
+})
+/** 设备类型兜底选项 */
+const fallbackDeviceType = computed<TDeviceType | undefined>(() => {
+  if (supportedDeviceTypes.value.length === 0) return undefined
+  if (supportedDeviceTypes.value.length === 1) {
+    return supportedDeviceTypes.value[0] as TDeviceType
+  }
+
+  const candidate = primaryDeviceType.value
+  if (supportedDeviceTypes.value.includes(candidate)) return candidate
+  return supportedDeviceTypes.value[0] as TDeviceType
+})
+/** 是否有可用设备类型 */
+const hasSupportedDeviceTypes = computed(() => supportedDeviceTypes.value.length > 0)
+/** 是否展示设备类型选项 */
+const showDeviceTypeOptions = computed(() => (deviceTypeRadioOptions.value?.length ?? 0) > 0)
 /** 表单数据 */
 const formData = ref<{
+  deviceType?: TDeviceType
   customAmount: string | number
 }>({
+  deviceType: fallbackDeviceType.value,
   customAmount: '',
 })
 /** 支付配置信息 */
@@ -78,15 +107,56 @@ const showRechargeModules = computed(
 )
 /** 内容区域样式 */
 const contentStyle = computed(() => getContentHeight('164rpx'))
+/** 当前选中的设备类型 */
+const selectedDeviceType = computed(() => formData.value.deviceType || fallbackDeviceType.value)
+/** 当前展示的余额信息 */
+const currentBalanceInfo = computed(() => {
+  if (selectedDeviceType.value === DEVICE_TYPE.DRYER) {
+    return dryerBalanceInfo.value
+  }
+  return videoBalanceInfo.value
+})
 
+/** 表单校验规则 */
 const rules = {
+  deviceType: [{ required: true, message: '请选择设备类型' }],
   customAmount: [{ required: false, message: '请输入有效的充值金额' }],
 }
+
+/** 设备类型选项 */
+const deviceTypeOptions = computed(() => deviceTypeRadioOptions.value ?? [])
+/** 是否禁用提交按钮 */
+const submitDisabled = computed(
+  () => !hasSupportedDeviceTypes.value || currentAmount.value <= 0 || hasPendingOrder.value,
+)
+/** 提交按钮文本 */
+const submitText = computed(() => {
+  if (!hasSupportedDeviceTypes.value) return '不支持支付'
+  if (currentAmount.value > 0) return `确认充值 ¥${currentAmount.value}`
+  return '确认充值'
+})
+
+watch(
+  fallbackDeviceType,
+  (value) => {
+    if (!value) {
+      formData.value.deviceType = undefined
+      return
+    }
+
+    if (!formData.value.deviceType || !supportedDeviceTypes.value.includes(formData.value.deviceType)) {
+      formData.value.deviceType = value
+    }
+  },
+  { immediate: true },
+)
 
 /** 检查待支付订单 */
 async function axiosCheckPendingOrderApi() {
   try {
-    const result = await getPendingBalancePaymentApi({ deviceType: deviceType.value })
+    if (!selectedDeviceType.value) return { code: -1 }
+
+    const result = await getPendingBalancePaymentApi({ deviceType: selectedDeviceType.value })
 
     if (result.code === 0) {
       const { hasPending } = result.data
@@ -94,8 +164,7 @@ async function axiosCheckPendingOrderApi() {
       pendingOrderInfo.value = hasPending ? result.data : null
     }
     return result
-  }
-  catch (error) {
+  } catch (error) {
     console.error('检查待支付订单失败:', error)
     throw error
   }
@@ -124,14 +193,12 @@ async function axiosGetPaymentConfigApi() {
             label: `${amount}元`,
             selected: false,
           }))
-      }
-      else {
+      } else {
         amountOptions.value = []
       }
     }
     return result
-  }
-  catch (error) {
+  } catch (error) {
     console.error('获取支付配置失败:', error)
     throw error
   }
@@ -187,7 +254,6 @@ async function handleCustomAmountChange(event: { value: string | number }) {
   formData.value.customAmount = numValue
   currentAmount.value = numValue
 }
-
 /** 点击待支付订单公告 */
 function handlePendingOrderClick() {
   if (!pendingOrderInfo.value) {
@@ -199,7 +265,6 @@ function handlePendingOrderClick() {
     url: BALANCE_RECHARGE_HISTORY_PATH,
   })
 }
-
 /** 选择预设金额 */
 function selectAmount(amount: number) {
   formData.value.customAmount = ''
@@ -209,16 +274,15 @@ function selectAmount(amount: number) {
   })
   currentAmount.value = amount
 }
-
 /** 查看充值记录 */
 function handleViewHistory() {
   uni.navigateTo({
     url: BALANCE_RECHARGE_HISTORY_PATH,
   })
 }
-
 /** 确认充值 */
 async function handleConfirmRecharge() {
+  if (!hasSupportedDeviceTypes.value) return
   if (hasPendingOrder.value) {
     toast.show('您有待支付的订单，请先处理')
     return
@@ -230,8 +294,7 @@ async function handleConfirmRecharge() {
       if (!result.valid) {
         return
       }
-    }
-    catch (error) {
+    } catch (error) {
       return
     }
   }
@@ -244,7 +307,9 @@ async function handleConfirmRecharge() {
   const amountToPay = Number(currentAmount.value.toFixed(2))
   const paymentMethod = PAYMENT_METHOD.WECHAT
 
-  await axiosPostRechargeApi(amountToPay, paymentMethod, deviceType.value, {
+  if (!selectedDeviceType.value) return
+
+  await axiosPostRechargeApi(amountToPay, paymentMethod, selectedDeviceType.value, {
     async onSuccess(data) {
       const { orderNo, id } = data
       clearAmount()
@@ -255,7 +320,11 @@ async function handleConfirmRecharge() {
     async onFinally() {
       clearAmount()
 
-      batchRequestHandler([axiosCheckPendingOrderApi(), axiosGetUserBalanceApi()])
+      if (!selectedDeviceType.value) return
+      batchRequestHandler([
+        axiosCheckPendingOrderApi(),
+        axiosGetUserBalanceApi(selectedDeviceType.value),
+      ])
     },
   })
 }
@@ -263,13 +332,38 @@ async function handleConfirmRecharge() {
 /** 登录成功处理 */
 async function onLoginSuccess() {
   clearAmount()
-  await batchRequestHandler([axiosGetPaymentConfigApi(), axiosCheckPendingOrderApi()])
+  const requests: TBatchRequestList = [axiosGetPaymentConfigApi()]
+  if (hasSupportedDeviceTypes.value) {
+    requests.push(axiosCheckPendingOrderApi())
+    if (selectedDeviceType.value) {
+      requests.push(axiosGetUserBalanceApi(selectedDeviceType.value))
+    }
+  }
+  await batchRequestHandler(requests)
 }
 
+/** 处理设备类型切换 */
+async function handleDeviceTypeChange(value: string | number) {
+  if (!value) return
+  clearAmount()
+  await batchRequestHandler(
+    [axiosCheckPendingOrderApi(), getBalanceByDeviceType(value as TDeviceType)],
+    {
+      auto: false,
+    },
+  )
+}
+
+/** 页面显示处理 */
 onShow(() => {
   if (unref(pageLoaded)) {
     clearAmount()
-    batchRequestHandler([axiosCheckPendingOrderApi(), axiosGetUserBalanceApi()])
+    if (!hasSupportedDeviceTypes.value || !selectedDeviceType.value) return
+
+    batchRequestHandler([
+      axiosCheckPendingOrderApi(),
+      axiosGetUserBalanceApi(selectedDeviceType.value),
+    ])
   }
 })
 </script>
@@ -312,10 +406,13 @@ onShow(() => {
             </view>
             <view flex="~ items-center justify-between">
               <view text="xs text-secondary">
-                {{ studentInfo?.className }}
+                {{ studentFullInfo }}
               </view>
               <view text="sm primary" font="medium">
-                ￥{{ balanceInfo?.availableBalanceFormatted }}
+                ￥{{
+                  currentBalanceInfo?.availableBalanceFormatted
+                    || (currentBalanceInfo?.availableBalance ?? '--')
+                }}
               </view>
             </view>
           </view>
@@ -325,6 +422,16 @@ onShow(() => {
         <WhiteCard v-if="showRechargeModules" :disabled="hasPendingOrder">
           <Form ref="formRef" :model="formData" :rules="rules">
             <view flex="~ col" gap="2.5">
+              <!-- 设备类型 -->
+              <Cell v-if="showDeviceTypeOptions" id="deviceType" required label="设备类型" prop="deviceType">
+                <Radio
+                  v-model="formData.deviceType"
+                  :options="deviceTypeOptions"
+                  :columns="2"
+                  @change="handleDeviceTypeChange"
+                />
+              </Cell>
+
               <!-- 充值金额选择 -->
               <view v-if="hasSelectRechargeAmountModules">
                 <view text="sm text-primary" font="medium" m="b-3">
@@ -386,11 +493,11 @@ onShow(() => {
           :type="currentAmount > 0 ? 'primary' : 'default'"
           size="large"
           full
-          :disabled="currentAmount <= 0 || hasPendingOrder"
+          :disabled="submitDisabled"
           :loading="rechargeLoading"
           @click="handleConfirmRecharge"
         >
-          {{ currentAmount > 0 ? `确认充值 ¥${currentAmount}` : '确认充值' }}
+          {{ submitText }}
         </TButton>
       </view>
     </view>

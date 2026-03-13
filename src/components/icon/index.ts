@@ -22,6 +22,7 @@ import {
   FILE_CHART_LINE,
   FILE_COPY_LINE,
   FILE_LIST_3_LINE,
+  FILTER_LINE,
   FORBID_LINE,
   HEART_3_LINE,
   HISTORY_LINE,
@@ -142,6 +143,7 @@ const svgMap = {
   'alarm-warning-fill': ALARM_WARNING_FILL,
   'upload-cloud-line': UPLOAD_CLOUD_LINE,
   'timer-2-line': TIMER_2_LINE,
+  'filter-line': FILTER_LINE,
 
   // user
   'user-settings-line': USER_SETTINGS_LINE,
@@ -165,8 +167,7 @@ export function loadSvg(name: string, color: string) {
     const _svg = svg.replace('currentColor', color)
 
     return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(_svg)}`
-  }
-  catch (error) {
+  } catch (error) {
     console.error('加载图标失败:', name, error)
   }
 }

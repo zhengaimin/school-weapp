@@ -1,4 +1,3 @@
-// #region 角色类型
 // Types
 export const ROLE_TYPE = {
   // 家长 - 1
@@ -24,9 +23,7 @@ export const ROLE_TYPE_OPTIONS = [
   { label: ROLE_TYPE_I18N[ROLE_TYPE.TEACHER], value: ROLE_TYPE.TEACHER },
   { label: ROLE_TYPE_I18N[ROLE_TYPE.STUDENT], value: ROLE_TYPE.STUDENT },
 ]
-// #endregion
 
-// #region 用户类型
 // Types
 export const USER_TYPE = {
   // 家长 - 'parent'
@@ -48,4 +45,3 @@ export const USER_TYPE_OPTIONS = [
   { label: USER_TYPE_I18N[USER_TYPE.PARENT], value: USER_TYPE.PARENT },
   { label: USER_TYPE_I18N[USER_TYPE.TEACHER], value: USER_TYPE.TEACHER },
 ]
-// #endregion

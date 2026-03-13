@@ -1,4 +1,3 @@
-// #region 金额类型
 // Types
 export const AMOUNT_TYPE = {
   RECHARGE: 'RECHARGE',
@@ -40,4 +39,3 @@ export const POSITIVE_AMOUNT_TYPES: TAmountType[] = [
   AMOUNT_TYPE.REFUND,
   AMOUNT_TYPE.UNFREEZE,
 ]
-// #endregion

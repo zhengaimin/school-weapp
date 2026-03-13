@@ -1,8 +1,47 @@
 import type { CustomRequestOptions } from '@/http/interceptor'
 import { ERROR_CODES, getHttpStatusMessage, TOKEN_WHITE_LIST } from '@/constant/modules'
+import { LAUNCH_PATH } from '@/constant/router'
 import { useUserStore } from '@/store/user'
 import { toast } from '@/utils/toast'
 // import { tokenManager } from './tokenManager'
+
+/** 是否正在处理 401，避免并发请求重复触发重登流程 */
+let isHandlingUnauthorized = false
+
+/** 清理 token 并触发重新登录流程 */
+function handleUnauthorized() {
+  if (isHandlingUnauthorized) {
+    return
+  }
+
+  isHandlingUnauthorized = true
+
+  const userStore = useUserStore()
+  userStore.setToken(null)
+  userStore.setUserInfo(null)
+  userStore.setPhone('')
+  userStore.setRole(null)
+
+  try {
+    // pinia 持久化默认 key 为 store id（user）
+    uni.removeStorageSync('user')
+    // 兜底清理包含 token 的历史 key，防止遗留脏数据
+    const { keys = [] } = uni.getStorageInfoSync() || {}
+    keys
+      .filter(key => /token/i.test(key))
+      .forEach((key) => {
+        uni.removeStorageSync(key)
+      })
+  } catch (error) {
+    console.error('清理 token 失败', error)
+  }
+
+  uni.reLaunch({ url: LAUNCH_PATH })
+
+  setTimeout(() => {
+    isHandlingUnauthorized = false
+  }, 1000)
+}
 
 // 原始的http请求函数（不带token检查）
 function httpRequest<T>(options: CustomRequestOptions) {
@@ -33,8 +72,7 @@ function httpRequest<T>(options: CustomRequestOptions) {
 
           // 2.1 提取核心数据 res.data
           resolve(data)
-        }
-        else {
+        } else {
           // 接口级别错误 -> 使用 HTTP 状态码提示
           if (!options.hideErrorToast) {
             // 优先使用 HTTP 状态码对应的提示信息
@@ -55,9 +93,7 @@ function httpRequest<T>(options: CustomRequestOptions) {
 
           // 特殊处理 401 错误
           if (res.statusCode === 401) {
-            // 401错误 -> 清理用户信息，跳转到登录页
-            // userStore.clearUserInfo()
-            // uni.navigateTo({ url: '/pages/login/login' })
+            handleUnauthorized()
           }
 
           reject(res)

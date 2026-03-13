@@ -4,7 +4,6 @@
 import type { FilterOption } from '@/components/common/filter-selector/index.vue'
 import type { TI18NMap, TOptions, TStatusConfigMap } from '@/types'
 
-// #region 退款申请状态
 // Types
 export const REFUND_APPLICATION_STATUS = {
   /** 待审核 */
@@ -68,9 +67,7 @@ export const REFUND_APPLICATION_STATUS_CONFIGS: TStatusConfigMap<TRefundApplicat
     bgColor: '#d1fae5',
   },
 }
-// #endregion
 
-// #region 退款类型
 // Types
 export const REFUND_TYPE = {
   /** 全额退款 */
@@ -88,9 +85,7 @@ export const REFUND_TYPE_I18N: TI18NMap<TRefundType> = {
 export const REFUND_TYPE_OPTIONS: TOptions<TRefundType> = [
   { label: REFUND_TYPE_I18N[REFUND_TYPE.FULL], value: REFUND_TYPE.FULL },
 ]
-// #endregion
 
-// #region 退款状态
 // Types
 export const REFUND_STATUS = {
   /** 待审核 */
@@ -198,4 +193,3 @@ export const REFUND_STATUS_CONFIGS: TStatusConfigMap<TRefundStatus> = {
     bgColor: '#f9fafb',
   },
 }
-// #endregion

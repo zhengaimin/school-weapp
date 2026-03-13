@@ -24,14 +24,14 @@ import Cell from '@/components/form/cell/index.vue'
 import Form from '@/components/form/index/index.vue'
 import Picker from '@/components/form/picker/index.vue'
 import BottomPopup from '@/components/popup/bottom-popup/index.vue'
-import { ROLE_TYPE, SEARCH_TYPE, SEARCH_TYPE_OPTIONS } from '@/constant/modules'
+import { DEVICE_TYPE, ROLE_TYPE, SEARCH_TYPE, SEARCH_TYPE_OPTIONS } from '@/constant/modules'
 import { TABBAR_HOME_PATH } from '@/constant/router'
 import { useBalance } from '@/hooks/useBalance'
+import { useDeviceType } from '@/hooks/useDeviceType'
 import { useForm } from '@/hooks/useForm'
 import { usePage } from '@/hooks/usePage'
 import { useParentStore } from '@/store/auth/parent'
 import { useCurrentStudentStore } from '@/store/business/currentStudent'
-import { useConfigStore } from '@/store/config'
 import { useUserStore } from '@/store/user'
 import { sleep } from '@/utils'
 import { toast } from '@/utils/toast'
@@ -45,9 +45,9 @@ defineOptions({
 const userStore = useUserStore()
 const parentStore = useParentStore()
 const currentStudentStore = useCurrentStudentStore()
-const configStore = useConfigStore()
 const { needBind, studentsIdMap } = storeToRefs(parentStore)
 const { axiosGetUserBalanceApi } = useBalance()
+const { defaultDeviceType } = useDeviceType()
 const { pageLoading, pageError, batchRequestHandler, onLoginFail, getContentHeight } = usePage()
 const { formRef, submitLoading, scrollIntoView, validate, scrollToFirstError } = useForm('.bind-scroll')
 
@@ -117,8 +117,7 @@ async function axiosGetSchoolsApi() {
       }))
     }
     return result
-  }
-  catch (error) {
+  } catch (error) {
     console.error('获取学校列表', error)
     return { code: -1 }
   }
@@ -129,12 +128,10 @@ async function axiosPostPublicStudentApi(params: Students.ReqPostPublicStudentAp
     const { code, data } = await postPublicStudentApi(params)
     if (code === 0 && data && data.students && data.students.length > 0) {
       searchResult.value = { type: 'found', students: data.students }
-    }
-    else {
+    } else {
       searchResult.value = { type: 'notFound' }
     }
-  }
-  catch (error) {
+  } catch (error) {
     searchResult.value = { type: 'notFound' }
     console.log(error)
   }
@@ -156,8 +153,7 @@ async function axiosPostBindStudentApi(params: { studentId: number }) {
           children: [{ studentId }],
           chooseChildUserId: studentId,
         })
-    }
-    else {
+    } else {
       api = () => postBindStudentApi({ studentId })
     }
 
@@ -166,7 +162,8 @@ async function axiosPostBindStudentApi(params: { studentId: number }) {
     if (result.data.token) {
       userStore.setToken(result.data.token)
       await userStore.getUserInfo()
-      await axiosGetUserBalanceApi()
+      const resolvedDeviceType = defaultDeviceType.value || DEVICE_TYPE.VIDEO
+      await axiosGetUserBalanceApi(resolvedDeviceType)
       currentStudentStore.setContactInfo(null)
       setTimeout(() => {
         uni.navigateBack()
@@ -174,8 +171,7 @@ async function axiosPostBindStudentApi(params: { studentId: number }) {
     }
 
     return result
-  }
-  catch (error) {
+  } catch (error) {
     console.error('绑定学生失败:', error)
     throw error
   }
@@ -222,12 +218,10 @@ async function handleSearchStudent() {
 
     selectedStudent.value = null
     showStudentInfoModal.value = true
-  }
-  catch (error) {
+  } catch (error) {
     console.error('搜索学生失败:', error)
     toast.show('搜索失败，请重试')
-  }
-  finally {
+  } finally {
     submitLoading.value = false
   }
 }
@@ -249,25 +243,19 @@ async function handleConfirmBinding() {
       showStudentInfoModal.value = false
 
       await sleep(500)
-      await batchRequestHandler(
-        [parentStore.axiosGetStudentListApi(), configStore.axiosGetSchoolModulesApi()],
-        { auto: false },
-      )
+      await batchRequestHandler([parentStore.axiosGetStudentListApi()], { auto: false })
 
       uni.redirectTo({
         url: `${TABBAR_HOME_PATH}?role=${ROLE_TYPE.PARENT}`,
       })
-    }
-    else {
+    } else {
       throw new Error(result.msg || '绑定失败')
     }
-  }
-  catch (error: any) {
+  } catch (error: any) {
     console.error('绑定失败:', error)
     const errorMessage = error?.message || error?.data?.message || error?.msg || '绑定失败，请重试'
     toast.show(errorMessage)
-  }
-  finally {
+  } finally {
     submitLoading.value = false
   }
 }

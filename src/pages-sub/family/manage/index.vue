@@ -22,9 +22,7 @@ import { FAMILY_EDIT_PATH } from '@/constant/router'
 import { usePage } from '@/hooks/usePage'
 import { useRefresh } from '@/hooks/useRefresh'
 import { MessageCache } from '@/pages-sub/chat/utils/cache'
-import { useParentStore } from '@/store/auth/parent'
 import { useCurrentStudentStore } from '@/store/business/currentStudent'
-import { useConfigStore } from '@/store/config'
 import { useUserStore } from '@/store/user'
 import { useFamily } from '@/utils/emit/family'
 
@@ -38,12 +36,10 @@ const message = useMessage()
 const { pageLoading, pageError, onLoginFail, getContentHeight, batchRequestHandler } = usePage()
 const { onRefreshFamilyList } = useFamily()
 
-const configStore = useConfigStore()
 const userStore = useUserStore()
-const parentStore = useParentStore()
 const currentStudentStore = useCurrentStudentStore()
-const { relationshipValueMap } = storeToRefs(configStore)
-const { currentStudent } = storeToRefs(parentStore)
+const { relationshipValueMap } = storeToRefs(currentStudentStore)
+const { studentInfo } = storeToRefs(currentStudentStore)
 
 const { loading, refreshLoading, loaded, empty, list, onRefreshList, onLoadMore }
   = useRefresh<Family.Contact.ResGetFamilyContactsApi>({
@@ -73,8 +69,8 @@ async function axiosDeleteFamilyContactApi(id: number) {
       if (contactToDelete?.phone && contactToDelete.phone === userStore.phone) {
         currentStudentStore.setContactInfo(null)
       }
-      if (currentStudent.value?.id) {
-        MessageCache.clearCachedMessages(currentStudent.value.id)
+      if (studentInfo.value?.studentId) {
+        MessageCache.clearCachedMessages(studentInfo.value.studentId)
       }
 
       await nextTick()
@@ -82,8 +78,7 @@ async function axiosDeleteFamilyContactApi(id: number) {
     }
 
     return result
-  }
-  catch (error) {
+  } catch (error) {
     console.error('删除失败', error)
     uni.hideLoading()
     return { code: -1 }
@@ -112,7 +107,7 @@ function showDeleteConfirmModal(id?: number) {
 
 /** 登录成功处理 */
 async function onLoginSuccess() {
-  await batchRequestHandler([configStore.axiosGetRelationshipOptionsApi(true), onRefreshList()])
+  await batchRequestHandler([currentStudentStore.axiosGetRelationshipOptionsApi(true), onRefreshList()])
   currentStudentStore.setFamilyContacts(list.value)
 }
 

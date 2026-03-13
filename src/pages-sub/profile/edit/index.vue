@@ -9,9 +9,8 @@
 </route>
 
 <script lang="ts" setup>
-// #region 导入
 import { storeToRefs } from 'pinia'
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 
 import { putMeInfoApi } from '@/api/modules/user'
 import TButton from '@/components/common/button/index.vue'
@@ -24,53 +23,43 @@ import { useForm } from '@/hooks/useForm'
 import { usePage } from '@/hooks/usePage'
 import { useUserStore } from '@/store/user'
 import { toast } from '@/utils/toast'
-// #endregion
 
-// 表单数据接口
 interface FormData {
   userName: string
   role: string
   phone: string
 }
 
-// #region 使用 Hooks
 const { pageLoading, pageError, onLoginSuccess, onLoginFail, getContentHeight } = usePage()
 const { formRef, validate, submitLoading } = useForm()
-// #endregion
 
-// #region 使用 Store
 const userStore = useUserStore()
 const { userInfo, role, phone } = storeToRefs(userStore)
-// #endregion
 
-// #region 定义计算属性
-const formData = computed<FormData>(() => ({
+/** 表单数据 */
+const formData = ref<FormData>({
   userName: userInfo.value?.userName || '',
   role: ROLE_TYPE_I18N[role.value],
   phone: phone.value ? `${phone.value.slice(0, 3)}****${phone.value.slice(-4)}` : '',
-}))
+})
 
+/** 内容区域高度 */
 const contentHeight = computed(() => {
   return getContentHeight('164rpx')
 })
-// #endregion
 
-// #region 定义验证规则
 const rules = {
   userName: [
     { required: true, message: '请输入姓名' },
     { required: true, minLength: 2, message: '姓名至少2个字符' },
   ],
 }
-// #endregion
 
-// #region 事件处理函数
-// 保存个人信息
+/** 保存个人信息 */
 async function handleSaveProfile() {
   try {
     const { valid } = await validate(['userName'])
-    if (!valid)
-      return
+    if (!valid) return
 
     submitLoading.value = true
 
@@ -90,20 +79,16 @@ async function handleSaveProfile() {
       setTimeout(() => {
         uni.navigateBack()
       }, 1500)
-    }
-    else {
+    } else {
       toast.error(result.msg || '保存失败，请重试')
     }
-  }
-  catch (error) {
+  } catch (error) {
     console.error('保存失败:', error)
     toast.error('保存失败，请重试')
-  }
-  finally {
+  } finally {
     submitLoading.value = false
   }
 }
-// #endregion
 </script>
 
 <template>

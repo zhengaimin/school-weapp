@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import RoleAvatar from '@/components/common/role-avatar/index.vue'
 import Icon from '@/components/icon/index.vue'
 
 defineOptions({
@@ -15,6 +16,7 @@ const props = defineProps<{
     avatar?: string
     schoolName?: string
     grade?: string
+    departmentName?: string
     className?: string
   }>
   modelValue: number | null
@@ -50,6 +52,17 @@ function selectStudent(id: number) {
     emit('popup-change', false)
   }
 }
+
+function getStudentFullInfo(student: {
+  schoolName?: string
+  grade?: string
+  departmentName?: string
+  className?: string
+}) {
+  return [student.schoolName, student.grade, student.departmentName, student.className]
+    .filter(Boolean)
+    .join(' · ')
+}
 </script>
 
 <template>
@@ -65,30 +78,19 @@ function selectStudent(id: number) {
       @click="toggleDropdown"
     >
       <view flex="~ items-center" gap-3>
-        <view
-          h-12
-          w-12
-          rounded-full
-          bg="blue-50"
-          flex="~ items-center justify-center"
-          text="primary xl"
-          font-bold
-          border="~ blue-100/50 solid"
-          shadow-sm
-        >
-          <image
-            :src="currentStudent.avatar"
-            mode="aspectFill"
-            class="h-full w-full rounded-full"
-          />
-        </view>
+        <RoleAvatar
+          type="student"
+          size="medium"
+          :path="currentStudent.avatar"
+          :face-img="false"
+          custom-class="border border-blue-100/50 shadow-sm"
+        />
         <view flex="~ col 1">
           <text block text="base gray-900" font-bold leading-tight>
             {{ currentStudent.name }}
           </text>
-          <text text="xs gray-500" mt-0.5 block>
-            {{ currentStudent.schoolName }} · {{ currentStudent.grade }}
-            {{ currentStudent.className }}
+          <text text="xs gray-500" mt-1 block>
+            {{ getStudentFullInfo(currentStudent) }}
           </text>
         </view>
         <view :class="showDropdown ? 'rotate-180' : ''" class="transition-transform duration-300">
@@ -118,28 +120,19 @@ function selectStudent(id: number) {
           active:bg="gray-50"
           @click="selectStudent(student.id)"
         >
-          <view
-            h-10
-            w-10
-            rounded-full
-            bg="blue-50"
-            flex="~ items-center justify-center"
-            text="primary base"
-            font-bold
-            border="~ blue-100/50 solid"
-          >
-            <image
-              :src="student.avatar"
-              mode="aspectFill"
-              class="h-full w-full rounded-full"
-            />
-          </view>
+          <RoleAvatar
+            type="student"
+            size="small"
+            :path="student.avatar"
+            :face-img="false"
+            custom-class="border border-blue-100/50"
+          />
           <view flex-1 text-left>
             <view text="sm gray-900" font-bold>
               {{ student.name }}
             </view>
-            <view text="xs gray-500">
-              {{ student.grade }}{{ student.className }}
+            <view text="xs gray-500" mt-0.5>
+              {{ getStudentFullInfo(student) }}
             </view>
           </view>
           <Icon

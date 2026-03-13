@@ -1,16 +1,10 @@
 <script setup lang="ts">
-// #region 导入
 import type { BottomPopupProps } from './types'
 import { computed } from 'vue'
-// #endregion
 
-// #region 属性定义
 // 组件属性类型（使用导入的类型）
 type Props = BottomPopupProps
 
-// #endregion
-
-// #region 组件选项
 defineOptions({
   inheritAttrs: false,
   options: {
@@ -44,14 +38,10 @@ const emit = defineEmits<{
   (e: 'leave'): void
   (e: 'after-leave'): void
 }>()
-// #endregion
 
-// #region 响应式数据
 // 使用 defineModel 定义双向绑定
 const show = defineModel('modelValue', { default: false })
-// #endregion
 
-// #region 计算属性
 // 计算弹框样式
 const popupStyle = computed(() => {
   const style = 'border-radius: 32rpx 32rpx 0 0;'
@@ -63,9 +53,7 @@ const popupStyle = computed(() => {
 const computedHeaderStyle = computed(() => {
   return props.headerStyle
 })
-// #endregion
 
-// #region 方法
 // 关闭弹框
 function handleClose() {
   show.value = false
@@ -121,16 +109,13 @@ function hidePopup() {
 function togglePopup() {
   show.value = !show.value
 }
-// #endregion
 
-// #region 暴露
 // 暴露方法给父组件
 defineExpose({
   show: showPopup,
   hide: hidePopup,
   toggle: togglePopup,
 })
-// #endregion
 </script>
 
 <template>

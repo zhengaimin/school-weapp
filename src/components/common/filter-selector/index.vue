@@ -1,14 +1,11 @@
 <script setup lang="ts">
-// #region 导入
 import type { DatetimePickerValue } from '@/components/popup/datetime-picker-popup/types'
 import dayjs from 'dayjs'
 import { computed, ref } from 'vue'
 import Icon from '@/components/icon/index.vue'
 import DatetimePickerPopup from '@/components/popup/datetime-picker-popup/index.vue'
 import SelectorPopup from '@/components/popup/selector-popup/index.vue'
-// #endregion
 
-// #region 接口定义
 // 筛选选项接口
 export interface FilterOption {
   value: string | number
@@ -35,9 +32,7 @@ interface Props {
   /** 是否精简显示文字，对于 daterange 类型，默认显示月+日，设置为 false 时显示完整年月日 */
   concise?: boolean
 }
-// #endregion
 
-// #region 组件选项配置
 const props = withDefaults(defineProps<Props>(), {
   icon: '',
   popupTitle: '',
@@ -55,14 +50,10 @@ const emit = defineEmits<{
 const modelValue = defineModel<DatetimePickerValue | [number, number]>({
   default: undefined,
 })
-// #endregion
 
-// #region 定义响应式数据
 // 弹框显示状态
 const showPopup = ref(false)
-// #endregion
 
-// #region 定义计算属性
 // 创建 defaultValue 计算属性，处理类型断言
 const defaultValue = computed((): number | [number, number] => {
   return modelValue.value as number | [number, number]
@@ -70,8 +61,7 @@ const defaultValue = computed((): number | [number, number] => {
 
 // 当前选中的选项文本
 const selectedText = computed(() => {
-  if (!modelValue.value)
-    return '请选择'
+  if (modelValue.value === undefined || modelValue.value === null) return '请选择'
 
   // 处理选择器类型
   if (props.type === 'select') {
@@ -94,8 +84,7 @@ const selectedText = computed(() => {
         const startDate = dayjs(modelValue.value[0]).format('MM-DD')
         const endDate = dayjs(modelValue.value[1]).format('MM-DD')
         return `${startDate} 至 ${endDate}`
-      }
-      else {
+      } else {
         const startDate = dayjs(modelValue.value[0]).format('YYYY-MM-DD')
         const endDate = dayjs(modelValue.value[1]).format('YYYY-MM-DD')
         return `${startDate} 至 ${endDate}`
@@ -113,9 +102,7 @@ const selectedText = computed(() => {
 
   return '请选择'
 })
-// #endregion
 
-// #region 事件处理函数
 // 打开筛选弹框
 function openFilter() {
   showPopup.value = true
@@ -132,7 +119,6 @@ function handleConfirm(value: FilterValue, option?: FilterOption) {
 function handleCancel() {
   showPopup.value = false
 }
-// #endregion
 </script>
 
 <template>

@@ -1,6 +1,5 @@
 import type { TI18NMap, TOptions } from '@/types'
 
-// #region 支付方式
 // Types
 export const PAYMENT_METHOD = {
   MOCK: 'MOCK',
@@ -20,9 +19,7 @@ export const PAYMENT_METHOD_OPTIONS: TOptions<TPaymentMethod> = [
   { label: PAYMENT_METHOD_I18N[PAYMENT_METHOD.MOCK], value: PAYMENT_METHOD.MOCK },
   { label: PAYMENT_METHOD_I18N[PAYMENT_METHOD.WECHAT], value: PAYMENT_METHOD.WECHAT },
 ]
-// #endregion
 
-// #region 支付状态
 // Types
 export const PAYMENT_STATUS = {
   /** 待支付 - 0 */
@@ -60,9 +57,7 @@ export const PAYMENT_STATUS_OPTIONS: TOptions<TPaymentStatus> = [
   { label: PAYMENT_STATUS_I18N[PAYMENT_STATUS.CANCELLED], value: PAYMENT_STATUS.CANCELLED },
   { label: PAYMENT_STATUS_I18N[PAYMENT_STATUS.EXPIRED], value: PAYMENT_STATUS.EXPIRED },
 ]
-// #endregion
 
-// #region 充值结果状态配置接口
 interface IRechargeResultStatusConfig {
   bgColor: string
   iconName: string
@@ -83,7 +78,7 @@ export const RECHARGE_RESULT_STATUS_CONFIG: Record<TPaymentStatus, IRechargeResu
     bgColor: '#d1fae5',
     iconName: 'check-line',
     iconColor: '#10b981',
-    title: '充值成功！',
+    title: '充值成功',
     description: '您的账户已成功充值',
   },
   [PAYMENT_STATUS.FAILED]: {
@@ -115,4 +110,3 @@ export const RECHARGE_RESULT_STATUS_CONFIG: Record<TPaymentStatus, IRechargeResu
     description: '订单已过期',
   },
 }
-// #endregion

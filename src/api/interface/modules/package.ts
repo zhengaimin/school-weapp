@@ -8,9 +8,7 @@ import type {
 } from '@/constant/modules'
 
 export namespace Pkg {
-  // #region 套餐查询
   export namespace Query {
-    // #region 获取可购买套餐列表
     /** 获取可购买套餐列表 - 请求 */
     export interface ReqGetAvailableApi {
       /** 页码，默认1 */
@@ -91,7 +89,6 @@ export namespace Pkg {
       /** 套餐列表 */
       packages: IPackage[]
     }
-    // #endregion
 
     /** 快照信息 */
     export interface ISnapshotInfo {
@@ -117,7 +114,6 @@ export namespace Pkg {
       monthlyDecrease: boolean
     }
 
-    // #region 获取套餐购买记录
     /** 剩余额度信息 */
     export interface IRemainingAmount {
       /** 套餐剩余分钟数 */
@@ -255,9 +251,7 @@ export namespace Pkg {
       /** 套餐列表 */
       packages: IPackagePurchaseVo[]
     }
-    // #endregion
 
-    // #region 获取学生当前正在使用的套餐
     /** 购买者信息 */
     export interface IPurchaserInfo {
       /** 用户ID */
@@ -355,9 +349,7 @@ export namespace Pkg {
       /** 总数量（已激活+待激活） */
       totalCount: number
     }
-    // #endregion
 
-    // #region 获取套餐详情
     /** 使用情况信息 */
     export interface IUsageInfo {
       /** 总视频通话分钟数 */
@@ -443,9 +435,7 @@ export namespace Pkg {
       /** 使用规则 */
       usageRules: string
     }
-    // #endregion
 
-    // #region 获取基础费率
     /** 费率信息 */
     export interface IRateInfo {
       /** 服务类型 */
@@ -467,13 +457,9 @@ export namespace Pkg {
       /** 费率列表 */
       rates: IRateInfo[]
     }
-    // #endregion
   }
-  // #endregion
 
-  // #region 套餐支付
   export namespace Payment {
-    // #region 购买套餐
     /** 购买套餐 - 请求 */
     export interface ReqPostPurchaseApi {
       /** 套餐ID */
@@ -513,9 +499,7 @@ export namespace Pkg {
       /** 支付参数 */
       paymentParams: IJsApiPayParams
     }
-    // #endregion
 
-    // #region 继续支付已存在的套餐订单
     /** 继续支付已存在的套餐订单 - 请求 */
     export interface ReqPostContinuePaymentApi {
       /** 订单号 */
@@ -535,9 +519,7 @@ export namespace Pkg {
       /** 支付参数 */
       paymentParams: IJsApiPayParams
     }
-    // #endregion
 
-    // #region 取消套餐购买订单
     /** 取消套餐购买订单 - 请求 */
     export interface ReqPostCancelPaymentApi {
       /** 订单号 */
@@ -549,9 +531,7 @@ export namespace Pkg {
       /** 操作结果消息 */
       message: string
     }
-    // #endregion
 
-    // #region 检查是否存在待支付的套餐订单
     /** 检查是否存在待支付的套餐订单 - 请求 */
     export interface ReqGetPendingPaymentApi {
       /** 设备类型 */
@@ -585,9 +565,7 @@ export namespace Pkg {
       /** 提示消息 */
       message: string
     }
-    // #endregion
 
-    // #region 获取套餐订单详情
     /** 获取套餐订单详情 - 请求 */
     export interface ReqGetOrderDetailApi {
       /** 订单号 */
@@ -651,13 +629,9 @@ export namespace Pkg {
       /** 班级名称 */
       className: string
     }
-    // #endregion
   }
-  // #endregion
 
-  // #region 套餐退款
   export namespace Refund {
-    // #region 申请套餐退费
     /** 申请套餐退费 - 请求 */
     export interface ReqPostApplyRefundApi {
       /** 套餐记录ID */
@@ -668,9 +642,7 @@ export namespace Pkg {
 
     /** 申请套餐退费 - 响应 */
     export interface ResPostApplyRefundApi {}
-    // #endregion
 
-    // #region 检查是否存在待审核的套餐退费申请
     /** 检查是否存在待审核的套餐退费申请 - 请求 */
     export interface ReqGetPendingApi {
       /** 设备类型 */
@@ -704,9 +676,7 @@ export namespace Pkg {
       /** 待审核的申请信息 */
       pendingApplication?: IPendingApplication
     }
-    // #endregion
 
-    // #region 取消套餐退费申请
     /** 取消套餐退费申请 - 响应 */
     export interface ResPostCancelApi {
       /** 提示信息 */
@@ -714,9 +684,7 @@ export namespace Pkg {
       /** 退费申请ID */
       refundApplicationId: number
     }
-    // #endregion
 
-    // #region 获取套餐退费申请列表
     /** 获取套餐退费申请列表 - 请求 */
     export interface ReqGetListApi {
       /** 退费状态筛选 */
@@ -733,6 +701,8 @@ export namespace Pkg {
     export interface IRefundApplicationRecord {
       /** 申请ID */
       id: number
+      /** 设备类型 */
+      deviceType?: TDeviceType
       /** 退费单号 */
       refundNo: string
       /** 套餐记录ID */
@@ -774,9 +744,7 @@ export namespace Pkg {
       /** 总页数 */
       totalPages: number
     }
-    // #endregion
 
-    // #region 套餐退款预览
     /** 套餐退款预览 - 请求 */
     export interface ReqPostRefundPreviewApi {
       /** 套餐购买记录 ID */
@@ -798,9 +766,7 @@ export namespace Pkg {
       /** 退款说明 */
       refundDescription: string
     }
-    // #endregion
 
-    // #region 获取套餐退款详情
     /** 套餐内容 */
     export interface IRefundPackageContent {
       /** 视频通话分钟数 */
@@ -868,7 +834,5 @@ export namespace Pkg {
       /** 申请人姓名 */
       applicantUserName: string
     }
-    // #endregion
   }
-  // #endregion
 }

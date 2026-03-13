@@ -1,5 +1,6 @@
-<route lang="jsonc" type="home">
+<route lang="jsonc" type="page">
 {
+  // 暂时不使用，保留以便后续恢复
   "layout": "default",
   "style": {
     "navigationStyle": "custom",
@@ -112,8 +113,7 @@ async function axiosGetOverviewStudentsApi() {
     }
 
     return result
-  }
-  catch (error) {
+  } catch (error) {
     console.error('获取概览数据失败:', error)
     return { code: -1 }
   }
@@ -123,15 +123,14 @@ async function axiosGetOverviewStudentsApi() {
 async function axiosPostParentSwitchChildApi(childId: number) {
   try {
     return await postParentSwitchChildApi({ childUserId: childId })
-  }
-  catch (error) {
+  } catch (error) {
     console.error('切换学生失败:', error)
     return { code: -1, data: null }
   }
 }
 
 /** 跳转到家长首页 */
-async function handleGoToHome(deviceType: TDeviceType) {
+async function handleGoToHome(_deviceType: TDeviceType) {
   if (!currentStudentId.value || switchLoading.value) return
 
   const childId = currentStudentId.value
@@ -147,7 +146,6 @@ async function handleGoToHome(deviceType: TDeviceType) {
     }
 
     parentStore.setCurrentStudentId(childId)
-    currentStudentStore.setDeviceType(deviceType)
 
     const token = result.data?.token
     if (token) {
@@ -156,8 +154,7 @@ async function handleGoToHome(deviceType: TDeviceType) {
     }
 
     uni.navigateTo({ url: PARENT_HOME_PATH })
-  }
-  finally {
+  } finally {
     switchLoading.value = false
   }
 }
@@ -177,8 +174,7 @@ async function onLoginSuccess() {
 watch(switchLoading, (loading) => {
   if (loading) {
     uni.showLoading({ title: '加载中' })
-  }
-  else {
+  } else {
     uni.hideLoading()
   }
 })

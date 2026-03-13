@@ -9,7 +9,6 @@
 </route>
 
 <script lang="ts" setup>
-// #region 导入
 import type { SignatureResult } from '@/uni_modules/wot-design-uni/components/wd-signature/types'
 import { computed, ref } from 'vue'
 import Page from '@/components/common/page/index.vue'
@@ -20,25 +19,17 @@ import WdSignature from '@/uni_modules/wot-design-uni/components/wd-signature/wd
 import { boundingClientRect } from '@/utils/dom'
 import { getPrevPageExposed } from '@/utils/index'
 import { toast } from '@/utils/toast'
-// #endregion
 
-// #region 使用 Hooks
 const { pageLoading, pageError, batchRequestHandler, onLoginFail, getContentHeight } = usePage()
-// #endregion
 
-// #region 定义响应式数据
 const height = ref(0)
 const width = ref(0)
 const inited = ref(false)
-// #endregion
 
-// #region 定义计算属性
 const contentStyle = computed(() => {
   return getContentHeight()
 })
-// #endregion
 
-// #region 事件处理函数
 function handleConfirm(result: SignatureResult) {
   if (result && result.success) {
     // 使用 getPrevPageExposed 方法调用上一个页面的方法
@@ -46,14 +37,11 @@ function handleConfirm(result: SignatureResult) {
 
     prevPageExposed?.acceptParams(result.tempFilePath)
     uni.navigateBack()
-  }
-  else {
+  } else {
     toast.show('获取签名失败')
   }
 }
-// #endregion
 
-// #region 生命周期钩子
 async function onLoginSuccess() {
   await batchRequestHandler([])
 
@@ -65,7 +53,6 @@ async function onLoginSuccess() {
     inited.value = true
   }
 }
-// #endregion
 </script>
 
 <template>

@@ -1,21 +1,24 @@
 <script lang="ts" setup>
 import type { Pkg } from '@/api/interface/modules/package'
+import type { User } from '@/api/interface/modules/user'
+import type { TDeviceType } from '@/constant/modules'
+
 import dayjs from 'dayjs'
-import { storeToRefs } from 'pinia'
+import { computed } from 'vue'
 import WhiteCard from '@/components/common/white-card/index.vue'
 import { DEVICE_TYPE, PACKAGE_TYPE_I18N } from '@/constant/modules'
 import { PACKAGE_DETAIL_PATH } from '@/constant/router'
-import { useCurrentStudentStore } from '@/store/business/currentStudent'
 
 const props = defineProps<{
   package: Pkg.Query.IStudentActivePackageVo
+  deviceType?: TDeviceType
+  balanceInfo?: User.Parent.IBalanceInfo | null
 }>()
 
-const currentStudentStore = useCurrentStudentStore()
-const { deviceType, balanceInfo } = storeToRefs(currentStudentStore)
+const resolvedDeviceType = computed(() => props.deviceType || DEVICE_TYPE.VIDEO)
+const isVideoDevice = computed(() => resolvedDeviceType.value === DEVICE_TYPE.VIDEO)
 
-const isVideoDevice = computed(() => deviceType.value === DEVICE_TYPE.VIDEO)
-
+/** 跳转套餐详情 */
 function handleClick() {
   uni.navigateTo({ url: `${PACKAGE_DETAIL_PATH}?id=${props.package.packageId}` })
 }

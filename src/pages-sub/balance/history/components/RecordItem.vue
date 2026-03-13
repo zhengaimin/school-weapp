@@ -3,6 +3,7 @@ import type { Payment } from '@/api/interface/modules/payment'
 import TButton from '@/components/common/button/index.vue'
 import WhiteCard from '@/components/common/white-card/index.vue'
 import Icon from '@/components/icon/index.vue'
+import { DEVICE_TYPE_I18N } from '@/constant/modules'
 import { useUserStore } from '@/store/user'
 import { formatTime } from '@/utils/format'
 
@@ -10,6 +11,7 @@ import { getStatusConfig } from '../data'
 
 const props = defineProps<{
   record: Payment.Order.IPaymentRecordVo
+  showDeviceType?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -66,6 +68,9 @@ function handlePay() {
         <!-- 第二行：支付方式和时间 -->
         <view flex="~ justify-between items-center" m="b-2">
           <view text="xs gray-600">
+            <text v-if="props.showDeviceType && record.deviceType">
+              {{ DEVICE_TYPE_I18N[record.deviceType] }} ·
+            </text>
             {{ record.statusText }} · {{ isSelfOperation ? '本人操作' : '非本人操作' }}
           </view>
           <view text="xs gray-600">
@@ -75,7 +80,7 @@ function handlePay() {
 
         <!-- 底部操作区域 -->
         <view v-if="record.status === 0" p="t-2" flex="~ row justify-end" gap="2">
-          <TButton size="small" type="danger" plain @click.stop="handleCancel">
+          <TButton size="small" type="warning" plain @click.stop="handleCancel">
             取消
           </TButton>
           <TButton size="small" type="primary" plain @click.stop="handlePay">

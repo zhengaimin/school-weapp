@@ -1,4 +1,3 @@
-// #region 金额类型映射
 // 获取交易类型的图标
 export const AMOUNT_TYPE_ICON_MAP = {
   RECHARGE: 'add-circle-line',
@@ -9,4 +8,3 @@ export const AMOUNT_TYPE_ICON_MAP = {
   ADJUST: 'settings-line',
   PACKAGE_PURCHASE: 'shopping-bag-line',
 }
-// #endregion

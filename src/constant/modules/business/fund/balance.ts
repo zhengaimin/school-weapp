@@ -1,6 +1,5 @@
 import type { TI18NMap, TOptions } from '@/types'
 
-// #region 金额类型
 // Types
 export const AMOUNT_TYPE = {
   RECHARGE: 'RECHARGE',
@@ -35,9 +34,7 @@ export const AMOUNT_TYPE_OPTIONS: TOptions<TAmountType> = [
   { label: AMOUNT_TYPE_I18N[AMOUNT_TYPE.ADJUST], value: AMOUNT_TYPE.ADJUST },
   { label: AMOUNT_TYPE_I18N[AMOUNT_TYPE.PACKAGE_PURCHASE], value: AMOUNT_TYPE.PACKAGE_PURCHASE },
 ]
-// #endregion
 
-// #region 金额类型映射
 // 获取交易类型的图标
 export const AMOUNT_TYPE_ICON_MAP: Record<TAmountType, string> = {
   [AMOUNT_TYPE.RECHARGE]: 'add-circle-line',
@@ -55,4 +52,3 @@ export const POSITIVE_AMOUNT_TYPES: TAmountType[] = [
   AMOUNT_TYPE.REFUND,
   AMOUNT_TYPE.UNFREEZE,
 ]
-// #endregion

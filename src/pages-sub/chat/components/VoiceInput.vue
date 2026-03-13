@@ -7,7 +7,7 @@ import Icon from '@/components/icon/index.vue'
 import { FILE_TYPE } from '@/constant/modules'
 import { uploadFilePromise, uploadFileUrl } from '@/utils/file'
 import { toast } from '@/utils/toast'
-import { voiceMessageDataKey } from '../provide'
+import { VOICE_MESSAGE_DATA_KEY } from '../provide'
 
 defineOptions({
   options: {
@@ -21,13 +21,16 @@ const emit = defineEmits<{
 }>()
 
 // 从父组件注入语音消息数据
-const voiceMessageData = inject(voiceMessageDataKey, ref(null))
+const voiceMessageData = inject(VOICE_MESSAGE_DATA_KEY, ref(null))
 
 // 语音输入相关状态
 const isRecording = ref(false) // 是否正在录音
 const recordingTime = ref(0) // 录音时长
 const recordingTimer = ref<NodeJS.Timeout | null>(null) // 录音计时器
 const recorderManager = ref<UniNamespace.RecorderManager | null>(null) // 录音管理器
+const isPressing = ref(false) // 是否处于按下状态
+const isRecorderStarting = ref(false) // 录音器是否处于启动中
+const isStopPendingAfterStart = ref(false) // 启动完成后是否需要立即停止
 const isUploading = ref(false) // 是否正在上传
 const isSending = ref(false) // 是否正在发送消息
 
@@ -54,14 +57,23 @@ function initRecorderManager() {
       recorderManager.value.onStart(() => {
         console.log('录音开始')
         isRecording.value = true
+        isRecorderStarting.value = false
         recordingTime.value = 0
         startRecordingTimer()
+        // 处理“先松开后收到 onStart”场景，避免继续录音
+        if (isStopPendingAfterStart.value || !isPressing.value) {
+          isStopPendingAfterStart.value = false
+          handleStopRecording()
+        }
       })
 
       // 录音结束事件
       recorderManager.value.onStop(async (result) => {
         console.log('录音结束', result)
         isRecording.value = false
+        isRecorderStarting.value = false
+        isPressing.value = false
+        isStopPendingAfterStart.value = false
         stopRecordingTimer()
 
         if (result.tempFilePath) {
@@ -84,7 +96,8 @@ function initRecorderManager() {
               mask: true,
             })
 
-            const uploadResult = await uploadVoiceFile(result.tempFilePath, duration)
+            const compressedVoicePath = await axiosCompressVoiceFileApi(result.tempFilePath)
+            const uploadResult = await axiosPostUploadVoiceFileApi(compressedVoicePath)
             uni.hideLoading()
 
             // 2. 发送消息
@@ -94,20 +107,18 @@ function initRecorderManager() {
               mask: true,
             })
 
-            await sendVoiceMessage(uploadResult, duration)
+            await axiosPostSendVoiceMessageApi(uploadResult, duration)
             uni.hideLoading()
 
             // 3. 通知父组件
             emit('sendVoice', result.tempFilePath, duration)
 
             toast.success('发送成功')
-          }
-          catch (error) {
+          } catch (error) {
             console.error('语音消息发送失败:', error)
             uni.hideLoading()
             toast.show('发送失败，请重试')
-          }
-          finally {
+          } finally {
             isUploading.value = false
             isSending.value = false
           }
@@ -121,8 +132,7 @@ function initRecorderManager() {
         stopRecordingTimer()
         toast.show('录音失败')
       })
-    }
-    catch (error) {
+    } catch (error) {
       console.error('录音管理器初始化异常:', error)
       toast.show('录音功能不可用')
       return false
@@ -154,39 +164,48 @@ function stopRecordingTimer() {
 
 // 开始录音（按住说话）
 function handleStartRecording() {
-  if (isRecording.value)
-    return
+  if (isUploading.value || isSending.value || isRecording.value || isRecorderStarting.value) return
+  isPressing.value = true
+  isStopPendingAfterStart.value = false
 
   const success = initRecorderManager()
   if (!success) {
+    isPressing.value = false
     return
   }
 
   if (recorderManager.value) {
     try {
+      isRecorderStarting.value = true
       recorderManager.value.start({
         duration: 60000, // 最大录音时长60秒
         format: 'mp3', // 录音格式
-        sampleRate: 16000, // 采样率
+        sampleRate: 12000, // 采样率（降低采样率减少体积）
         numberOfChannels: 1, // 录音通道数
-        encodeBitRate: 48000, // 编码码率
+        encodeBitRate: 24000, // 编码码率（低码率实现本地压缩）
         frameSize: 4096, // 指定帧大小
       })
-    }
-    catch (error) {
+    } catch (error) {
       console.error('开始录音失败:', error)
+      isRecorderStarting.value = false
       toast.show('录音启动失败')
     }
-  }
-  else {
+  } else {
+    isPressing.value = false
     toast.show('录音功能不可用')
   }
 }
 
 // 停止录音（松开按钮）
 function handleStopRecording() {
-  if (!isRecording.value || !recorderManager.value)
+  isPressing.value = false
+  if (!recorderManager.value) return
+  // 录音器启动中但还未真正开始，标记为启动后立即停止
+  if (isRecorderStarting.value && !isRecording.value) {
+    isStopPendingAfterStart.value = true
     return
+  }
+  if (!isRecording.value) return
 
   try {
     // 录音时间太短提示
@@ -197,9 +216,9 @@ function handleStopRecording() {
     }
 
     recorderManager.value.stop()
-  }
-  catch (error) {
+  } catch (error) {
     console.error('停止录音失败:', error)
+    isRecorderStarting.value = false
     isRecording.value = false
     stopRecordingTimer()
     toast.show('录音停止失败')
@@ -221,7 +240,7 @@ function stopRecording() {
 }
 
 // 上传语音文件
-async function uploadVoiceFile(filePath: string, duration: number) {
+async function axiosPostUploadVoiceFileApi(filePath: string) {
   const result = await uploadFilePromise<File.Upload.ResPostUploadApi>(
     uploadFileUrl.UPLOAD,
     filePath,
@@ -230,8 +249,16 @@ async function uploadVoiceFile(filePath: string, duration: number) {
   return result.data
 }
 
+/**
+ * @description 本地压缩语音文件（当前以录制低码率为主，保留扩展点）
+ * @param tempFilePath - 原始语音文件路径
+ */
+async function axiosCompressVoiceFileApi(tempFilePath: string): Promise<string> {
+  return tempFilePath
+}
+
 // 发送语音消息
-async function sendVoiceMessage(uploadResult: any, duration: number) {
+async function axiosPostSendVoiceMessageApi(uploadResult: any, duration: number) {
   try {
     const messageData: Message.ReqPostMessageApi = {
       content: '', // 语音消息内容为空
@@ -277,8 +304,7 @@ async function sendVoiceMessage(uploadResult: any, duration: number) {
     voiceMessageData.value = messageItem
 
     return result.data
-  }
-  catch (error) {
+  } catch (error) {
     console.error('消息发送失败:', error)
     throw error
   }
@@ -304,9 +330,10 @@ defineExpose({
     :style="{
       pointerEvents: isUploading || isSending ? 'none' : 'auto',
     }"
-    @touchstart="handleStartRecording"
-    @touchend="handleStopRecording"
-    @touchcancel="handleStopRecording"
+    @touchstart.stop.prevent="handleStartRecording"
+    @touchend.stop.prevent="handleStopRecording"
+    @touchcancel.stop.prevent="handleStopRecording"
+    @touchleave.stop.prevent="handleStopRecording"
   >
     <!-- 录音中状态 -->
     <view v-if="isRecording" flex="~ items-center" gap="2">

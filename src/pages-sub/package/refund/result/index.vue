@@ -10,14 +10,14 @@
 
 <script lang="ts" setup>
 import type { Pkg } from '@/api/interface/modules/package'
+import type { ResultCard, ResultItem } from '@/components/common/result-view/index.vue'
 import type { TRefundStatus } from '@/constant/modules'
 import dayjs from 'dayjs'
 import { computed, ref } from 'vue'
 import { getPackageRefundDetailApi, postCancelPackageRefundApi } from '@/api/modules/package/refund'
 import TButton from '@/components/common/button/index.vue'
 import Page from '@/components/common/page/index.vue'
-import WhiteCard from '@/components/common/white-card/index.vue'
-import Icon from '@/components/icon/index.vue'
+import ResultView from '@/components/common/result-view/index.vue'
 import { DEVICE_TYPE, PACKAGE_TYPE_I18N, REFUND_STATUS, REFUND_STATUS_CONFIGS } from '@/constant/modules'
 import { PACKAGE_REFUND_HISTORY_PATH } from '@/constant/router'
 import { usePage } from '@/hooks/usePage'
@@ -56,6 +56,158 @@ const actualAmount = computed(() => {
   return detail.value.actualAmount || detail.value.applyAmount
 })
 
+const refundCards = computed<ResultCard[]>(() => {
+  if (!detail.value) return []
+
+  const items: ResultItem[] = [
+    {
+      key: 'refundNo',
+      label: '退款单号',
+      value: detail.value.refundNo,
+    },
+    {
+      key: 'applyTime',
+      label: '申请时间',
+      value: formatDateTime(detail.value.applyTime),
+    },
+  ]
+
+  if (detail.value.auditTime) {
+    items.push({
+      key: 'auditTime',
+      label: '审核时间',
+      value: formatDateTime(detail.value.auditTime),
+    })
+  }
+
+  if (detail.value.completeTime) {
+    items.push({
+      key: 'completeTime',
+      label: '完成时间',
+      value: formatDateTime(detail.value.completeTime),
+    })
+  }
+
+  items.push(
+    {
+      key: 'applyReason',
+      label: '申请原因',
+      value: detail.value.applyReason,
+    },
+  )
+
+  if (detail.value.adminRemark) {
+    items.push({
+      key: 'adminRemark',
+      label: '管理员备注',
+      value: detail.value.adminRemark,
+    })
+  }
+
+  items.push(
+    { key: 'divider-1', type: 'divider' },
+    {
+      key: 'studentName',
+      label: '学生姓名',
+      value: detail.value.studentName,
+    },
+    {
+      key: 'studentCode',
+      label: '学号',
+      value: detail.value.studentCode,
+    },
+    {
+      key: 'schoolName',
+      label: '学校',
+      value: detail.value.schoolName,
+    },
+    {
+      key: 'className',
+      label: '班级',
+      value: detail.value.className,
+    },
+    {
+      key: 'applicantUserName',
+      label: '申请人',
+      value: detail.value.applicantUserName,
+    },
+    { key: 'divider-2', type: 'divider' },
+    {
+      key: 'packageName',
+      label: '套餐名称',
+      value: detail.value.packageName,
+    },
+    {
+      key: 'packageType',
+      label: '套餐类型',
+      value: PACKAGE_TYPE_I18N[detail.value.packageType],
+    },
+    {
+      key: 'purchasePrice',
+      label: '购买价格',
+      value: `¥${detail.value.purchasePrice}`,
+    },
+    {
+      key: 'purchaseDate',
+      label: '购买日期',
+      value: formatDate(detail.value.purchaseDate),
+    },
+    {
+      key: 'validDate',
+      label: '有效期',
+      value: `${formatDate(detail.value.startDate)} ~ ${formatDate(detail.value.endDate)}`,
+    },
+  )
+
+  if (isVideoDevice.value) {
+    if (detail.value.packageContent.videoCallMinutes) {
+      items.push({
+        key: 'videoCallMinutes',
+        label: '通话分钟',
+        value: detail.value.packageContent.videoCallMinutes === -1
+          ? '不限'
+          : `${detail.value.packageContent.videoCallMinutes}分钟`,
+      })
+    }
+    if (detail.value.packageContent.messageCount) {
+      items.push({
+        key: 'messageCount',
+        label: '留言条数',
+        value: detail.value.packageContent.messageCount === -1
+          ? '不限'
+          : `${detail.value.packageContent.messageCount}条`,
+      })
+    }
+  } else if (detail.value.packageContent.dryerMinutes) {
+    items.push({
+      key: 'dryerMinutes',
+      label: '吹风时长',
+      value: detail.value.packageContent.dryerMinutes === -1
+        ? '不限'
+        : `${detail.value.packageContent.dryerMinutes}分钟`,
+    })
+  }
+
+  if (detail.value.templateDescription) {
+    items.push({
+      key: 'templateDescription',
+      label: '套餐说明',
+      value: detail.value.templateDescription,
+    })
+  }
+
+  return [
+    {
+      key: 'amount',
+      customClass: 'mb-3',
+    },
+    {
+      key: 'detail',
+      items,
+    },
+  ]
+})
+
 function formatDate(date: string | null) {
   if (!date) return '-'
   return dayjs(date).format('YYYY-MM-DD')
@@ -89,14 +241,12 @@ async function handleCancelRefund() {
       emitPackageRefund(detail.value.id)
       handleBackToList()
     }
-  }
-  catch (error: any) {
+  } catch (error: any) {
     if (error?.errMsg !== 'showModal:fail cancel') {
       console.error('取消退款申请失败:', error)
       toast.show('取消失败，请重试')
     }
-  }
-  finally {
+  } finally {
     uni.hideLoading()
   }
 }
@@ -109,8 +259,7 @@ async function axiosGetPackageRefundDetailApi(id: number) {
       detail.value = result.data
     }
     return result
-  }
-  catch (error) {
+  } catch (error) {
     console.error('获取退款详情失败:', error)
     throw error
   }
@@ -142,211 +291,24 @@ function onLoginSuccess() {
     <!-- 内容区域 -->
     <scroll-view scroll-y :enhanced="true" :show-scrollbar="false" :style="contentHeight">
       <view p="x-4 t-2 b-4" relative z-1>
-        <!-- 状态图标和标题 -->
-        <view v-if="statusConfig" flex="~ row items-center justify-center" gap="3" p="t-7 b-6">
-          <Icon :name="statusConfig.icon" :icon-color="statusConfig.iconColor" icon-size="64rpx" />
-          <view text="xl gray-900" font="medium">
-            {{ detail?.statusText }}
-          </view>
-        </view>
-
-        <!-- 退款金额 -->
-        <WhiteCard v-if="detail" m="b-3">
-          <view flex="~ col items-center" p="y-2">
-            <text text="sm gray-500" m="b-1">
-              {{ detail.status === REFUND_STATUS.APPROVED ? '实际退款金额' : '申请退款金额' }}
-            </text>
-            <text text="2xl primary" font="bold">
-              ¥{{ Number(actualAmount).toFixed(2) }}
-            </text>
-          </view>
-        </WhiteCard>
-
-        <!-- 详情卡片 -->
-        <WhiteCard v-if="detail">
-          <view flex="~ col" gap="3">
-            <!-- 退款信息 -->
-            <view flex="~ row justify-between items-center">
-              <text text="sm gray-500">
-                退款单号
+        <ResultView
+          v-if="detail && statusConfig"
+          :icon-name="statusConfig.icon"
+          :icon-color="statusConfig.iconColor"
+          :status-text="detail.statusText"
+          :cards="refundCards"
+        >
+          <template #card-amount>
+            <view class="flex flex-col items-center py-2">
+              <text class="mb-1 text-sm text-gray-500">
+                {{ detail.status === REFUND_STATUS.APPROVED ? '实际退款金额' : '申请退款金额' }}
               </text>
-              <text text="sm gray-900">
-                {{ detail.refundNo }}
+              <text class="text-2xl text-primary font-bold">
+                ¥{{ Number(actualAmount).toFixed(2) }}
               </text>
             </view>
-            <view flex="~ row justify-between items-center">
-              <text text="sm gray-500">
-                申请时间
-              </text>
-              <text text="sm gray-900">
-                {{ formatDateTime(detail.applyTime) }}
-              </text>
-            </view>
-            <view v-if="detail.auditTime" flex="~ row justify-between items-center">
-              <text text="sm gray-500">
-                审核时间
-              </text>
-              <text text="sm gray-900">
-                {{ formatDateTime(detail.auditTime) }}
-              </text>
-            </view>
-            <view v-if="detail.completeTime" flex="~ row justify-between items-center">
-              <text text="sm gray-500">
-                完成时间
-              </text>
-              <text text="sm gray-900">
-                {{ formatDateTime(detail.completeTime) }}
-              </text>
-            </view>
-            <view flex="~ row justify-between items-start">
-              <text text="sm gray-500" flex-shrink-0>
-                申请原因
-              </text>
-              <text text="sm gray-900" text-right max-w="60%">
-                {{ detail.applyReason }}
-              </text>
-            </view>
-            <view v-if="detail.adminRemark" flex="~ row justify-between items-start">
-              <text text="sm gray-500" flex-shrink-0>
-                管理员备注
-              </text>
-              <text text="sm gray-900" text-right max-w="60%">
-                {{ detail.adminRemark }}
-              </text>
-            </view>
-
-            <!-- 分隔线 -->
-            <view h="1px" bg="gray-100" m="y-1" />
-
-            <!-- 学生信息 -->
-            <view flex="~ row justify-between items-center">
-              <text text="sm gray-500">
-                学生姓名
-              </text>
-              <text text="sm gray-900">
-                {{ detail.studentName }}
-              </text>
-            </view>
-            <view flex="~ row justify-between items-center">
-              <text text="sm gray-500">
-                学号
-              </text>
-              <text text="sm gray-900">
-                {{ detail.studentCode }}
-              </text>
-            </view>
-            <view flex="~ row justify-between items-center">
-              <text text="sm gray-500">
-                学校
-              </text>
-              <text text="sm gray-900">
-                {{ detail.schoolName }}
-              </text>
-            </view>
-            <view flex="~ row justify-between items-center">
-              <text text="sm gray-500">
-                班级
-              </text>
-              <text text="sm gray-900">
-                {{ detail.className }}
-              </text>
-            </view>
-            <view flex="~ row justify-between items-center">
-              <text text="sm gray-500">
-                申请人
-              </text>
-              <text text="sm gray-900">
-                {{ detail.applicantUserName }}
-              </text>
-            </view>
-
-            <!-- 分隔线 -->
-            <view h="1px" bg="gray-100" m="y-1" />
-
-            <!-- 套餐信息 -->
-            <view flex="~ row justify-between items-center">
-              <text text="sm gray-500">
-                套餐名称
-              </text>
-              <text text="sm gray-900">
-                {{ detail.packageName }}
-              </text>
-            </view>
-            <view flex="~ row justify-between items-center">
-              <text text="sm gray-500">
-                套餐类型
-              </text>
-              <text text="sm gray-900">
-                {{ PACKAGE_TYPE_I18N[detail.packageType] }}
-              </text>
-            </view>
-            <view flex="~ row justify-between items-center">
-              <text text="sm gray-500">
-                购买价格
-              </text>
-              <text text="sm gray-900">
-                ¥{{ detail.purchasePrice }}
-              </text>
-            </view>
-            <view flex="~ row justify-between items-center">
-              <text text="sm gray-500">
-                购买日期
-              </text>
-              <text text="sm gray-900">
-                {{ formatDate(detail.purchaseDate) }}
-              </text>
-            </view>
-            <view flex="~ row justify-between items-center">
-              <text text="sm gray-500">
-                有效期
-              </text>
-              <text text="sm gray-900">
-                {{ formatDate(detail.startDate) }} ~ {{ formatDate(detail.endDate) }}
-              </text>
-            </view>
-
-            <!-- 套餐内容 - 话机 -->
-            <template v-if="isVideoDevice">
-              <view v-if="detail.packageContent.videoCallMinutes" flex="~ row justify-between items-center">
-                <text text="sm gray-500">
-                  通话分钟
-                </text>
-                <text text="sm gray-900">
-                  {{ detail.packageContent.videoCallMinutes === -1 ? '不限' : `${detail.packageContent.videoCallMinutes}分钟` }}
-                </text>
-              </view>
-              <view v-if="detail.packageContent.messageCount" flex="~ row justify-between items-center">
-                <text text="sm gray-500">
-                  留言条数
-                </text>
-                <text text="sm gray-900">
-                  {{ detail.packageContent.messageCount === -1 ? '不限' : `${detail.packageContent.messageCount}条` }}
-                </text>
-              </view>
-            </template>
-            <!-- 套餐内容 - 吹风机 -->
-            <template v-else>
-              <view v-if="detail.packageContent.dryerMinutes" flex="~ row justify-between items-center">
-                <text text="sm gray-500">
-                  吹风时长
-                </text>
-                <text text="sm gray-900">
-                  {{ detail.packageContent.dryerMinutes === -1 ? '不限' : `${detail.packageContent.dryerMinutes}分钟` }}
-                </text>
-              </view>
-            </template>
-
-            <!-- 套餐说明 -->
-            <view v-if="detail.templateDescription" flex="~ row justify-between items-start">
-              <text text="sm gray-500" flex-shrink-0>
-                套餐说明
-              </text>
-              <text text="sm gray-900" text-right max-w="60%">
-                {{ detail.templateDescription }}
-              </text>
-            </view>
-          </view>
-        </WhiteCard>
+          </template>
+        </ResultView>
       </view>
     </scroll-view>
 

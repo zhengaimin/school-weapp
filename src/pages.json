@@ -16,12 +16,12 @@
   },
   "pages": [
     {
-      "path": "pages/parent/overview/index",
+      "path": "pages/parent/home/index",
       "type": "home",
       "layout": "default",
       "style": {
         "navigationStyle": "custom",
-        "navigationBarTitleText": "概览"
+        "navigationBarTitleText": "首页"
       }
     },
     {
@@ -43,12 +43,12 @@
       }
     },
     {
-      "path": "pages/parent/home/index",
+      "path": "pages/parent/overview/index",
       "type": "page",
       "layout": "default",
       "style": {
         "navigationStyle": "custom",
-        "navigationBarTitleText": "首页"
+        "navigationBarTitleText": "概览"
       }
     }
   ],

@@ -1,4 +1,3 @@
-// #region 亲情号称谓类型
 // Types
 export const RELATION_TYPE = {
   // 爸爸
@@ -54,4 +53,3 @@ export const RELATION_TYPE_OPTIONS = [
   { value: RELATION_TYPE.BROTHER, label: RELATION_TYPE_I18N[RELATION_TYPE.BROTHER] },
   { value: RELATION_TYPE.OTHER, label: RELATION_TYPE_I18N[RELATION_TYPE.OTHER] },
 ]
-// #endregion

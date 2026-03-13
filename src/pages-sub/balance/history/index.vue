@@ -9,37 +9,32 @@
 </route>
 
 <script lang="ts" setup>
-// #region 导入
 import type { Payment } from '@/api/interface/modules/payment'
-import type { FilterConfig } from '@/components/common/filter-group/index.vue'
-import dayjs from 'dayjs'
-import { computed, ref } from 'vue'
+import { computed, onMounted } from 'vue'
 import { getPaymentRecordsApi } from '@/api/modules/payment'
 import FilterGroup from '@/components/common/filter-group/index.vue'
 import Page from '@/components/common/page/index.vue'
 import RefreshList from '@/components/common/refresh-list/index.vue'
-import { ALL, PAYMENT_STATUS } from '@/constant/modules'
+import { PAYMENT_STATUS } from '@/constant/modules'
 import { BALANCE_RECHARGE_RESULT_PATH } from '@/constant/router'
+import { useDeviceType } from '@/hooks/useDeviceType'
+import { useHistoryFilters } from '@/hooks/useHistoryFilters'
 import { usePage } from '@/hooks/usePage'
 import { useRefresh } from '@/hooks/useRefresh'
 import { usePayment } from '@/pages-sub/balance/hooks/usePayment'
 import { useBalanceEmitter } from '@/utils/emit/balance'
 import RecordItem from './components/RecordItem.vue'
-// #endregion
 
-// #region 组件选项配置
 defineOptions({
   options: {
     styleIsolation: 'apply-shared',
   },
 })
-// #endregion
 
-// #region 使用 Hooks
 const { pageLoading, pageError, getContentHeight, batchRequestHandler, onLoginFail } = usePage()
 const { axiosPostPayApi, axiosPostCancelPaymentRecordApi, cancelLoading } = usePayment()
 const { onRechargeSuccess, emitRechargeSuccess } = useBalanceEmitter()
-
+const { hasVideoDevice, hasDryerDevice } = useDeviceType()
 const {
   query,
   list: recordsList,
@@ -54,59 +49,30 @@ const {
   listField: 'records',
   immediate: false,
 })
-// #endregion
 
-// #region 定义响应式数据
-// 筛选条件 - 日期范围筛选使用时间戳数组
-const filters = ref<Array<[number, number] | string | number>>([
-  [dayjs().subtract(1, 'year').valueOf(), dayjs().valueOf()],
-])
-// #endregion
+const { filters, filterConfigs, onFilterChange, applyFiltersToQuery } = useHistoryFilters({
+  query,
+  onRefreshList,
+})
 
-// #region 定义计算属性
-// 筛选器配置
-const filterConfigs = computed<FilterConfig[]>(() => [
-  {
-    key: 'daterange',
-    title: '选择时间范围',
-    type: 'daterange',
-    concise: false,
-    options: [],
-  },
-])
+const showDeviceType = computed(() => {
+  const count = Number(hasVideoDevice.value) + Number(hasDryerDevice.value)
+  return count > 1
+})
 
-// 内容区域样式
+/** 内容区域样式 */
 const contentStyle = computed(() => {
   return getContentHeight('140rpx')
 })
-// #endregion
 
-// #region 事件处理函数
-// 筛选条件变化
-function onFilterChange(key: string, value: [number, number]) {
-  if (key === 'daterange') {
-    const [startTime, endTime] = value as [number, number]
-
-    query.value.startDate = dayjs(startTime).format('YYYY-MM-DD')
-    query.value.endDate = dayjs(endTime).format('YYYY-MM-DD')
-  }
-
-  // 根据筛选条件添加参数
-  if (filters.value[1] !== ALL) {
-    query.value.status = Number(filters.value[1])
-  }
-
-  onRefreshList()
-}
-
-// 跳转到充值记录详情
+/** 跳转到充值记录详情 */
 function goToRechargeDetail(record: Payment.Order.IPaymentRecordVo) {
   uni.navigateTo({
     url: `${BALANCE_RECHARGE_RESULT_PATH}?orderId=${record.id}`,
   })
 }
 
-// 取消订单
+/** 取消订单 */
 async function handleCancelOrder(record: Payment.Order.IPaymentRecordVo) {
   await axiosPostCancelPaymentRecordApi(record, {
     onSuccess: () => {
@@ -120,7 +86,7 @@ async function handleCancelOrder(record: Payment.Order.IPaymentRecordVo) {
   })
 }
 
-// 支付订单
+/** 支付订单 */
 async function handlePayOrder(record: Payment.Order.IPaymentRecordVo) {
   await axiosPostPayApi(record, {
     onSuccess: () => {
@@ -133,17 +99,10 @@ async function handlePayOrder(record: Payment.Order.IPaymentRecordVo) {
     },
   })
 }
-// #endregion
 
-// #region 生命周期钩子
+/** 登录成功处理 */
 function onLoginSuccess() {
-  const daterange = filters.value[0] as [number, number]
-  if (Array.isArray(daterange) && daterange.length === 2) {
-    const [startTime, endTime] = daterange
-    query.value.startDate = dayjs(startTime).format('YYYY-MM-DD')
-    query.value.endDate = dayjs(endTime).format('YYYY-MM-DD')
-  }
-
+  applyFiltersToQuery()
   batchRequestHandler([onRefreshList()])
 }
 
@@ -155,7 +114,6 @@ onMounted(() => {
     }
   })
 })
-// #endregion
 </script>
 
 <template>
@@ -187,6 +145,7 @@ onMounted(() => {
           v-for="record in recordsList"
           :key="record.id"
           :record="record"
+          :show-device-type="showDeviceType"
           :cancel-loading="cancelLoading"
           @detail="goToRechargeDetail(record)"
           @cancel="handleCancelOrder(record)"

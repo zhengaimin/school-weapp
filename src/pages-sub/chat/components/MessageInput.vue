@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { Ref } from 'vue'
 import type { Message } from '@/api/interface/modules/message'
 import { computed, getCurrentInstance, inject, nextTick, provide, ref, watch } from 'vue'
 import Icon from '@/components/icon/index.vue'
@@ -6,9 +7,19 @@ import { boundingClientRect } from '@/utils/dom'
 import VoiceInput from './VoiceInput.vue'
 
 // 定义消息发送配置接口
-export interface MessageSendConfig {
+export interface TMessageSendConfig {
   canSendText: boolean
   maxTextLength: number
+}
+
+/**
+ * @description 媒体消息发送参数
+ */
+export interface TMediaMessagePayload {
+  fileType: 'image' | 'video'
+  tempFilePath: string
+  fileName?: string
+  duration?: number
 }
 
 defineOptions({
@@ -20,7 +31,7 @@ defineOptions({
 // 定义组件props
 const props = withDefaults(
   defineProps<{
-    config?: Partial<MessageSendConfig>
+    config?: Partial<TMessageSendConfig>
   }>(),
   {
     config: () => ({
@@ -34,6 +45,7 @@ const props = withDefaults(
 const emit = defineEmits<{
   sendText: [content: string]
   sendVoice: [filePath: string, duration: number]
+  sendMedia: [payload: TMediaMessagePayload]
   focus: []
   blur: []
   inputChange: [height: number]
@@ -70,9 +82,8 @@ const isSendButtonDisabled = computed(() => {
 })
 
 // 发送文本消息
-function sendTextMessage() {
-  if (isSendButtonDisabled.value)
-    return
+function handleSendTextMessage() {
+  if (isSendButtonDisabled.value) return
 
   const content = inputValue.value.trim()
   if (!content) {
@@ -97,8 +108,7 @@ async function handleInput() {
   await nextTick()
   const rect: any = await boundingClientRect('.input-area', instance)
 
-  if (rect && rect.height)
-    emit('inputChange', rect.height)
+  if (rect && rect.height) emit('inputChange', rect.height)
 }
 
 // 处理键盘高度变化
@@ -134,8 +144,7 @@ function handleToggleInputMode() {
   if (isVoiceMode.value) {
     // 切换到语音模式，隐藏键盘
     uni.hideKeyboard()
-  }
-  else {
+  } else {
     // 切换到文本模式时，如果正在录音，停止录音
     if (voiceInputRef.value) {
       voiceInputRef.value.stopRecording()
@@ -147,6 +156,65 @@ function handleToggleInputMode() {
 // 处理语音发送
 function handleSendVoice(filePath: string, duration: number) {
   emit('sendVoice', filePath, duration)
+}
+
+/**
+ * @description 根据临时文件路径提取文件名
+ * @param tempFilePath - 临时文件路径
+ */
+function getMediaFileName(tempFilePath: string): string {
+  const pathParts = tempFilePath.split('/')
+  const fileName = pathParts[pathParts.length - 1]
+  return fileName || `chat_media_${Date.now()}`
+}
+
+/**
+ * @description 统一选择媒体并发送给父组件
+ * @param mediaType - 媒体类型
+ */
+function handleChooseCameraMedia(mediaType: 'image' | 'video') {
+  uni.hideKeyboard()
+  uni.chooseMedia({
+    count: 1,
+    mediaType: [mediaType],
+    sourceType: ['camera'],
+    maxDuration: mediaType === 'video' ? 60 : 10,
+    camera: 'back',
+    success: (result) => {
+      const mediaItem = result.tempFiles[0]
+      if (!mediaItem?.tempFilePath) {
+        uni.showToast({ title: '未获取到媒体文件', icon: 'none' })
+        return
+      }
+      emit('sendMedia', {
+        fileType: mediaType,
+        tempFilePath: mediaItem.tempFilePath,
+        fileName: getMediaFileName(mediaItem.tempFilePath),
+        duration: mediaType === 'video' ? Number(mediaItem.duration || 0) : undefined,
+      })
+    },
+    fail: (error) => {
+      if (String(error?.errMsg || '').includes('cancel')) return
+      uni.showToast({
+        title: mediaType === 'image' ? '拍照失败，请重试' : '录像失败，请重试',
+        icon: 'none',
+      })
+    },
+  })
+}
+
+/**
+ * @description 拍照并发送图片消息
+ */
+function handleTakePhoto() {
+  handleChooseCameraMedia('image')
+}
+
+/**
+ * @description 录像并发送视频消息
+ */
+function handleRecordVideo() {
+  handleChooseCameraMedia('video')
 }
 
 // 监听子组件的录音消息数据变化
@@ -223,7 +291,7 @@ watch(voiceMessageDataFromChild, (newMessageData) => {
             @focus="emit('focus')"
             @blur="emit('blur')"
             @keyboardheightchange="handleKeyboardHeightChange"
-            @confirm="sendTextMessage"
+            @confirm="handleSendTextMessage"
           />
         </view>
       </scroll-view>
@@ -232,13 +300,21 @@ watch(voiceMessageDataFromChild, (newMessageData) => {
       <VoiceInput v-else ref="voiceInputRef" style="width: 100%;" @send-voice="handleSendVoice" />
 
       <!-- 发送按钮 -->
-      <view v-if="!isVoiceMode" class="action-button" h-64rpx flex="shrink-0">
+      <view v-if="!isVoiceMode" class="action-button" h-64rpx flex="~ items-center shrink-0">
+        <view class="media-actions" flex="~ items-center" gap="2">
+          <view class="media-action-btn" flex="~ items-center justify-center" @click="handleTakePhoto">
+            <Icon name="camera-line" icon-size="34rpx" icon-color="#666666" />
+          </view>
+          <view class="media-action-btn" flex="~ items-center justify-center" @click="handleRecordVideo">
+            <Icon name="play-circle-line" icon-size="34rpx" icon-color="#666666" />
+          </view>
+        </view>
         <wd-button
           type="primary"
           size="small"
           custom-class="send-btn"
           :disabled="isSendButtonDisabled"
-          @click="sendTextMessage"
+          @click="handleSendTextMessage"
         >
           发送
         </wd-button>
@@ -308,5 +384,16 @@ watch(voiceMessageDataFromChild, (newMessageData) => {
   &:active {
     transform: scale(0.95);
   }
+}
+
+.media-actions {
+  margin-right: 16rpx;
+}
+
+.media-action-btn {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 12rpx;
+  background-color: #f5f5f5;
 }
 </style>

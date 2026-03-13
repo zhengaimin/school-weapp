@@ -10,8 +10,6 @@
 
 <script lang="ts" setup>
 import type { Pkg } from '@/api/interface/modules/package'
-import type { FilterConfig } from '@/components/common/filter-group/index.vue'
-import dayjs from 'dayjs'
 import { computed, ref } from 'vue'
 import { getStudentPackagesApi } from '@/api/modules/package'
 import FilterGroup from '@/components/common/filter-group/index.vue'
@@ -25,9 +23,10 @@ import {
   PAYMENT_METHOD,
 } from '@/constant/modules'
 import { PACKAGE_HISTORY_RESULT_PATH } from '@/constant/router'
+import { useDeviceType } from '@/hooks/useDeviceType'
+import { useHistoryFilters } from '@/hooks/useHistoryFilters'
 import { usePage } from '@/hooks/usePage'
 import { useRefresh } from '@/hooks/useRefresh'
-import { useCurrentStudentStore } from '@/store/business/currentStudent'
 import { usePackageEmitter } from '@/utils/emit/package'
 import RefundModal from '../../components/RefundModal.vue'
 import { usePayment } from '../../hooks/usePayment'
@@ -39,12 +38,10 @@ defineOptions({
   },
 })
 
-type FilterValue = string | number | number[] | [number, number]
-
 const { pageLoading, pageError, getContentHeight, batchRequestHandler, onLoginFail } = usePage()
 const { axiosPostContinuePaymentApi, axiosPostCancelPaymentApi } = usePayment()
 const { emitPackageTransaction, onPackageRefund } = usePackageEmitter()
-const currentStudentStore = useCurrentStudentStore()
+const { hasVideoDevice, hasDryerDevice } = useDeviceType()
 const {
   query,
   list: recordsList,
@@ -55,19 +52,10 @@ const {
   onRefreshList,
   onLoadMore,
 } = useRefresh<Pkg.Query.IPackagePurchaseVo>({
-  get: params =>
-    getStudentPackagesApi({
-      ...params,
-      deviceType: currentStudentStore.deviceType,
-    }),
+  get: getStudentPackagesApi,
   listField: 'packages',
   immediate: false,
 })
-/** 筛选条件：默认获取这一年的数据 */
-const filters = ref<FilterValue[]>([
-  [dayjs().subtract(1, 'year').valueOf(), dayjs().valueOf()],
-  ALL,
-])
 /** 退款弹框显示状态 */
 const showRefundModal = ref(false)
 /** 当前退款记录ID */
@@ -75,25 +63,33 @@ const currentRefundId = ref<number>()
 /** 是否有待退款订单 */
 const hasPendingRefund = ref(false)
 
-/** 筛选器配置 */
-const filterConfigs = computed<FilterConfig[]>(() => [
-  {
-    key: 'daterange',
-    title: '选择时间范围',
-    type: 'daterange',
-    concise: true,
-    options: [],
-  },
-  {
-    key: 'status',
-    title: '套餐购买状态',
-    type: 'select',
-    options: [{ label: '全部', value: ALL }, ...PACKAGE_BUY_STATUS_OPTIONS],
-  },
-])
 /** 内容区域样式 */
 const contentStyle = computed(() => {
   return getContentHeight('140rpx')
+})
+
+const { filters, filterConfigs, onFilterChange, applyFiltersToQuery } = useHistoryFilters({
+  query,
+  onRefreshList,
+  extraFilters: [
+    {
+      key: 'status',
+      title: '套餐购买状态',
+      type: 'select',
+      concise: false,
+      options: [{ label: '全部', value: ALL }, ...PACKAGE_BUY_STATUS_OPTIONS],
+      inDrawer: true,
+      defaultValue: ALL,
+      apply: (value, targetQuery) => {
+        if (value !== ALL) {
+          targetQuery.status = value
+          return
+        }
+
+        delete targetQuery.status
+      },
+    },
+  ],
 })
 
 /** 跳转到套餐记录详情 */
@@ -103,25 +99,6 @@ function goToPackageDetail(_event: Event, record: Pkg.Query.IPackagePurchaseVo) 
   uni.navigateTo({
     url: `${PACKAGE_HISTORY_RESULT_PATH}?type=purchase&orderNo=${orderNo}&packageRecordId=${packageRecordId}`,
   })
-}
-/** 筛选条件变化 */
-function handleFilterChange(key: string, value: [number, number] | string) {
-  if (key === 'daterange') {
-    const [startTime, endTime] = value as [number, number]
-
-    query.value.startDate = dayjs(startTime).format('YYYY-MM-DD')
-    query.value.endDate = dayjs(endTime).format('YYYY-MM-DD')
-  }
-  else if (key === 'status') {
-    if (value !== ALL) {
-      query.value.status = value
-    }
-    else {
-      delete query.value.status
-    }
-  }
-
-  onRefreshList()
 }
 /** 取消订单 */
 async function handleCancelOrder(record: Pkg.Query.IPackagePurchaseVo) {
@@ -178,13 +155,14 @@ function handleRefundSuccess(id: number) {
 
 /** 登录成功处理 */
 function onLoginSuccess() {
-  const daterange = filters.value[0] as [number, number]
-  const [startTime, endTime] = daterange
-  query.value.startDate = dayjs(startTime).format('YYYY-MM-DD')
-  query.value.endDate = dayjs(endTime).format('YYYY-MM-DD')
-
+  applyFiltersToQuery()
   batchRequestHandler([onRefreshList()])
 }
+
+const showDeviceType = computed(() => {
+  const count = Number(hasVideoDevice.value) + Number(hasDryerDevice.value)
+  return count > 1
+})
 
 onShow(() => {
   onPackageRefund((id) => {
@@ -212,7 +190,7 @@ onShow(() => {
   >
     <view p="4 t-2!">
       <!-- 筛选区域 -->
-      <FilterGroup v-model="filters" :filters="filterConfigs" @change="handleFilterChange" />
+      <FilterGroup v-model="filters" :filters="filterConfigs" @change="onFilterChange" />
     </view>
 
     <!-- 退款申请弹框 -->
@@ -237,6 +215,7 @@ onShow(() => {
           v-for="record in recordsList"
           :key="record.id"
           :record="record"
+          :show-device-type="showDeviceType"
           :has-pending-refund="hasPendingRefund"
           @click="goToPackageDetail"
           @cancel="handleCancelOrder"

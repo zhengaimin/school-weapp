@@ -1,6 +1,8 @@
+import type { TDeviceType } from '@/constant/modules'
+
 import { storeToRefs } from 'pinia'
 import { computed } from 'vue'
-
+import { DEVICE_TYPE, DEVICE_TYPE_I18N } from '@/constant/modules'
 import { useUserStore } from '@/store/user'
 
 /**
@@ -30,10 +32,38 @@ export function useDeviceType() {
     return supportedDeviceTypes.value.includes('DRYER')
   })
 
+  /** 默认设备类型（优先 VIDEO，其次 DRYER） */
+  const defaultDeviceType = computed<TDeviceType>(() => {
+    if (supportedDeviceTypes.value.includes(DEVICE_TYPE.VIDEO)) return DEVICE_TYPE.VIDEO
+    if (supportedDeviceTypes.value.includes(DEVICE_TYPE.DRYER)) return DEVICE_TYPE.DRYER
+    return DEVICE_TYPE.VIDEO
+  })
+
+  /** 设备类型单选列表 */
+  const deviceTypeRadioOptions = computed(() => {
+    // 只有一种设备就不需要下拉选项了
+    if (!hasVideoDevice.value || !hasDryerDevice.value) return null
+
+    return [
+      {
+        label: DEVICE_TYPE_I18N[DEVICE_TYPE.VIDEO],
+        value: DEVICE_TYPE.VIDEO,
+        disabled: !hasVideoDevice.value,
+      },
+      {
+        label: DEVICE_TYPE_I18N[DEVICE_TYPE.DRYER],
+        value: DEVICE_TYPE.DRYER,
+        disabled: !hasDryerDevice.value,
+      },
+    ]
+  })
+
   return {
     supportedDeviceTypes,
     isDeviceTypeSupported,
     hasVideoDevice,
     hasDryerDevice,
+    defaultDeviceType,
+    deviceTypeRadioOptions,
   }
 }

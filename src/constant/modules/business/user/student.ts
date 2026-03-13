@@ -1,6 +1,5 @@
 import type { IOption, TI18NMap } from '@/types'
 
-// #region 学生搜索类型
 // Types
 export const SEARCH_TYPE = {
   CODE: 'studentCode',
@@ -23,9 +22,7 @@ export const SEARCH_TYPE_OPTIONS: IOption<TSearchType>[] = [
   { label: SEARCH_TYPE_I18N[SEARCH_TYPE.ID_CARD], value: SEARCH_TYPE.ID_CARD },
   { label: SEARCH_TYPE_I18N[SEARCH_TYPE.UUID], value: SEARCH_TYPE.UUID },
 ]
-// #endregion
 
-// #region 人脸状态
 // Types
 export const FACE_STATUS = {
   NOT_COLLECTED: 0,
@@ -54,4 +51,3 @@ export const FACE_STATUS_OPTIONS: IOption<TFaceStatus>[] = [
   { label: FACE_STATUS_I18N[FACE_STATUS.AUDIT_PASSED], value: FACE_STATUS.AUDIT_PASSED },
   { label: FACE_STATUS_I18N[FACE_STATUS.AUDIT_FAILED], value: FACE_STATUS.AUDIT_FAILED },
 ]
-// #endregion

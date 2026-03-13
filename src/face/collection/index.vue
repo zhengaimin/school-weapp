@@ -9,7 +9,6 @@
 </route>
 
 <script setup lang="ts">
-// #region 导入
 import type { File } from '@/api/interface/modules/file'
 import { storeToRefs } from 'pinia'
 import { computed, ref } from 'vue'
@@ -28,25 +27,19 @@ import { useUserStore } from '@/store/user'
 import { uploadFilePromise, uploadFileUrl } from '@/utils/file'
 import { toast } from '@/utils/toast'
 import { FACE_STATUS_CONFIG } from './utils/business'
-// #endregion
 
-// #region 组件选项配置
 defineOptions({
   options: {
     styleIsolation: 'shared',
   },
 })
-// #endregion
 
-// #region 使用 Hooks
 const { pageLoading, pageError, pageLoaded, batchRequestHandler, onLoginFail } = usePage()
 const userStore = useUserStore()
 const parentStore = useParentStore()
 const currentStudentStore = useCurrentStudentStore()
 const { studentInfo } = storeToRefs(currentStudentStore)
-// #endregion
 
-// #region 定义响应式数据
 const uploadedImageInfo = ref<File.Upload.ResPostUploadApi | null>(null)
 // 页面状态
 const selectedMethod = ref<'upload' | 'camera' | null>(null)
@@ -56,17 +49,13 @@ const showLastImageModal = ref(false)
 const previewImageUrl = ref('')
 const showExternalImagePreview = ref(false)
 const externalImageUrl = ref('')
-// #endregion
 
-// #region 定义计算属性
 // 人脸状态公告配置
 const noticeConfig = computed(() => {
   const faceStatus = studentInfo.value?.faceStatus ?? FACE_STATUS.NOT_COLLECTED
   return FACE_STATUS_CONFIG[faceStatus]
 })
-// #endregion
 
-// #region 事件处理函数
 // 重新拍照处理函数
 function handleRetakePhoto() {
   externalImageUrl.value = ''
@@ -111,12 +100,10 @@ async function handleSubmitExternalImage() {
         await userStore.getUserInfo()
         await parentStore.axiosGetStudentListApi()
       }
-    }
-    else {
+    } else {
       toast.show('图片上传失败，请重试')
     }
-  }
-  catch (error) {
+  } catch (error) {
     console.error('提交外部图片失败:', error)
     toast.show('图片上传失败，请重试')
   }
@@ -149,16 +136,13 @@ async function selectUploadMethod() {
     if (result.code === 0) {
       uploadedImageInfo.value = result.data
       showImagePreview.value = true
-    }
-    else {
+    } else {
       toast.show('图片上传失败，请重试')
     }
-  }
-  catch (err: any) {
+  } catch (err: any) {
     if (err && err.errMsg && err.errMsg.includes('cancel')) {
       // User cancelled, do nothing
-    }
-    else {
+    } else {
       console.error('选择或上传失败:', err)
       toast.show('无法选择或上传照片，请稍后重试')
     }
@@ -208,21 +192,17 @@ async function confirmSubmitImage() {
       await userStore.getUserInfo()
       await parentStore.axiosGetStudentListApi()
     }
-  }
-  catch (error) {
+  } catch (error) {
     console.error('提交确认失败:', error)
     toast.show('更新用户信息时出错，请重试')
-  }
-  finally {
+  } finally {
     // 删除图片数据
     uploadedImageInfo.value = null
     capturedPhoto.value = null
     selectedMethod.value = null
   }
 }
-// #endregion
 
-// #region 生命周期钩子
 function onLoginSuccess() {
   batchRequestHandler([userStore.getUserInfo()])
 }
@@ -242,7 +222,6 @@ onShow(() => {
 defineExpose({
   acceptParams,
 })
-// #endregion
 </script>
 
 <template>

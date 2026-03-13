@@ -1,4 +1,3 @@
-// #region 错误码定义
 export const ERROR_CODES = {
   // 角色相关 (100901-100905)
   100901: '角色不存在',
@@ -198,4 +197,3 @@ export function isKnownErrorCode(code: TErrorCode | string | number): code is TE
   const errorCode = String(code)
   return errorCode in ERROR_CODES
 }
-// #endregion

@@ -1,11 +1,10 @@
 import { storeToRefs } from 'pinia'
 
-import { getRelationshipOptionsApi } from '@/api/modules/family'
-import { useConfigStore } from '@/store/config'
+import { useCurrentStudentStore } from '@/store/business/currentStudent'
 
 export function useConfig() {
-  const configStore = useConfigStore()
-  const { relationshipOptions } = storeToRefs(configStore)
+  const currentStudentStore = useCurrentStudentStore()
+  const { relationshipOptions } = storeToRefs(currentStudentStore)
 
   /**
    * @description 获取关系选项
@@ -14,9 +13,7 @@ export function useConfig() {
     if (relationshipOptions.value) {
       return { code: 0 }
     }
-    const res = await getRelationshipOptionsApi()
-    configStore.setRelationshipOptions(res.data.options)
-    return res
+    return currentStudentStore.axiosGetRelationshipOptionsApi()
   }
 
   return {

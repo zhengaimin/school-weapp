@@ -9,27 +9,19 @@
 </route>
 
 <script lang="ts" setup>
-// #region 导入
 import Page from '@/components/common/page/index.vue'
 import { usePage } from '@/hooks/usePage'
 import { getEnvBaseUrl } from '@/utils'
-// #endregion
 
-// #region 组件选项配置
 defineOptions({
   options: {
     styleIsolation: 'apply-shared',
   },
 })
-// #endregion
 
-// #region 使用 Hooks
 const { pageLoading, pageError, onLoginSuccess, onLoginFail } = usePage()
-// #endregion
 
-// #region 定义响应式数据
 const imageBaseUrl = `${getEnvBaseUrl()}/img/qrcode.jpg`
-// #endregion
 </script>
 
 <template>

@@ -1,4 +1,3 @@
-export * from './demo'
 export * from './devices'
 export * from './family'
 export * from './file'

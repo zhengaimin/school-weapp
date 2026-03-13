@@ -1,4 +1,3 @@
-// #region 家长端小程序模块常量
 export const MINIAPP_MODULE_KEY_ACCOUNT_INFO = 'account_info' // 账户信息
 export const MINIAPP_MODULE_KEY_REFUND_APPLY = 'refund_apply' // 申请退费
 export const MINIAPP_MODULE_KEY_CONSUMPTION_RECORD = 'consumption_record' // 消费记录
@@ -15,4 +14,3 @@ export const MINIAPP_MODULE_KEY_RECHARGE = 'recharge' // 选择充值模块
 export const MINIAPP_MODULE_KEY_SELECT_RECHARGE_AMOUNT = 'select_recharge_amount' // 选择充值金额
 export const MINIAPP_MODULE_KEY_INPUT_RECHARGE_AMOUNT = 'input_recharge_amount' // 自定义充值金额
 export const MINIAPP_MODULE_KEY_PACKAGE_MINUTES = 'package_minutes' // 套餐剩余分钟数
-// #endregion
