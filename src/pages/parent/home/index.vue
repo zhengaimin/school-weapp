@@ -9,40 +9,13 @@
 </route>
 
 <script setup lang="ts">
-import type { User } from '@/api/interface/modules/user'
-
 import dayjs from 'dayjs'
-import { storeToRefs } from 'pinia'
-import { computed, nextTick, ref, unref } from 'vue'
-import { getCheckSelfApi } from '@/api/modules/family/contacts'
-import { postParentSwitchChildApi } from '@/api/modules/students'
 import Notice from '@/components/common/notice/index.vue'
 import Page from '@/components/common/page/index.vue'
 import Icon from '@/components/icon/index.vue'
-import {
-  DEVICE_TYPE,
-  MENU_LIST,
-  MINIAPP_MODULE_KEY_ACCOUNT_INFO,
-  MINIAPP_MODULE_KEY_FACE_COLLECTION,
-  MINIAPP_MODULE_KEY_RECHARGE,
-} from '@/constant/modules'
-import {
-  BALANCE_RECHARGE_PATH,
-  COMMON_FOLLOW_PATH,
-  COMMON_WEBVIEW_PATH,
-  FACE_CONSENT_PATH,
-} from '@/constant/router'
-import { useBalance } from '@/hooks/useBalance'
-import { useDeviceType } from '@/hooks/useDeviceType'
-import { usePage } from '@/hooks/usePage'
-import { useAppStore } from '@/store/app'
-import { useParentStore } from '@/store/auth/parent'
-import { useCurrentStudentStore } from '@/store/business/currentStudent'
-import { useUserStore } from '@/store/user'
-import { toast } from '@/utils/toast'
-
 import StudentSelector from './components/StudentSelector.vue'
 import { getGreeting } from './data'
+import { useHome } from './hooks/useHome'
 
 defineOptions({
   options: {
@@ -50,199 +23,29 @@ defineOptions({
   },
 })
 
-const { pageLoading, pageError, pageLoaded, getContentHeight, batchRequestHandler, onLoginFail }
-  = usePage()
-
-const userStore = useUserStore()
-const parentStore = useParentStore()
-const currentStudentStore = useCurrentStudentStore()
-const { userInfo, phone } = storeToRefs(userStore)
-const { students } = storeToRefs(parentStore)
-const { studentInfo, devices } = storeToRefs(currentStudentStore)
-const { navBarInfo } = storeToRefs(useAppStore())
-const { dryerBalanceInfo, videoBalanceInfo } = useBalance()
-const { defaultDeviceType } = useDeviceType()
-
-const consumptionStats = ref<User.Consumption.IConsumptionStatisticsVo>()
-const isInFamilyContact = ref<boolean>(false)
-// Feature flag: hide balance display but keep the code for later use.
-const showBalanceSection = false
-
-const headerHeight = computed(() => {
-  return `calc(260rpx + ${navBarInfo.value.navBarHeight}px)`
-})
-const headerInfoTop = computed(() => {
-  return `calc(16rpx + ${navBarInfo.value.navBarHeight}px)`
-})
-const contentHeight = computed(() => {
-  return getContentHeight('(260rpx - 48rpx)')
-})
-const showOfficialAccountNotice = computed(() => {
-  const info = unref(userInfo) as any
-
-  if (!info) return false
-
-  // 检查微信服务号关注状态
-  const subscribed = info?.wechatSubscribed
-
-  return subscribed === undefined ? true : !subscribed
-})
-const hasAgreementSigned = computed(() => {
-  const info = unref(userInfo) as any
-  return !!info?.agreementUrl
-})
-const studentModules = computed(() => {
-  return studentInfo.value?.modules || []
-})
-const primaryDeviceType = computed(() => {
-  return devices.value?.[0]?.deviceType || defaultDeviceType.value || DEVICE_TYPE.VIDEO
-})
-const currentBalanceInfo = computed(() => {
-  if (primaryDeviceType.value === DEVICE_TYPE.DRYER) {
-    return dryerBalanceInfo.value
-  }
-  return videoBalanceInfo.value
-})
-const hasAccountModules = computed(() => {
-  return studentModules.value.includes(MINIAPP_MODULE_KEY_ACCOUNT_INFO)
-})
-const hasRechargeModules = computed(() => {
-  return studentModules.value.includes(MINIAPP_MODULE_KEY_RECHARGE)
-})
-const filteredMenuList = computed(() => {
-  const modules = new Set(studentModules.value)
-  return MENU_LIST.filter((item) => {
-    if (item.id === MINIAPP_MODULE_KEY_FACE_COLLECTION) return false
-    if (!item.id) return true
-    return modules.has(item.id)
-  })
-})
-const accountInfoMenuItem = computed(() => {
-  return filteredMenuList.value.find(item => item.id === MINIAPP_MODULE_KEY_ACCOUNT_INFO) || null
-})
-const otherMenuList = computed(() => {
-  return filteredMenuList.value.filter(item => item.id !== MINIAPP_MODULE_KEY_ACCOUNT_INFO)
-})
-const selectedStudentId = computed<number | null>({
-  get: () => studentInfo.value?.studentId ?? null,
-  set: (id) => {
-    if (id == null || id === studentInfo.value?.studentId) return
-    handleStudentChange(id)
-  },
-})
-
-/** 查询手机号是否存在于亲情号列表中 */
-async function axiosGetCheckSelfApi() {
-  try {
-    const result = await getCheckSelfApi({ phone: unref(phone) || unref(userInfo).phone })
-
-    if (result.code === 0) {
-      const { exists, contactInfo: selfContactInfo } = result.data
-      // 保存是否存在于亲情号中的状态
-      isInFamilyContact.value = exists
-
-      // 如果存在亲情号信息，则存储到 store
-      if (exists && selfContactInfo) {
-        currentStudentStore.setContactInfo(selfContactInfo)
-      }
-    }
-
-    return result
-  } catch (error) {
-    console.error('获取联系人信息失败:', error)
-    isInFamilyContact.value = false
-    return { code: -1 }
-  }
-}
-
-/** 关注公众号 */
-function handleGoToOfficialAccount() {
-  uni.navigateTo({
-    url: COMMON_FOLLOW_PATH,
-  })
-}
-/** 页面跳转 */
-function handleNavigationToPath(path: string, item: any = null) {
-  // 检查是否点击留言功能
-  if (item && item.id === 'message' && !isInFamilyContact.value) {
-    toast.show('您的手机号未在亲情号中，无法使用留言功能')
-    return
-  }
-  // 检查是否点击人脸采集功能
-  if (item && (item.id === 'face' || item.title === '人脸采集') && !hasAgreementSigned.value) {
-    // 如果没有签名授权，直接跳转到同意授权页面
-    uni.navigateTo({
-      url: FACE_CONSENT_PATH,
-    })
-    return
-  }
-  // 跳转成绩页面 - 第三方
-  if (item && item.id === 'score') {
-    const { UUID } = unref(studentInfo) || {}
-    const { scoreUrl, schoolName } = unref(userInfo)
-
-    const path = `${scoreUrl}?onlyCode=${UUID}&schoolName=${schoolName}`
-    // const path = `https://test.hainanxinyang.net/student/Account/WebLogin?onlyCode=250224&schoolName=测试学校`
-    uni.navigateTo({
-      // 不编码，webview 页面无法拿到 ? 后面的参数内容
-      url: `${COMMON_WEBVIEW_PATH}?path=${encodeURIComponent(path)}`,
-    })
-    return
-  }
-
-  uni.navigateTo({
-    url: path,
-  })
-}
-/** 切换学生和设备 */
-async function handleStudentChange(childId: number) {
-  pageError.value = ''
-  pageLoading.value = true
-
-  try {
-    const previousStudentId = parentStore.currentStudentId
-    const result = await postParentSwitchChildApi({ childUserId: childId })
-
-    if (result.code === 0) {
-      // 如果切换到不同的学生，清空旧学生的业务数据
-      if (previousStudentId !== childId) {
-        currentStudentStore.clearStudentData()
-      }
-
-      // 设置新的学生ID
-      parentStore.setCurrentStudentId(childId)
-      const selectedStudent = students.value.find(student => student.id === childId)
-      currentStudentStore.setDevices(selectedStudent?.devices ?? [])
-
-      const { token } = result.data
-
-      if (token) {
-        userStore.setToken(token)
-        await userStore.getUserInfo()
-      }
-
-      await nextTick()
-      await batchRequestHandler([axiosGetCheckSelfApi()], {
-        auto: false,
-      })
-    }
-  } catch (error) {
-    console.error('切换学生失败', error)
-  } finally {
-    pageError.value = ''
-    pageLoading.value = false
-  }
-}
-/** 登录成功处理 */
-async function handleLoginSuccess() {
-  await batchRequestHandler([axiosGetCheckSelfApi()])
-}
-
-onShow(() => {
-  if (unref(pageLoaded)) {
-    batchRequestHandler([userStore.getUserInfo(), axiosGetCheckSelfApi()])
-  }
-})
+const {
+  BALANCE_RECHARGE_PATH,
+  pageLoading,
+  pageError,
+  onLoginFail,
+  userInfo,
+  students,
+  selectedStudentId,
+  showOfficialAccountNotice,
+  showBalanceSection,
+  currentBalanceInfo,
+  hasAccountModules,
+  consumptionStats,
+  accountInfoMenuItem,
+  hasRechargeModules,
+  otherMenuList,
+  headerHeight,
+  headerInfoTop,
+  contentHeight,
+  handleGoToOfficialAccount,
+  handleNavigationToPath,
+  handleLoginSuccess,
+} = useHome()
 </script>
 
 <template>

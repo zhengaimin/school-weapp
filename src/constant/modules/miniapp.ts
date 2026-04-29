@@ -6,6 +6,7 @@ export const MINIAPP_MODULE_KEY_PACKAGE_PURCHASE = 'package_purchase' // 套餐�
 export const MINIAPP_MODULE_KEY_FACE_COLLECTION = 'face_collection' // 人脸采集
 export const MINIAPP_MODULE_KEY_FAMILY_CONTACT = 'family_contact' // 亲情号
 export const MINIAPP_MODULE_KEY_DEVICE_SUBSCRIPTION = 'device_subscription' // 设备订阅
+export const MINIAPP_MODULE_KEY_PARENT_MESSAGE = 'parent_message' // 家长留言
 export const MINIAPP_MODULE_KEY_MESSAGE = 'message' // 留言
 export const MINIAPP_MODULE_KEY_BIND_STUDENT = 'bind_student' // 绑定学生
 export const MINIAPP_MODULE_KEY_PROFILE = 'profile' // 个人信息

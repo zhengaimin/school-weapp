@@ -9,17 +9,14 @@
 </route>
 
 <script lang="ts" setup>
-import type { User } from '@/api/interface/modules/user'
 import { computed } from 'vue'
-import { getConsumptionRecordsApi } from '@/api/modules/user/consumption'
 import FilterGroup from '@/components/common/filter-group/index.vue'
 import Page from '@/components/common/page/index.vue'
 import RefreshList from '@/components/common/refresh-list/index.vue'
-import { useDeviceType } from '@/hooks/useDeviceType'
-import { useHistoryFilters } from '@/hooks/useHistoryFilters'
 import { usePage } from '@/hooks/usePage'
-import { useRefresh } from '@/hooks/useRefresh'
 import RecordItem from './components/RecordItem.vue'
+import { CONTENT_HEIGHT_OFFSET } from './constants'
+import { useConsumptionRecords } from './hooks/useConsumptionRecords'
 
 defineOptions({
   options: {
@@ -28,30 +25,24 @@ defineOptions({
 })
 
 const { pageLoading, pageError, batchRequestHandler, onLoginFail, getContentHeight } = usePage()
-const { hasVideoDevice, hasDryerDevice } = useDeviceType()
 const {
   loading,
   refreshLoading,
   loaded,
   empty,
-  list: recordsList,
+  recordsList,
   onRefreshList,
   onLoadMore,
-  query,
-} = useRefresh<User.Consumption.IConsumptionRecordVo>({
-  get: getConsumptionRecordsApi,
-  immediate: false,
-  listField: 'records',
-})
-
-const { filters, filterConfigs, onFilterChange, applyFiltersToQuery } = useHistoryFilters({
-  query,
-  onRefreshList,
-})
+  filters,
+  filterConfigs,
+  onFilterChange,
+  applyFiltersToQuery,
+  showDeviceType,
+} = useConsumptionRecords()
 
 /** 内容区域高度 */
 const contentStyle = computed(() => {
-  return getContentHeight('140rpx')
+  return getContentHeight(CONTENT_HEIGHT_OFFSET)
 })
 
 /** 登录成功处理 */
@@ -59,11 +50,6 @@ async function onLoginSuccess() {
   applyFiltersToQuery()
   batchRequestHandler([onRefreshList()])
 }
-
-const showDeviceType = computed(() => {
-  const count = Number(hasVideoDevice.value) + Number(hasDryerDevice.value)
-  return count > 1
-})
 </script>
 
 <template>

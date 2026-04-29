@@ -59,6 +59,8 @@ export const useCurrentStudentStore = defineStore(
   () => {
     const parentStore = useParentStore()
     const { currentStudentId, studentsIdMap } = storeToRefs(parentStore)
+    const userStore = useUserStore()
+    const { userInfo } = storeToRefs(userStore)
     // 学生基本信息（从概览学生接口同步）
     const studentInfo = ref<CurrentStudentInfo | null>(null)
     // 亲情号信息
@@ -121,9 +123,8 @@ export const useCurrentStudentStore = defineStore(
     const studentFullInfo = computed(() => {
       if (!studentInfo.value) return ''
 
-      const userStore = useUserStore()
       const parts = [
-        userStore.userInfo?.schoolName,
+        userInfo.value?.schoolName,
         studentInfo.value.grade,
         studentInfo.value.departmentName,
         studentInfo.value.className,
@@ -180,12 +181,18 @@ export const useCurrentStudentStore = defineStore(
         ? studentsIdMap.value[currentStudentId.value] || null
         : null
       const mappedStudent = mapParentStudentToCurrentChild(student)
+
+      const currentChildUUID = (userInfo.value?.roleInfo as User.Common.IParentRoleInfoVo)?.currentChild?.UUID
+      if (mappedStudent && currentChildUUID) {
+        mappedStudent.UUID = currentChildUUID
+      }
+
       setStudentInfo(mappedStudent)
       setModules(mappedStudent?.modules ?? [])
       setDevices(student?.devices ?? [])
     }
 
-    watch([currentStudentId, studentsIdMap], () => {
+    watch([currentStudentId, studentsIdMap, userInfo], () => {
       syncCurrentStudentInfo()
     }, { immediate: true })
 

@@ -13,7 +13,7 @@ export type TServiceType = (typeof SERVICE_TYPE)[keyof typeof SERVICE_TYPE]
 export const SERVICE_TYPE_I18N: TI18NMap<TServiceType> = {
   [SERVICE_TYPE.MESSAGE]: '留言',
   [SERVICE_TYPE.CALL]: '通话',
-  [SERVICE_TYPE.DRYER]: '吹风',
+  [SERVICE_TYPE.DRYER]: '吹风机',
 }
 
 // Options

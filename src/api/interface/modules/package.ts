@@ -15,8 +15,6 @@ export namespace Pkg {
       page?: number
       /** 每页数量，默认20 */
       pageSize?: number
-      /** 设备类型 */
-      deviceType?: TDeviceType
     }
 
     /**
@@ -40,6 +38,19 @@ export namespace Pkg {
       totalMonths: number
     }
 
+    /** 可购买套餐内容（按 OpenAPI 同步，字段按需可选） */
+    export interface IAvailablePackageContent {
+      /** 设备类型 */
+      deviceType?: TDeviceType
+      /** 视频通话分钟数 */
+      videoCallMinutes?: number
+      /** 留言条数 */
+      messageCount?: number
+      /** 吹风机分钟数 */
+      dryerMinutes?: number
+      [property: string]: unknown
+    }
+
     /** 套餐信息 */
     export interface IPackage {
       /** 套餐ID */
@@ -49,7 +60,7 @@ export namespace Pkg {
       /** 套餐名称 */
       packageName: string
       /** 套餐内容 */
-      packageContent: IPackageContent
+      packageContent?: IAvailablePackageContent
       /** 实际购买价格 */
       purchasePrice: number
       /** 基础月价格 */
@@ -57,19 +68,19 @@ export namespace Pkg {
       /** 套餐总月数 */
       totalMonths: number
       /** 套餐说明 */
-      templateDescription: string
+      templateDescription?: string
       /** 使用规则 */
-      usageRules: string
+      usageRules?: string
       /** 套餐类型 */
       packageType: TPackageType
       /** 设备类型 */
-      deviceType: string
+      deviceType?: TDeviceType
       /** 套餐开始时间（固定套餐专用） */
-      startTime: string
+      startTime?: string
       /** 套餐结束时间（固定套餐专用） */
-      endTime: string
+      endTime?: string
       /** 是否按月递减（固定套餐专用） */
-      monthlyDecrease: boolean
+      monthlyDecrease?: boolean
     }
 
     /** 获取可购买套餐列表 - 响应 */
@@ -373,7 +384,7 @@ export namespace Pkg {
       /** 套餐模板ID */
       packageTemplateId: number | null
       /** 套餐名称 */
-      packageName: string
+      packageName?: string
       /** 模板代码 */
       templateCode: string
       /** 套餐类型 */
@@ -383,18 +394,18 @@ export namespace Pkg {
       /** 套餐内容 */
       packageContent: {
         /** 留言条数 */
-        messageCount: number
+        messageCount?: number
         /** 视频通话分钟数 */
-        videoCallMinutes: number
+        videoCallMinutes?: number
         /** 吹风机分钟数 */
-        dryerMinutes: number
+        dryerMinutes?: number
       }
       /** 套餐总月数 */
       totalMonths: number
       /** 购买时间 */
       purchaseDate: string
       /** 购买价格 */
-      purchasePrice: string
+      purchasePrice: number
       /** 支付时间 */
       paymentDate: string | null
       /** 支付订单号 */
@@ -402,13 +413,13 @@ export namespace Pkg {
       /** 购买者信息 */
       purchaserInfo: IPurchaserInfo | null
       /** 开始时间 */
-      startDate: string
+      startDate: string | null
       /** 结束时间 */
-      endDate: string
+      endDate: string | null
       /** 套餐状态 */
-      status: TPackageBuyStatus
+      status?: TPackageBuyStatus
       /** 状态文本 */
-      statusText: string
+      statusText?: string
       /** 套餐是否存在 */
       isPackageExists: boolean
       /** 当前模板信息 */
@@ -423,7 +434,7 @@ export namespace Pkg {
         templateCode: string
       } | null
       /** 使用情况 */
-      usageInfo: IUsageInfo | null
+      usageInfo?: IUsageInfo | null
       /** 是否可退款 */
       canRefund: boolean
       /** 剩余可退款金额 */

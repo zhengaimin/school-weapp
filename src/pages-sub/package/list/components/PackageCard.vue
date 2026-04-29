@@ -1,14 +1,12 @@
 <script lang="ts" setup>
-import type { Pkg } from '@/api/interface/modules/package'
-import { storeToRefs } from 'pinia'
+import type { AvailablePackage, PackageListDeviceType } from '../types'
 import { computed } from 'vue'
 import WhiteCard from '@/components/common/white-card/index.vue'
 import { DEVICE_TYPE, PACKAGE_TYPE, PACKAGE_TYPE_I18N } from '@/constant/modules'
-import { useDeviceType } from '@/hooks/useDeviceType'
-import { useCurrentStudentStore } from '@/store/business/currentStudent'
+import { isValidDeviceType } from '../utils/availablePackage'
 
 interface Props {
-  package: Pkg.Query.IPackage
+  package: AvailablePackage
   isPurchased?: boolean
 }
 
@@ -17,13 +15,19 @@ const emit = defineEmits<{
   click: []
 }>()
 
-const currentStudentStore = useCurrentStudentStore()
-const { devices } = storeToRefs(currentStudentStore)
-const { defaultDeviceType } = useDeviceType()
-
 const isFixed = computed(() => props.package.packageType === PACKAGE_TYPE.FIXED)
-const primaryDeviceType = computed(() => devices.value?.[0]?.deviceType || defaultDeviceType.value)
-const isVideoDevice = computed(() => primaryDeviceType.value === DEVICE_TYPE.VIDEO)
+
+const packageDeviceType = computed<PackageListDeviceType>(() => {
+  const packageDeviceType = props.package?.deviceType
+  if (isValidDeviceType(packageDeviceType)) return packageDeviceType
+
+  const contentDeviceType = props.package?.packageContent?.deviceType
+  if (isValidDeviceType(contentDeviceType)) return contentDeviceType
+
+  return DEVICE_TYPE.VIDEO
+})
+
+const isVideoDevice = computed(() => packageDeviceType.value === DEVICE_TYPE.VIDEO)
 
 const messageCountDisplay = computed(() => {
   const count = props.package.packageContent?.messageCount

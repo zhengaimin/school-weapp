@@ -57,19 +57,51 @@ function decodeUrl(encodedUrl: string): string {
   return currentUrl
 }
 
+/**
+ * 解析 URL 查询参数（仅用于日志输出）
+ * @param targetUrl 目标 URL
+ * @returns 查询参数对象
+ */
+function getUrlQueryParams(targetUrl: string): Record<string, string> {
+  if (!targetUrl || !targetUrl.includes('?')) {
+    return {}
+  }
+
+  const queryString = targetUrl.split('?')[1]?.split('#')[0] || ''
+  if (!queryString) {
+    return {}
+  }
+
+  return queryString.split('&').reduce((acc, pair) => {
+    if (!pair) {
+      return acc
+    }
+    const [key, value = ''] = pair.split('=')
+    if (key) {
+      acc[decodeURIComponent(key)] = decodeURIComponent(value)
+    }
+    return acc
+  }, {} as Record<string, string>)
+}
+
 // 处理fab按钮点击
 function handleFabClick() {
   console.log('fab按钮被点击')
 }
 
 onMounted(() => {
-  const { query } = currRoute()
+  const { path: webviewPath, query } = currRoute()
 
-  const { path } = query
+  const path = query?.path || ''
+  const decodedPath = decodeUrl(path)
+  const webviewPagePath = `${webviewPath}?path=${encodeURIComponent(decodedPath)}`
 
-  console.log(decodeUrl(path))
-  if (path) {
-    url.value = decodeUrl(path)
+  console.log('[WebView] 页面路径:', webviewPagePath)
+  console.log('[WebView] 目标链接:', decodedPath)
+  console.log('[WebView] 目标链接参数:', getUrlQueryParams(decodedPath))
+
+  if (decodedPath) {
+    url.value = decodedPath
   }
 })
 </script>

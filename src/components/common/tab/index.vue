@@ -34,8 +34,7 @@ function switchTab(index: number) {
 // 快速滚动到选中的tab，使其位于最左侧
 function scrollToLeftFast(index: number) {
   const targetTab = tabPositions.value[index]
-  if (!targetTab)
-    return
+  if (!targetTab) return
 
   scrollPosition.value = Math.max(0, targetTab.preLeft)
 }
@@ -65,7 +64,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <!-- 分类导航条（唯品会风格） -->
+  <!-- 分类导航条 -->
   <view class="w-full overflow-hidden">
     <scroll-view
       class="tabs-scroll-view w-full"
@@ -87,7 +86,6 @@ onMounted(() => {
           <text class="whitespace-nowrap text-sm">
             {{ tab.label }}
           </text>
-          <view v-if="activeTab === index" class="tab-indicator" />
         </view>
       </view>
     </scroll-view>
@@ -101,21 +99,9 @@ onMounted(() => {
 
   &.active {
     font-weight: 600;
-    color: #0ec69a;
+    color: #3269dd;
     transform: scale(1.05);
   }
-}
-
-.tab-indicator {
-  position: absolute;
-  bottom: 6rpx;
-  left: 50%;
-  width: 40rpx;
-  height: 6rpx;
-  border-radius: 6rpx;
-  background-color: #0ec69a;
-  transform: translateX(-50%);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .tabs-scroll-view {

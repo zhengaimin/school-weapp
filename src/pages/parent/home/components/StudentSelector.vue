@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { IHomeStudent, IStudentDisplayInfo } from '../types'
 import { computed, ref } from 'vue'
 import RoleAvatar from '@/components/common/role-avatar/index.vue'
 import Icon from '@/components/icon/index.vue'
@@ -10,15 +11,7 @@ defineOptions({
 })
 
 const props = defineProps<{
-  students: Array<{
-    id: number
-    name: string
-    avatar?: string
-    schoolName?: string
-    grade?: string
-    departmentName?: string
-    className?: string
-  }>
+  students: IHomeStudent[]
   modelValue: number | null
 }>()
 
@@ -53,12 +46,7 @@ function selectStudent(id: number) {
   }
 }
 
-function getStudentFullInfo(student: {
-  schoolName?: string
-  grade?: string
-  departmentName?: string
-  className?: string
-}) {
+function getStudentFullInfo(student: IStudentDisplayInfo) {
   return [student.schoolName, student.grade, student.departmentName, student.className]
     .filter(Boolean)
     .join(' · ')

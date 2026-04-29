@@ -59,7 +59,10 @@
     "openapi-ts-request": "openapi-ts",
     "prepare": "git init && husky",
     "lint": "eslint",
-    "lint:fix": "eslint --fix"
+    "lint:fix": "eslint --fix",
+    "workflow:style-check": "node C:/Users/aimin.zheng/aimin-workflow/aimin-code-style-skill/rules/runner.mjs --project-root .",
+    "workflow:style-check:all": "node C:/Users/aimin.zheng/aimin-workflow/aimin-code-style-skill/rules/runner.mjs --project-root . --all",
+    "workflow:style-check:rules": "node C:/Users/aimin.zheng/aimin-workflow/aimin-code-style-skill/rules/runner.mjs --project-root . --rules"
   },
   "dependencies": {
     "@alova/adapter-uniapp": "^2.0.14",

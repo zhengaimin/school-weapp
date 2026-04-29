@@ -16,7 +16,8 @@ const PACKAGE_QUERY_API = {
  * @returns {Promise<Pkg.Query.ResGetAvailableApi>}
  */
 export function getAvailablePackagesApi(params: Pkg.Query.ReqGetAvailableApi) {
-  return http.get<Pkg.Query.ResGetAvailableApi>(PACKAGE_QUERY_API.AVAILABLE, params)
+  const { page, pageSize } = params
+  return http.get<Pkg.Query.ResGetAvailableApi>(PACKAGE_QUERY_API.AVAILABLE, { page, pageSize })
 }
 
 /**

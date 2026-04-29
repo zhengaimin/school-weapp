@@ -1,14 +1,12 @@
 <script lang="ts" setup>
-import type { User } from '@/api/interface/modules/user'
+import type { ConsumptionRecordItemProps } from '../types'
 import { computed } from 'vue'
 import WhiteCard from '@/components/common/white-card/index.vue'
-import { CONSUMPTION_SOURCE_I18N, DEVICE_TYPE_I18N, SERVICE_TYPE_I18N } from '@/constant/modules'
+import { DEVICE_TYPE_I18N } from '@/constant/modules'
 import { formatTime } from '@/utils/format'
+import { buildRecordDisplayInfo, formatAmount } from '../utils/record'
 
-const props = defineProps<{
-  record: User.Consumption.IConsumptionRecordVo
-  showDeviceType?: boolean
-}>()
+const props = defineProps<ConsumptionRecordItemProps>()
 
 const emit = defineEmits<{
   click: [event: Event]
@@ -16,36 +14,8 @@ const emit = defineEmits<{
 
 /** 显示信息 */
 const displayInfo = computed(() => {
-  const serviceType = props.record.serviceType as keyof typeof SERVICE_TYPE_I18N
-  const title = SERVICE_TYPE_I18N[serviceType] || '未知消费'
-
-  const consumptionSource = props.record.consumptionSource as keyof typeof CONSUMPTION_SOURCE_I18N
-  const sourceText = CONSUMPTION_SOURCE_I18N[consumptionSource]
-
-  const parts = []
-  if (sourceText) {
-    parts.push(sourceText)
-  }
-  if (props.record.remark) {
-    parts.push(props.record.remark)
-  }
-
-  let subtitle = parts.join('·')
-
-  if (!subtitle) {
-    subtitle = props.record.remark || '未知来源'
-  }
-
-  return {
-    title,
-    subtitle,
-  }
+  return buildRecordDisplayInfo(props.record)
 })
-
-/** 格式化金额显示 */
-function formatAmount(amount: string): string {
-  return `-¥${amount}`
-}
 </script>
 
 <template>

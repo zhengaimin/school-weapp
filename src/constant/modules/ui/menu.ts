@@ -137,6 +137,16 @@ export const MENU_MESSAGE: IMenuItem = {
   path: '/pages-sub/chat/index',
 }
 
+/** 家长留言 - green */
+export const MENU_PARENT_MESSAGE: IMenuItem = {
+  id: 'parent_message',
+  title: '家长留言',
+  icon: 'user-3-line',
+  color: '#22c55e', // green-500
+  bgColor: '#dcfce7', // green-100
+  path: '/pages-sub/chat/index',
+}
+
 /** 关于我们 - gray */
 export const MENU_ABOUT: IMenuItem = {
   icon: 'information-line',
@@ -199,6 +209,7 @@ export const MENU_LIST = [
   MENU_FAMILY_NUMBER,
   MENU_DEVICE_SUBSCRIBE,
   MENU_MESSAGE,
+  MENU_PARENT_MESSAGE,
 
   MENU_STUDENT_BIND,
   MENU_PROFILE,
