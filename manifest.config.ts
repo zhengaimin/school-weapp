@@ -122,6 +122,12 @@ export default defineManifestConfig({
   /* 小程序特有相关 */
   'mp-weixin': {
     appid: VITE_WX_APPID,
+    plugins: {
+      'wmpf-voip': {
+        version: 'latest',
+        provider: 'wxf830863afde621eb',
+      },
+    },
     setting: {
       urlCheck: false,
       // 是否启用 ES6 转 ES5

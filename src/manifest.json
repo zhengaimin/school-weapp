@@ -90,6 +90,12 @@
       "minified": true
     },
     "usingComponents": true,
+    "plugins": {
+      "wmpf-voip": {
+        "version": "latest",
+        "provider": "wxf830863afde621eb"
+      }
+    },
     "optimization": {
       "subPackages": true
     }
