@@ -11,7 +11,9 @@
 <script lang="ts" setup>
 import type { Gifts } from '@/api/interface/modules/gifts'
 import type { Pkg } from '@/api/interface/modules/package'
+import type { User } from '@/api/interface/modules/user'
 import type { TDeviceType } from '@/constant/modules'
+import type { TBatchRequestList } from '@/hooks/usePage'
 import { storeToRefs } from 'pinia'
 import { computed, ref } from 'vue'
 import { getStudentActivePackageApi } from '@/api/modules'
@@ -40,7 +42,9 @@ const {
   devices,
 } = storeToRefs(currentStudentStore)
 
-const consumptionStatistics = ref()
+/** 消费统计 */
+const consumptionStatistics = ref<User.Consumption.IConsumptionStatisticsVo>()
+/** 有效赠费记录 */
 const validGifts = ref<Gifts.Valid.ResGetStudentValidGiftsApi>()
 /** 每个设备对应的生效套餐 */
 const deviceActivePackages = ref<Map<TDeviceType, Pkg.Query.IStudentActivePackageVo | null>>(new Map())
@@ -77,11 +81,10 @@ async function axiosGetConsumptionStatisticsApi() {
       consumptionStatistics.value = result.data
     }
     return result
-  } catch (error) {
+  } catch {
     return { code: -1 }
   }
 }
-
 /** 获取有效赠费记录 */
 async function axiosGetValidGiftsApi() {
   try {
@@ -90,35 +93,34 @@ async function axiosGetValidGiftsApi() {
       validGifts.value = result.data
     }
     return result
-  } catch (error) {
+  } catch {
     return { code: -1 }
   }
 }
-
 /** 获取指定设备类型的生效套餐 */
-async function fetchActivePackage(deviceType: TDeviceType) {
+async function axiosGetActivePackageApi(deviceType: TDeviceType) {
   try {
     const result = await getStudentActivePackageApi({ deviceType })
     if (result.code === 0) {
       deviceActivePackages.value.set(deviceType, result.data.activePackages?.[0] ?? null)
     }
     return result
-  } catch (error) {
+  } catch {
     return { code: -1 }
   }
 }
 
 /** 登录成功处理 */
-async function onLoginSuccess() {
+async function handleLoginSuccess() {
   const deviceList = devices.value || []
-  const requests: Promise<any>[] = [
+  const requests: TBatchRequestList = [
     axiosGetConsumptionStatisticsApi(),
     axiosGetValidGiftsApi(),
   ]
 
   for (const device of deviceList) {
     requests.push(axiosGetUserBalanceApi(device.deviceType))
-    requests.push(fetchActivePackage(device.deviceType))
+    requests.push(axiosGetActivePackageApi(device.deviceType))
   }
 
   await batchRequestHandler(requests)
@@ -135,37 +137,25 @@ async function onLoginSuccess() {
     nav-bg-color="#3269dd"
     nav-text-color="#ffffff"
     nav-icon-color="#ffffff"
-    @login:success="onLoginSuccess"
+    @login:success="handleLoginSuccess"
     @login:fail="onLoginFail"
   >
     <scroll-view scroll-y :style="contentStyle" bg-gray-50>
       <!-- 蓝色背景区域 -->
-      <view class="balance-hero" relative overflow="hidden" bg="#3269dd" pt-safe>
-        <view relative z="10" p="t-5 b-12 x-6" text="white">
-          <view flex="~ col items-center" p="b-4">
-            <!-- 学生信息胶囊 -->
-            <view
-              flex="~ row items-center"
-              gap="1.5"
-              p="x-4 y-2"
-              bg="white/15"
-              rounded-full
-              backdrop-blur-sm
-            >
-              <text text="sm white" font="medium">
-                {{ currentStudent?.studentName || '--' }}
-              </text>
-              <view v-if="studentFullInfo" w="1px" h="3" bg="white/40" />
-              <text v-if="studentFullInfo" text="xs white/75">
-                {{ studentFullInfo }}
-              </text>
-            </view>
-          </view>
+      <view class="balance-hero" relative overflow="hidden" bg="#3269dd">
+        <view class="balance-hero__inner" relative z="10" text="white">
+          <StatisticsCard
+            :month-count="consumptionStatistics?.monthCount"
+            :month-amount="consumptionStatistics?.monthAmount"
+            :total-recharge="totalRecharge"
+            :student-name="currentStudent?.studentName ?? undefined"
+            :student-full-info="studentFullInfo"
+          />
         </view>
       </view>
 
       <!-- 内容区域 -->
-      <view p="x-4 b-6 b-safe" relative z-10 flex="~ col gap-3" class="balance-content">
+      <view p="x-4 b-6 b-safe" relative z-10 flex="~ col gap-4" class="balance-content">
         <!-- 设备余额卡片列表 -->
         <DeviceBalanceCard
           v-for="device in devices"
@@ -175,13 +165,6 @@ async function onLoginSuccess() {
           :active-package="getActivePackageByDevice(device.deviceType)"
           :gift-records="getGiftRecordsByDevice(device.deviceType)"
         />
-
-        <!-- 账户统计卡片 -->
-        <StatisticsCard
-          :month-count="consumptionStatistics?.monthCount"
-          :month-amount="consumptionStatistics?.monthAmount"
-          :total-recharge="totalRecharge"
-        />
       </view>
     </scroll-view>
   </Page>
@@ -189,11 +172,18 @@ async function onLoginSuccess() {
 
 <style lang="scss" scoped>
 .balance-hero {
+  min-height: 384rpx;
+  box-sizing: border-box;
+  padding: 76rpx 32rpx 0;
   border-bottom-left-radius: 56rpx;
   border-bottom-right-radius: 56rpx;
 }
 
+.balance-hero__inner {
+  width: 100%;
+}
+
 .balance-content {
-  margin-top: -48rpx;
+  margin-top: -64rpx;
 }
 </style>

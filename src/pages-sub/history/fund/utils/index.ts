@@ -17,5 +17,5 @@ export function formatAmount(amount: string, type: User.Balance.AmountType): str
   const numAmount = Number.parseFloat(amount)
   const isPositive = POSITIVE_AMOUNT_TYPES.includes(type as TAmountType)
   const prefix = isPositive ? '+' : '-'
-  return `${prefix}¥${Math.abs(numAmount).toFixed(2)}`
+  return `${prefix}￥${Math.abs(numAmount).toFixed(2)}`
 }

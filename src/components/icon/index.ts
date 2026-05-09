@@ -8,6 +8,7 @@ import {
   ARROW_LEFT_RIGHT_FILL,
   ARROW_RIGHT_S_LINE,
   ARROW_UP_S_LINE,
+  BANK_CARD_LINE,
   BILL_LINE,
   CAMERA_LINE,
   CHECK_LINE,
@@ -34,6 +35,7 @@ import {
   LOCK_UNLOCK_LINE,
   MESSAGE_3_LINE,
   MONEY_CNY_CIRCLE_LINE,
+  MONEY_DOLLAR_CIRCLE_LINE,
   PARENT_LINE,
   PAUSE_CIRCLE_LINE,
   PLAY_CIRCLE_FILL,
@@ -65,7 +67,7 @@ import {
   WINDY_LINE,
 } from './modules'
 
-const svgMap = {
+const svgMap: Record<string, string> = {
   // arrows
   'arrow-left-right-fill': ARROW_LEFT_RIGHT_FILL,
   'arrow-right-s-line': ARROW_RIGHT_S_LINE,
@@ -112,6 +114,8 @@ const svgMap = {
   'wallet-3-line': WALLET_3_LINE,
   'wallet-line': WALLET_LINE,
   'money-cny-circle-line': MONEY_CNY_CIRCLE_LINE,
+  'money-dollar-circle-line': MONEY_DOLLAR_CIRCLE_LINE,
+  'bank-card-line': BANK_CARD_LINE,
   'coupon-line': COUPON_LINE,
   'shopping-cart-line': SHOPPING_CART_LINE,
   'refund-line': REFUND_LINE,

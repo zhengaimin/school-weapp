@@ -83,19 +83,13 @@
   },
   "quickapp": {},
   "mp-weixin": {
-    "appid": "wxd306b4755df39867",
+    "appid": "wxf86491ae0549468c",
     "setting": {
       "urlCheck": false,
       "es6": true,
       "minified": true
     },
     "usingComponents": true,
-    "plugins": {
-      "wmpf-voip": {
-        "version": "latest",
-        "provider": "wxf830863afde621eb"
-      }
-    },
     "optimization": {
       "subPackages": true
     }

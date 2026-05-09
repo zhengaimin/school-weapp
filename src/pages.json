@@ -16,16 +16,8 @@
   },
   "pages": [
     {
-      "path": "pages/voip/test/index",
-      "type": "home",
-      "layout": "default",
-      "style": {
-        "navigationBarTitleText": "VoIP 测试"
-      }
-    },
-    {
       "path": "pages/launch/index",
-      "type": "page",
+      "type": "home",
       "layout": "default",
       "style": {
         "navigationStyle": "custom",

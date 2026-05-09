@@ -1,7 +1,9 @@
 doc
 .claude
 .aimin-skill
+.agent
 AGENTS.md
+CLAUDE.md
 
 # Logs
 logs

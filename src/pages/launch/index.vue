@@ -1,4 +1,4 @@
-<route lang="jsonc">
+<route lang="jsonc" type="home">
 {
   "layout": "default",
   "style": {
@@ -20,14 +20,13 @@ defineOptions({
   },
 })
 
-const { pageError, onLoginSuccess, onLoginFail } = usePage()
+const { onLoginSuccess, onLoginFail } = usePage()
 </script>
 
 <template>
   <Page
     :show="false"
     :loading="false"
-    :error="pageError"
     :show-bg="true"
     :bg-colors="['bg-primary', 'bg-primary-light', 'bg-primary']"
     @login:success="onLoginSuccess"

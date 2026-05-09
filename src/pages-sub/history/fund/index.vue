@@ -16,7 +16,6 @@ import FilterGroup from '@/components/common/filter-group/index.vue'
 import Page from '@/components/common/page/index.vue'
 import RefreshList from '@/components/common/refresh-list/index.vue'
 import { ALL, AMOUNT_TYPE_OPTIONS } from '@/constant/modules'
-import { useDeviceType } from '@/hooks/useDeviceType'
 import { useHistoryFilters } from '@/hooks/useHistoryFilters'
 import { usePage } from '@/hooks/usePage'
 import { useRefresh } from '@/hooks/useRefresh'
@@ -29,7 +28,6 @@ defineOptions({
 })
 
 const { pageLoading, pageError, getContentHeight, batchRequestHandler, onLoginFail } = usePage()
-const { hasVideoDevice, hasDryerDevice } = useDeviceType()
 
 const contentStyle = computed(() => {
   return getContentHeight('140rpx')
@@ -85,11 +83,6 @@ function onLoginSuccess() {
   applyFiltersToQuery()
   batchRequestHandler([onRefreshList()])
 }
-
-const showDeviceType = computed(() => {
-  const count = Number(hasVideoDevice.value) + Number(hasDryerDevice.value)
-  return count > 1
-})
 </script>
 
 <template>
@@ -106,7 +99,7 @@ const showDeviceType = computed(() => {
       <FilterGroup v-model="filters" :filters="filterConfigs" @change="onFilterChange" />
     </view>
 
-    <!-- 资金流水列表 -->
+    <!-- 充值明细列表 -->
     <RefreshList
       :loading="loading"
       :refresh-loading="refreshLoading"
@@ -121,7 +114,6 @@ const showDeviceType = computed(() => {
           v-for="record in recordsList"
           :key="record.id"
           :record="record"
-          :show-device-type="showDeviceType"
           @detail="goToBalanceDetail(record)"
         />
       </view>

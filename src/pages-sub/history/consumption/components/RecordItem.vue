@@ -2,7 +2,8 @@
 import type { ConsumptionRecordItemProps } from '../types'
 import { computed } from 'vue'
 import WhiteCard from '@/components/common/white-card/index.vue'
-import { DEVICE_TYPE_I18N } from '@/constant/modules'
+import Icon from '@/components/icon/index.vue'
+import { DEVICE_TYPE, DEVICE_TYPE_I18N } from '@/constant/modules'
 import { formatTime } from '@/utils/format'
 import { buildRecordDisplayInfo, formatAmount } from '../utils/record'
 
@@ -16,30 +17,54 @@ const emit = defineEmits<{
 const displayInfo = computed(() => {
   return buildRecordDisplayInfo(props.record)
 })
+
+const recordIconName = computed(() => {
+  if (props.record.deviceType === DEVICE_TYPE.DRYER) {
+    return 'windy-line'
+  }
+
+  if (props.record.deviceType === DEVICE_TYPE.VIDEO) {
+    return 'customer-service-line'
+  }
+
+  return 'shopping-cart-line'
+})
 </script>
 
 <template>
-  <WhiteCard @click.stop="e => emit('click', e)">
-    <view flex="~ items-center justify-between gap-3">
-      <view>
-        <view text="sm text-primary" font="medium">
-          {{ displayInfo.title }}
+  <view relative overflow="hidden" @click.stop="e => emit('click', e)">
+    <WhiteCard custom-class="pt-3 relative">
+      <view absolute left--68rpx top-68rpx style="transform: translateY(-50%)">
+        <Icon
+          :name="recordIconName"
+          icon-color="#ef4444"
+          icon-size="256rpx"
+          custom-class="opacity-10"
+        />
+      </view>
+
+      <view relative z="10">
+        <view flex="~ justify-between items-center" m="b-1">
+          <view text="sm gray-900" font="medium">
+            {{ displayInfo.title }}
+          </view>
+          <view text="lg" font="bold" class="text-red-600" shrink-0 whitespace-nowrap>
+            {{ formatAmount(record.amount) }}
+          </view>
         </view>
-        <view text="xs text-secondary" m="t-1">
-          <text v-if="props.showDeviceType && record.deviceType">
-            {{ DEVICE_TYPE_I18N[record.deviceType] }} ·
-          </text>
-          {{ displayInfo.subtitle }}
+
+        <view flex="~ justify-between items-start" gap="4">
+          <view text="xs gray-600">
+            <text v-if="props.showDeviceType && record.deviceType">
+              {{ DEVICE_TYPE_I18N[record.deviceType] }} ·
+            </text>
+            {{ displayInfo.subtitle }}
+          </view>
+          <view text="xs gray-600" whitespace-nowrap>
+            {{ formatTime(record.consumeTime) }}
+          </view>
         </view>
       </view>
-      <view text="right" shrink-0 whitespace-nowrap>
-        <view text="sm" font="medium" class="text-red-600">
-          {{ formatAmount(record.amount) }}
-        </view>
-        <view text="xs text-muted" m="t-1">
-          {{ formatTime(record.consumeTime) }}
-        </view>
-      </view>
-    </view>
-  </WhiteCard>
+    </WhiteCard>
+  </view>
 </template>

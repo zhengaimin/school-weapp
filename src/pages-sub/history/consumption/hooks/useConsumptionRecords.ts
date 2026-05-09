@@ -1,5 +1,4 @@
 import type { ConsumptionRecord, ConsumptionRecordsQuery } from '../types'
-import type { TDeviceType } from '@/constant/modules'
 import { computed } from 'vue'
 import { getConsumptionRecordsApi } from '@/api/modules/user/consumption'
 import { useDeviceType } from '@/hooks/useDeviceType'
@@ -12,6 +11,10 @@ import { useRefresh } from '@/hooks/useRefresh'
  */
 export function useConsumptionRecords() {
   const { hasVideoDevice, hasDryerDevice, defaultDeviceType } = useDeviceType()
+  const showDeviceType = computed(() => {
+    const count = Number(hasVideoDevice.value) + Number(hasDryerDevice.value)
+    return count > 1
+  })
 
   /**
    * 组装消费记录接口请求参数
@@ -19,16 +22,19 @@ export function useConsumptionRecords() {
    * @returns 满足接口要求的消费记录查询参数
    */
   function buildConsumptionRecordsQuery(query: Record<string, unknown>): ConsumptionRecordsQuery {
-    const deviceType = (query.deviceType as TDeviceType | undefined) ?? defaultDeviceType.value
     const page = Number(query.page) || 1
     const pageSize = Number(query.pageSize) || 10
-
-    return {
+    const params = {
       ...query,
-      deviceType,
       page,
       pageSize,
-    } as ConsumptionRecordsQuery
+    }
+
+    if (!showDeviceType.value && !params.deviceType) {
+      params.deviceType = defaultDeviceType.value
+    }
+
+    return params as ConsumptionRecordsQuery
   }
 
   /**
@@ -58,11 +64,6 @@ export function useConsumptionRecords() {
   const { filters, filterConfigs, onFilterChange, applyFiltersToQuery } = useHistoryFilters({
     query,
     onRefreshList,
-  })
-
-  const showDeviceType = computed(() => {
-    const count = Number(hasVideoDevice.value) + Number(hasDryerDevice.value)
-    return count > 1
   })
 
   /**

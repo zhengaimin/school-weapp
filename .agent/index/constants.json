@@ -23,6 +23,78 @@
       ]
     },
     {
+      "name": "AMOUNT_TYPE",
+      "description": "资金流水金额类型",
+      "typeName": "TAmountType",
+      "filePath": "src/constant/modules/business/fund/balance.ts",
+      "values": [
+        {
+          "value": "RECHARGE",
+          "label": "充值"
+        },
+        {
+          "value": "CONSUMPTION",
+          "label": "消费"
+        },
+        {
+          "value": "CARD_RECHARGE",
+          "label": "圈存"
+        },
+        {
+          "value": "REFUND",
+          "label": "退款"
+        },
+        {
+          "value": "FREEZE",
+          "label": "冻结"
+        },
+        {
+          "value": "UNFREEZE",
+          "label": "解冻"
+        },
+        {
+          "value": "ADJUST",
+          "label": "调整"
+        },
+        {
+          "value": "PACKAGE_PURCHASE",
+          "label": "套餐购买"
+        }
+      ]
+    },
+    {
+      "name": "BALANCE_BUSINESS_TYPE",
+      "description": "资金流水业务类型",
+      "typeName": "TBalanceBusinessType",
+      "filePath": "src/constant/modules/business/fund/balance.ts",
+      "values": [
+        {
+          "value": "PAYMENT",
+          "label": "支付"
+        },
+        {
+          "value": "CONSUMPTION",
+          "label": "消费"
+        },
+        {
+          "value": "CARD_RECHARGE",
+          "label": "圈存"
+        },
+        {
+          "value": "REFUND_APPLICATION",
+          "label": "退费申请"
+        },
+        {
+          "value": "PACKAGE_PURCHASE",
+          "label": "套餐购买"
+        },
+        {
+          "value": "ADMIN_ADJUST",
+          "label": "管理调整"
+        }
+      ]
+    },
+    {
       "name": "GIFT_SOURCE",
       "description": "赠费来源",
       "typeName": "TGiftSource",
@@ -47,5 +119,5 @@
       ]
     }
   ],
-  "lastUpdated": "2026-05-08"
+  "lastUpdated": "2026-05-09"
 }

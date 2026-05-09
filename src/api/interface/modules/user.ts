@@ -1,4 +1,6 @@
 import type {
+  TAmountType,
+  TBalanceBusinessType,
   TConsumptionSource,
   TDeviceType,
   TFaceStatus,
@@ -317,67 +319,62 @@ export namespace User {
     /** 资金流水明细请求参数 */
     export interface ReqGetBalanceDetails {
       /** 设备类型 */
-      deviceType: TDeviceType
+      deviceType?: TDeviceType
       /** 开始日期 (YYYY-MM-DD格式) */
       startDate?: string
       /** 结束日期 (YYYY-MM-DD格式) */
       endDate?: string
       /** 金额类型过滤 */
-      amountType?: AmountType
+      amountType?: TAmountType
+      /** 业务类型过滤 */
+      businessType?: TBalanceBusinessType
       /** 页码，从1开始 */
       page: number
       /** 每页数量，最大100 */
       pageSize: number
     }
 
-    /** 金额类型枚举 */
-    export type AmountType
-      = | 'RECHARGE' // 充值
-        | 'CONSUMPTION' // 消费
-        | 'REFUND' // 退款
-        | 'FREEZE' // 冻结
-        | 'UNFREEZE' // 解冻
-        | 'ADJUST' // 调整
-        | 'PACKAGE_PURCHASE' // 套餐购买
+    export type AmountType = TAmountType
+    export type BusinessType = TBalanceBusinessType
 
     /** 资金流水明细记录 */
     export interface IBalanceDetailRecordVo {
-      /** 记录ID */
+      /** 明细ID */
       id: number
-      /** 流水号 */
-      transactionId: string
-      /** 设备类型 */
-      deviceType?: TDeviceType
+      /** 明细流水号 */
+      detailNo: string
+      /** 学生ID */
+      studentId: number
+      /** 学生姓名 */
+      studentName: string
       /** 金额类型 */
-      amountType: AmountType
-      /** 金额类型名称 */
-      amountTypeName: string
-      /** 变动金额（正数为收入，负数为支出） */
+      amountType: TAmountType
+      /** 金额类型文本 */
+      amountTypeText: string
+      /** 变动金额 */
       amount: string
-      /** 变动后余额 */
-      balanceAfter: string
-      /** 变动前余额 */
-      balanceBefore: string
-      /** 交易描述 */
+      /** 变动前总余额 */
+      totalBalanceBefore: string
+      /** 变动后总余额 */
+      totalBalanceAfter: string
+      /** 变动前可用余额 */
+      availableBalanceBefore: string
+      /** 变动后可用余额 */
+      availableBalanceAfter: string
+      /** 关联业务类型 */
+      relatedBusinessType: string
+      /** 关联业务ID */
+      relatedBusinessId: number | null
+      /** 操作人类型 */
+      operatorType: string
+      /** 操作人姓名 */
+      operatorName: string
+      /** 变动描述 */
       description: string
-      /** 交易时间 */
-      transactionTime: string
-      /** 关联订单号 */
-      relatedOrderNo?: string
-      /** 备注 */
-      remark?: string
+      /** 操作时间 */
+      operationTime: string
       /** 创建时间 */
       createdAt: string
-    }
-
-    /** 资金流水明细汇总信息 */
-    export interface IBalanceSummaryVo {
-      /** 总收入 */
-      totalIncome: string
-      /** 总支出 */
-      totalExpense: string
-      /** 净变动 */
-      netChange: string
     }
 
     /** 资金流水明细响应 */
@@ -392,8 +389,6 @@ export namespace User {
       pageSize: number
       /** 总页数 */
       totalPages: number
-      /** 汇总信息 */
-      summary?: IBalanceSummaryVo
     }
   }
 

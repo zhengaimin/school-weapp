@@ -237,7 +237,7 @@ function handleDrawerConfirm() {
     </view>
 
     <!-- 抽屉弹窗 -->
-    <BottomPopup v-model="showDrawer" title="筛选" height="60vh" @close="showDrawer = false">
+    <BottomPopup v-model="showDrawer" title="筛选" height="80vh" @close="showDrawer = false">
       <view flex="~ col" h-full>
         <scroll-view scroll-y flex-1>
           <view p="4">

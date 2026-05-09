@@ -32,5 +32,7 @@ export function buildRecordDisplayInfo(
  * @returns 带负号与人民币符号的展示文案
  */
 export function formatAmount(amount: string): string {
-  return `-¥${amount}`
+  const numAmount = Number.parseFloat(amount)
+  const value = Number.isFinite(numAmount) ? Math.abs(numAmount).toFixed(2) : amount
+  return `-¥${value}`
 }
