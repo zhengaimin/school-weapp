@@ -9,10 +9,10 @@ const GIFTS_API = {
 
 /**
  * @description 获取学生有效赠费记录
- * @returns {Promise<Gifts.Valid.ResGetValidGiftsApi>}
+ * @returns {Promise<Gifts.Valid.ResGetStudentValidGiftsApi>}
  */
-export function getValidGiftsApi() {
-  return http.get<Gifts.Valid.ResGetValidGiftsApi>(GIFTS_API.VALID)
+export function getStudentValidGiftsApi() {
+  return http.get<Gifts.Valid.ResGetStudentValidGiftsApi>(GIFTS_API.VALID)
 }
 
 /**

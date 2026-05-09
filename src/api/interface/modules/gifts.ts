@@ -1,3 +1,5 @@
+import type { TDeviceType, TGiftSource } from '@/constant/modules'
+
 export namespace Gifts {
   /** 有效赠费记录信息 */
   export interface ValidGiftRecord {
@@ -7,6 +9,10 @@ export namespace Gifts {
     studentId: number
     /** 学校ID */
     schoolId: number
+    /** 设备类型 */
+    deviceType: TDeviceType
+    /** 设备类型文本 */
+    deviceTypeText: string
     /** 总赠送分钟数 */
     totalMinutes: number
     /** 剩余分钟数 */
@@ -18,7 +24,7 @@ export namespace Gifts {
     /** 过期时间 */
     expireDate: string
     /** 赠费来源 */
-    source: string
+    source: TGiftSource
     /** 赠费来源文本 */
     sourceText: string
     /** 描述信息 */
@@ -31,12 +37,12 @@ export namespace Gifts {
 
   export namespace Valid {
     /** 获取学生有效赠费记录 - 请求 */
-    export interface ReqGetValidGiftsApi {
+    export interface ReqGetStudentValidGiftsApi {
       // 无需额外参数，通过Authorization获取当前学生信息
     }
 
     /** 获取学生有效赠费记录 - 响应 */
-    export interface ResGetValidGiftsApi {
+    export interface ResGetStudentValidGiftsApi {
       /** 有效赠费记录列表 */
       records: ValidGiftRecord[]
       /** 总记录数 */

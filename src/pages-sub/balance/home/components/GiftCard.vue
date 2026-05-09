@@ -3,7 +3,7 @@ import type { Gifts } from '@/api/interface/modules/gifts'
 import WhiteCard from '@/components/common/white-card/index.vue'
 
 const props = defineProps<{
-  validGifts?: Gifts.Valid.ResGetValidGiftsApi
+  validGifts?: Gifts.Valid.ResGetStudentValidGiftsApi
 }>()
 
 const emit = defineEmits<{

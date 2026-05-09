@@ -1,0 +1,51 @@
+{
+  "version": "0.1.0",
+  "name": "school-weapp",
+  "description": "常量索引",
+  "typeName": "",
+  "filePath": "",
+  "values": [],
+  "constants": [
+    {
+      "name": "DEVICE_TYPE",
+      "description": "设备类型",
+      "typeName": "TDeviceType",
+      "filePath": "src/constant/modules/business/package/common.ts",
+      "values": [
+        {
+          "value": "VIDEO",
+          "label": "视频话机"
+        },
+        {
+          "value": "DRYER",
+          "label": "吹风机"
+        }
+      ]
+    },
+    {
+      "name": "GIFT_SOURCE",
+      "description": "赠费来源",
+      "typeName": "TGiftSource",
+      "filePath": "src/constant/modules/business/gift/source.ts",
+      "values": [
+        {
+          "value": "ADMIN_GIFT",
+          "label": "管理员赠送"
+        },
+        {
+          "value": "PROMOTION",
+          "label": "活动赠送"
+        },
+        {
+          "value": "COMPENSATION",
+          "label": "补偿赠送"
+        },
+        {
+          "value": "REWARD",
+          "label": "奖励赠送"
+        }
+      ]
+    }
+  ],
+  "lastUpdated": "2026-05-08"
+}
