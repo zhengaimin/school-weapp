@@ -1,0 +1,16 @@
+/**
+ * 兼容底部横线底部内边距
+ */
+.bottom-line-exclude {
+  /* #ifdef H5 */
+  padding-bottom: 112rpx !important;
+  /* #endif */
+}
+
+.wd-form {
+  .cell-container {
+    &:last-of-type {
+      padding-bottom: 0;
+    }
+  }
+}

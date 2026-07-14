@@ -1,0 +1,3 @@
+# 初始化配置修改
+1. `.env` 文件修改 `VITE_APP_DEP_UUID`、`VITE_SERVER_BASEURL__WEIXIN_XXXX`、`VITE_UPLOAD_BASEURL__WEIXIN_XXXX`
+2. `.env.development`、`.env.production` 文件修改 `VITE_SERVER_BASEURL`、`VITE_UPLOAD_BASEURL`

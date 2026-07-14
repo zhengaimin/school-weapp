@@ -1,0 +1,39 @@
+input,
+textarea {
+  caret-color: var(--primary-color) !important;
+}
+
+// 去掉 微信小程序点击高点的问题
+page {
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+}
+
+.wd-message-box {
+  @apply rounded-xl!;
+
+  .wd-button {
+    @apply rounded-xl!;
+  }
+}
+
+.wd-action-sheet {
+  &__header {
+    @apply pl-4!;
+    @apply text-left!;
+    @apply border-b border-b-bg-muted border-b-solid;
+  }
+}
+
+.wd-picker-view__roller {
+  @apply bg-[#f7fafc]!;
+}
+
+.school-form {
+  .wd-form-item {
+    @apply p-0!;
+  }
+
+  .wd-cell__wrapper {
+    @apply p-0!;
+  }
+}

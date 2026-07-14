@@ -1,0 +1,341 @@
+{
+  "globalStyle": {
+    "navigationStyle": "default",
+    "navigationBarTitleText": "unibest",
+    "navigationBarBackgroundColor": "#f8f8f8",
+    "navigationBarTextStyle": "black",
+    "backgroundColor": "#FFFFFF"
+  },
+  "easycom": {
+    "autoscan": true,
+    "custom": {
+      "^fg-(.*)": "@/components/fg-$1/fg-$1.vue",
+      "^wd-(.*)": "wot-design-uni/components/wd-$1/wd-$1.vue",
+      "^(?!z-paging-refresh|z-paging-load-more)z-paging(.*)": "z-paging/components/z-paging$1/z-paging$1.vue"
+    }
+  },
+  "pages": [
+    {
+      "path": "pages/launch/index",
+      "type": "home",
+      "layout": "default",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": ""
+      }
+    },
+    {
+      "path": "pages/welcome/index",
+      "type": "page",
+      "layout": "default",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "欢迎使用"
+      }
+    },
+    {
+      "path": "pages/parent/home/index",
+      "type": "page",
+      "layout": "default",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "首页"
+      }
+    },
+    {
+      "path": "pages/parent/overview/index",
+      "type": "page",
+      "layout": "default",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "概览"
+      }
+    }
+  ],
+  "subPackages": [
+    {
+      "root": "pages-sub",
+      "pages": [
+        {
+          "path": "chat/index",
+          "type": "page",
+          "layout": "default",
+          "style": {
+            "navigationStyle": "custom",
+            "navigationBarTitleText": "聊天"
+          }
+        },
+        {
+          "path": "balance/history/index",
+          "type": "page",
+          "layout": "default",
+          "style": {
+            "navigationStyle": "custom",
+            "navigationBarTitleText": "充值记录"
+          }
+        },
+        {
+          "path": "balance/home/index",
+          "type": "page",
+          "layout": "default",
+          "style": {
+            "navigationStyle": "custom",
+            "navigationBarTitleText": "余额信息"
+          }
+        },
+        {
+          "path": "balance/recharge/index",
+          "type": "page",
+          "layout": "default",
+          "style": {
+            "navigationStyle": "custom",
+            "navigationBarTitleText": "账户充值"
+          }
+        },
+        {
+          "path": "balance/result/index",
+          "type": "page",
+          "layout": "default",
+          "style": {
+            "navigationStyle": "custom",
+            "navigationBarTitleText": "充值成功"
+          }
+        },
+        {
+          "path": "common/follow/index",
+          "type": "page",
+          "layout": "default",
+          "style": {
+            "navigationStyle": "custom",
+            "navigationBarTitleText": "关注公众号"
+          }
+        },
+        {
+          "path": "common/icon/index",
+          "type": "page",
+          "layout": "default",
+          "style": {
+            "navigationStyle": "custom",
+            "navigationBarTitleText": "图标展示"
+          }
+        },
+        {
+          "path": "common/role-switch/index",
+          "type": "page",
+          "layout": "default",
+          "style": {
+            "navigationStyle": "custom",
+            "navigationBarTitleText": "切换身份"
+          }
+        },
+        {
+          "path": "common/signature/index",
+          "type": "page",
+          "layout": "default",
+          "style": {
+            "navigationStyle": "custom",
+            "navigationBarTitleText": "请签字"
+          }
+        },
+        {
+          "path": "common/webview/index",
+          "type": "page",
+          "layout": "default",
+          "style": {
+            "navigationStyle": "custom",
+            "navigationBarTitleText": ""
+          }
+        },
+        {
+          "path": "device/subscribe/index",
+          "type": "page",
+          "layout": "default",
+          "style": {
+            "navigationStyle": "custom",
+            "navigationBarTitleText": "我的订阅"
+          }
+        },
+        {
+          "path": "device/voip/index",
+          "type": "page",
+          "layout": "default",
+          "style": {
+            "navigationStyle": "custom",
+            "navigationBarTitleText": "VOIP 通话"
+          }
+        },
+        {
+          "path": "family/edit/index",
+          "type": "page",
+          "layout": "default",
+          "style": {
+            "navigationStyle": "custom",
+            "navigationBarTitleText": "编辑亲情号码"
+          }
+        },
+        {
+          "path": "family/manage/index",
+          "type": "page",
+          "layout": "default",
+          "style": {
+            "navigationStyle": "custom",
+            "navigationBarTitleText": "亲情号码管理"
+          }
+        },
+        {
+          "path": "history/consumption/index",
+          "type": "page",
+          "layout": "default",
+          "style": {
+            "navigationStyle": "custom",
+            "navigationBarTitleText": "消费记录"
+          }
+        },
+        {
+          "path": "history/fund/index",
+          "type": "page",
+          "layout": "default",
+          "style": {
+            "navigationStyle": "custom",
+            "navigationBarTitleText": "资金流水"
+          }
+        },
+        {
+          "path": "package/detail/index",
+          "type": "page",
+          "layout": "default",
+          "style": {
+            "navigationStyle": "custom",
+            "navigationBarTitleText": "套餐详情"
+          }
+        },
+        {
+          "path": "package/list/index",
+          "type": "page",
+          "layout": "default",
+          "style": {
+            "navigationStyle": "custom",
+            "navigationBarTitleText": "套餐列表"
+          }
+        },
+        {
+          "path": "profile/edit/index",
+          "type": "page",
+          "layout": "default",
+          "style": {
+            "navigationStyle": "custom",
+            "navigationBarTitleText": "编辑资料"
+          }
+        },
+        {
+          "path": "service/privacy/index",
+          "type": "page",
+          "layout": "default",
+          "style": {
+            "navigationStyle": "custom",
+            "navigationBarTitleText": ""
+          }
+        },
+        {
+          "path": "service/protocol/index",
+          "type": "page",
+          "layout": "default",
+          "style": {
+            "navigationStyle": "custom",
+            "navigationBarTitleText": ""
+          }
+        },
+        {
+          "path": "service/purchase/index",
+          "type": "page",
+          "layout": "default",
+          "style": {
+            "navigationStyle": "custom",
+            "navigationBarTitleText": ""
+          }
+        },
+        {
+          "path": "balance/refund/apply/index",
+          "type": "page",
+          "layout": "default",
+          "style": {
+            "navigationStyle": "custom",
+            "navigationBarTitleText": "申请退费"
+          }
+        },
+        {
+          "path": "balance/refund/history/index",
+          "type": "page",
+          "layout": "default",
+          "style": {
+            "navigationStyle": "custom",
+            "navigationBarTitleText": "退款记录"
+          }
+        },
+        {
+          "path": "balance/refund/result/index",
+          "type": "page",
+          "layout": "default",
+          "style": {
+            "navigationStyle": "custom",
+            "navigationBarTitleText": "退款结果"
+          }
+        },
+        {
+          "path": "package/history/home/index",
+          "type": "page",
+          "layout": "default",
+          "style": {
+            "navigationStyle": "custom",
+            "navigationBarTitleText": "话机套餐购买记录"
+          }
+        },
+        {
+          "path": "package/history/result/index",
+          "type": "page",
+          "layout": "default",
+          "style": {
+            "navigationStyle": "custom",
+            "navigationBarTitleText": "操作结果"
+          }
+        },
+        {
+          "path": "package/refund/history/index",
+          "type": "page",
+          "layout": "default",
+          "style": {
+            "navigationStyle": "custom",
+            "navigationBarTitleText": "退款记录"
+          }
+        },
+        {
+          "path": "package/refund/result/index",
+          "type": "page",
+          "layout": "default",
+          "style": {
+            "navigationStyle": "custom",
+            "navigationBarTitleText": "退款详情"
+          }
+        },
+        {
+          "path": "parent/student/bind/index",
+          "type": "page",
+          "layout": "default",
+          "style": {
+            "navigationStyle": "custom",
+            "navigationBarTitleText": "绑定学生"
+          }
+        },
+        {
+          "path": "parent/student/detail/index",
+          "type": "page",
+          "layout": "default",
+          "style": {
+            "navigationStyle": "custom",
+            "navigationBarTitleText": "学生信息"
+          }
+        }
+      ]
+    }
+  ]
+}

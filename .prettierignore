@@ -1,0 +1,23 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+.vercel/
+
+# Generated files
+src/pages.json
+src/manifest.json
+auto-import.d.ts
+uni-pages.d.ts
+src/service/app/**
+
+# Lock files
+pnpm-lock.yaml
+
+# Uni modules
+src/uni_modules/
+
+# Other files
+*.md
+LICENSE

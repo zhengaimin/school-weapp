@@ -1,0 +1,128 @@
+{
+  // 配置语言的文件关联
+  "files.associations": {
+    "pages.json": "jsonc", // pages.json 可以写注释
+    "manifest.json": "jsonc" // manifest.json 可以写注释
+  },
+
+  "stylelint.enable": false, // 禁用 stylelint
+  "css.validate": false, // 禁用 CSS 内置验证
+  "scss.validate": false, // 禁用 SCSS 内置验证
+  "less.validate": false, // 禁用 LESS 内置验证
+
+  "typescript.tsdk": "node_modules\\typescript\\lib",
+  "explorer.fileNesting.enabled": false,
+  "explorer.fileNesting.expand": false,
+  "explorer.fileNesting.patterns": {
+    "README.md": "index.html,favicon.ico,robots.txt,CHANGELOG.md",
+    "pages.config.ts": "manifest.config.ts,openapi-ts-request.config.ts",
+    "package.json": "tsconfig.json,pnpm-lock.yaml,pnpm-workspace.yaml,LICENSE,.gitattributes,.gitignore,.gitpod.yml,CNAME,.npmrc,.browserslistrc",
+    "eslint.config.mjs": ".commitlintrc.*,.prettier*,.editorconfig,.commitlint.cjs,.eslint*"
+  },
+
+  // Use ESLint as the single formatter
+  "prettier.enable": false,
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "dbaeumer.vscode-eslint",
+  "eslint.format.enable": true,
+
+  // Set specific formatters for different file types
+  "[vue]": {
+    "editor.defaultFormatter": "dbaeumer.vscode-eslint"
+  },
+  "[html]": {
+    "editor.defaultFormatter": "dbaeumer.vscode-eslint"
+  },
+  "[javascript]": {
+    "editor.defaultFormatter": "dbaeumer.vscode-eslint"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "dbaeumer.vscode-eslint"
+  },
+
+  // Auto fix
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit",
+    "source.organizeImports": "never"
+  },
+
+  // Silent the stylistic rules in you IDE, but still auto fix them
+  "eslint.rules.customizations": [
+    { "rule": "style/*", "severity": "off", "fixable": true },
+    { "rule": "format/*", "severity": "off", "fixable": true },
+    { "rule": "*-indent", "severity": "off", "fixable": true },
+    { "rule": "*-spacing", "severity": "off", "fixable": true },
+    { "rule": "*-spaces", "severity": "off", "fixable": true },
+    { "rule": "*-order", "severity": "off", "fixable": true },
+    { "rule": "*-dangle", "severity": "off", "fixable": true },
+    { "rule": "*-newline", "severity": "off", "fixable": true },
+    { "rule": "*quotes", "severity": "off", "fixable": true },
+    { "rule": "*semi", "severity": "off", "fixable": true }
+  ],
+
+  // Enable eslint for all supported languages
+  "eslint.validate": [
+    "javascript",
+    "javascriptreact",
+    "typescript",
+    "typescriptreact",
+    "vue",
+    "html",
+    "markdown",
+    "json",
+    "jsonc",
+    "yaml",
+    "toml",
+    "xml",
+    "gql",
+    "graphql",
+    "astro",
+    "svelte",
+    "css",
+    "less",
+    "scss",
+    "pcss",
+    "postcss"
+  ],
+  "cSpell.words": [
+    "alova",
+    "Aplipay",
+    "Attributify",
+    "climblee",
+    "commitlint",
+    "daterange",
+    "datetimerange",
+    "dcloudio",
+    "eslintcache",
+    "getphonenumber",
+    "hbuilderx",
+    "iconfont",
+    "inited",
+    "loadmore",
+    "njsproj",
+    "ntvs",
+    "oxlint",
+    "qrcode",
+    "refresherrefresh",
+    "scrolltolower",
+    "stylelintcache",
+    "tabbar",
+    "Toutiao",
+    "uniapp",
+    "unibest",
+    "unocss",
+    "unref",
+    "uview",
+    "uvui",
+    "VITE",
+    "vitepress",
+    "Wechat",
+    "WechatMiniprogram",
+    "Weixin"
+  ],
+  "liveServer.settings.port": 5501
+
+  // Auto Fold 配置
+  // "autofold.default": 2,
+  // "autofold.unfoldOnLineSelect": true
+}
