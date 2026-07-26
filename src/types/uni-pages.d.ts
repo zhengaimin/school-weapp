@@ -5,6 +5,7 @@
 
 interface NavigateToOptions {
   url: "/pages/launch/index" |
+       "/pages/voip/index" |
        "/pages/welcome/index" |
        "/pages/parent/home/index" |
        "/pages/parent/overview/index" |
@@ -19,7 +20,6 @@ interface NavigateToOptions {
        "/pages-sub/common/signature/index" |
        "/pages-sub/common/webview/index" |
        "/pages-sub/device/subscribe/index" |
-       "/pages-sub/device/voip/index" |
        "/pages-sub/family/edit/index" |
        "/pages-sub/family/manage/index" |
        "/pages-sub/history/consumption/index" |

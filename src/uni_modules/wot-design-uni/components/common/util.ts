@@ -403,10 +403,10 @@ export function objToStyle(styles: Record<string, any> | Record<string, any>[]):
     // 使用过滤函数去除空值和 null 值的元素
     // 对每个非空元素递归调用 objToStyle，然后通过分号连接
     const result = styles
-      .filter(function (item) {
+      .filter(function (item: any) {
         return item != null && item !== ''
       })
-      .map(function (item) {
+      .map(function (item: any) {
         return objToStyle(item)
       })
       .join(';')

@@ -2,7 +2,7 @@ import type { ResultData } from '@/api/interface'
 import { computed, nextTick, onMounted, ref, unref } from 'vue'
 import { isNumber } from '@/utils/is'
 
-interface IResponse extends ResultData {
+export interface IResponse extends ResultData {
   [property: string]: any
   list: any[]
   total: number
@@ -13,7 +13,7 @@ interface IRefresh {
   immediate?: boolean
   listField?: string
 }
-interface IQuery {
+export interface IQuery {
   page: number
   pageSize: number
 

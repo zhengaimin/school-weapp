@@ -4,6 +4,7 @@ import en from './locale/en';
 import U from './utils';
 var L = 'en'; // global locale
 
+/** @type {any} */
 var Ls = {}; // global loaded locale
 
 Ls[L] = en;

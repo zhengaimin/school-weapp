@@ -4,36 +4,56 @@ import { http } from '@/http'
 
 const DEVICES_GROUPS_API = {
   GROUPS: `${API}/devices/groups`,
-  SUBSCRIBE: `${API}/devices/groups/subscribe`,
-  UNSUBSCRIBE: `${API}/devices/groups/unsubscribe`,
+  SUBSCRIBE_PREPARE: `${API}/devices/subscribe/prepare`,
+  SUBSCRIBE_CONFIRM: `${API}/devices/subscribe/confirm`,
+  UNSUBSCRIBE: `${API}/devices/unsubscribe`,
   SUBSCRIPTIONS: `${API}/devices/subscriptions`,
 }
 
 /**
- * @description 获取设备组列表
- * @param {Devices.Group.ReqGetDeviceGroupsApi} params
- * @returns {Promise<Devices.Group.ResGetDeviceGroupsApi>}
+ * 获取可订阅设备组列表
+ * @param params 分页与名称搜索条件
+ * @returns 可订阅设备组列表
  */
-export function getDeviceGroupsApi(params: Devices.Group.ReqGetDeviceGroupsApi) {
+export function getDeviceGroupsApi(params?: Devices.Group.ReqGetDeviceGroupsApi) {
   return http.get<Devices.Group.ResGetDeviceGroupsApi>(DEVICES_GROUPS_API.GROUPS, params)
 }
 
 /**
- * @description 订阅设备组
- * @param {Devices.Group.ReqPostSubscribeDeviceGroupApi} params
- * @returns {Promise<Devices.Group.ResPostSubscribeDeviceGroupApi>}
+ * 校验设备组订阅并获取微信授权参数
+ * @param params 设备组标识
+ * @returns 微信设备组授权参数
  */
-export function postSubscribeDeviceGroupApi(params: Devices.Group.ReqPostSubscribeDeviceGroupApi) {
-  return http.post<Devices.Group.ResPostSubscribeDeviceGroupApi>(DEVICES_GROUPS_API.SUBSCRIBE, params)
+export function postPrepareDeviceGroupSubscriptionApi(
+  params: Devices.Group.ReqPostPrepareDeviceGroupSubscriptionApi,
+) {
+  return http.post<Devices.Group.ResPostPrepareDeviceGroupSubscriptionApi>(
+    DEVICES_GROUPS_API.SUBSCRIBE_PREPARE,
+    params,
+  )
 }
 
 /**
- * @description 取消订阅设备组
- * @param {Devices.Group.ReqPostUnsubscribeDeviceGroupApi} params
- * @returns {Promise<Devices.Group.ResPostUnsubscribeDeviceGroupApi>}
+ * 确认设备组订阅
+ * @param params 设备组标识
+ * @returns 确认订阅请求结果
+ */
+export function postConfirmDeviceGroupSubscriptionApi(
+  params: Devices.Group.ReqPostConfirmDeviceGroupSubscriptionApi,
+) {
+  return http.post<Devices.Group.ResPostConfirmDeviceGroupSubscriptionApi>(
+    DEVICES_GROUPS_API.SUBSCRIBE_CONFIRM,
+    params,
+  )
+}
+
+/**
+ * 取消订阅设备组
+ * @param params 亲情号联系人和设备组标识
+ * @returns 取消订阅请求结果
  */
 export function postUnsubscribeDeviceGroupApi(params: Devices.Group.ReqPostUnsubscribeDeviceGroupApi) {
-  return http.post<Devices.Group.ResPostUnsubscribeDeviceGroupApi>(DEVICES_GROUPS_API.UNSUBSCRIBE, params)
+  return http.post<null>(DEVICES_GROUPS_API.UNSUBSCRIBE, params)
 }
 
 /**

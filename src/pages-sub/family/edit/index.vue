@@ -9,6 +9,7 @@
 </route>
 
 <script lang="ts" setup>
+import type { FamilyContactFormData } from './types'
 import type { Family } from '@/api/interface/modules/family'
 import type { TBatchRequestList } from '@/hooks/usePage'
 import { storeToRefs } from 'pinia'
@@ -48,9 +49,9 @@ const { emitRefreshFamilyList } = useFamily()
 
 /** 当前编辑的亲情号信息 */
 const currentEditContact = ref<Family.Contact.ResGetFamilyContactsApi | null>(null)
-/** 表单数据 */
-const formData = ref<Family.Contact.ReqPostFamilyContactApi>({
-  relationship: null,
+/** 表单数据（未选关系时为 undefined） */
+const formData = ref<FamilyContactFormData>({
+  relationship: undefined,
   phone: '',
   nickname: '',
 })
@@ -61,7 +62,7 @@ const contentHeight = computed(() => {
 })
 /** 处理关系选项，禁用已存在的关系（编辑时排除当前关系） */
 const processedRelationshipOptions = computed(() => {
-  return relationshipOptions.value.map((option) => {
+  return relationshipOptions.value?.map((option) => {
     const isCurrentRelationship = currentEditContact.value?.relationship === option.value
     const isExistingRelationship = familyContactsRelationshipMap.value[option.value]
 
@@ -113,12 +114,21 @@ async function handleSubmit() {
       return
     }
 
+    // 校验通过后 relationship 必有值，再组装接口入参
+    if (formData.value.relationship === undefined) {
+      return
+    }
+
     submitLoading.value = true
     const isEdit = !!currentEditContact.value
+    const payload: Family.Contact.ReqPostFamilyContactApi = {
+      ...formData.value,
+      relationship: formData.value.relationship,
+    }
 
     const result = await (isEdit
-      ? putFamilyContactApi(currentEditContact.value!.id!, formData.value)
-      : postFamilyContactApi(formData.value))
+      ? putFamilyContactApi(currentEditContact.value!.id!, payload)
+      : postFamilyContactApi(payload))
 
     if (result.code === 0) {
       toast.show(isEdit ? '修改成功' : '添加成功')
@@ -135,14 +145,14 @@ async function handleSubmit() {
 
 /** 登录成功处理 */
 function onLoginSuccess() {
-  const { query } = currRoute()
+  const { query } = currRoute() as { path: string, query: { id?: string } }
 
   const reqList: TBatchRequestList = [
     currentStudentStore.axiosGetRelationshipOptionsApi(),
     currentStudentStore.axiosGetFamilyContactsApi(),
   ]
 
-  if (query.id) {
+  if (query?.id) {
     reqList.push(axiosGetFamilyContactDetailApi(+query.id))
   }
 

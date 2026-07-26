@@ -371,7 +371,7 @@ function setShowValue(items: ColumnItem | ColumnItem[]) {
   if ((isArray(items) && !items.length) || !items) return
 
   const { valueKey, labelKey } = props
-  showValue.value = (props.displayFormat || defaultDisplayFormat)(items, { valueKey, labelKey })
+  showValue.value = (props.displayFormat || defaultDisplayFormat)(items, { valueKey, labelKey } as any)
 }
 function noop() {}
 function onPickStart() {

@@ -9,13 +9,49 @@
 </route>
 
 <script setup lang="ts">
+import type { THomeMenuItem } from './types'
+import type { User } from '@/api/interface/modules/user'
 import dayjs from 'dayjs'
+import { storeToRefs } from 'pinia'
+import { computed, nextTick, ref, unref } from 'vue'
+import { getCheckSelfApi } from '@/api/modules/family/contacts'
+import { postParentSwitchChildApi } from '@/api/modules/students'
 import Notice from '@/components/common/notice/index.vue'
 import Page from '@/components/common/page/index.vue'
 import Icon from '@/components/icon/index.vue'
+import {
+  DEVICE_TYPE,
+  MENU_LIST,
+  MINIAPP_MODULE_KEY_ACCOUNT_INFO,
+  MINIAPP_MODULE_KEY_FACE_COLLECTION,
+  MINIAPP_MODULE_KEY_MESSAGE,
+  MINIAPP_MODULE_KEY_PARENT_MESSAGE,
+  MINIAPP_MODULE_KEY_RECHARGE,
+} from '@/constant/modules'
+import {
+  BALANCE_RECHARGE_PATH,
+  COMMON_FOLLOW_PATH,
+  FACE_CONSENT_PATH,
+} from '@/constant/router'
+import { useBalance } from '@/hooks/useBalance'
+import { useDeviceType } from '@/hooks/useDeviceType'
+import { usePage } from '@/hooks/usePage'
+import { useAppStore } from '@/store/app'
+import { useParentStore } from '@/store/auth/parent'
+import { useCurrentStudentStore } from '@/store/business/currentStudent'
+import { useUserStore } from '@/store/user'
+import { toast } from '@/utils/toast'
 import StudentSelector from './components/StudentSelector.vue'
+import {
+  HOME_CONTENT_OFFSET,
+  HOME_HEADER_HEIGHT,
+  HOME_HEADER_INFO_TOP,
+  MESSAGE_CONTACT_REQUIRED_TEXT,
+  PARENT_MESSAGE_URL_MISSING_TEXT,
+  SHOW_BALANCE_SECTION,
+} from './constants'
 import { getGreeting } from './data'
-import { useHome } from './hooks/useHome'
+import { navigateToParentMessage, navigateToScore } from './utils/navigation'
 
 defineOptions({
   options: {
@@ -23,29 +59,245 @@ defineOptions({
   },
 })
 
-const {
-  BALANCE_RECHARGE_PATH,
-  pageLoading,
-  pageError,
-  onLoginFail,
-  userInfo,
-  students,
-  selectedStudentId,
-  showOfficialAccountNotice,
-  showBalanceSection,
-  currentBalanceInfo,
-  hasAccountModules,
-  consumptionStats,
-  accountInfoMenuItem,
-  hasRechargeModules,
-  otherMenuList,
-  headerHeight,
-  headerInfoTop,
-  contentHeight,
-  handleGoToOfficialAccount,
-  handleNavigationToPath,
-  handleLoginSuccess,
-} = useHome()
+const { pageLoading, pageError, pageLoaded, getContentHeight, batchRequestHandler, onLoginFail }
+  = usePage()
+const userStore = useUserStore()
+const parentStore = useParentStore()
+const currentStudentStore = useCurrentStudentStore()
+const { userInfo, phone } = storeToRefs(userStore)
+const { students } = storeToRefs(parentStore)
+const { studentInfo, devices } = storeToRefs(currentStudentStore)
+const { navBarInfo } = storeToRefs(useAppStore())
+const { dryerBalanceInfo, videoBalanceInfo } = useBalance()
+const { defaultDeviceType } = useDeviceType()
+
+/** 是否展示余额区域 */
+const showBalanceSection = SHOW_BALANCE_SECTION
+/** 当前学生的消费统计 */
+const consumptionStats = ref<User.Consumption.IConsumptionStatisticsVo>()
+/** 当前手机号是否已加入亲情号 */
+const isInFamilyContact = ref<boolean>(false)
+
+/** 包含系统导航栏高度的首页头部高度 */
+const headerHeight = computed(() => {
+  return `calc(${HOME_HEADER_HEIGHT} + ${navBarInfo.value.navBarHeight}px)`
+})
+/** 首页头部信息的顶部位置 */
+const headerInfoTop = computed(() => {
+  return `calc(${HOME_HEADER_INFO_TOP} + ${navBarInfo.value.navBarHeight}px)`
+})
+/** 首页滚动内容区域高度 */
+const contentHeight = computed(() => {
+  return getContentHeight(HOME_CONTENT_OFFSET)
+})
+/** 是否展示服务号关注提醒 */
+const showOfficialAccountNotice = computed(() => {
+  const info = unref(userInfo) as any
+  if (!info) return false
+
+  const subscribed = info?.wechatSubscribed
+  // 未返回关注状态时仍展示提醒，避免遗漏关注引导
+  return subscribed === undefined ? true : !subscribed
+})
+/** 当前用户是否已签署人脸采集协议 */
+const hasAgreementSigned = computed(() => {
+  const info = unref(userInfo) as any
+  return !!info?.agreementUrl
+})
+/** 当前学生已开通的功能模块 */
+const studentModules = computed(() => {
+  return studentInfo.value?.modules || []
+})
+/** 当前余额对应的设备类型 */
+const primaryDeviceType = computed(() => {
+  return devices.value?.[0]?.deviceType || defaultDeviceType.value || DEVICE_TYPE.VIDEO
+})
+/** 当前设备类型对应的余额信息 */
+const currentBalanceInfo = computed(() => {
+  if (primaryDeviceType.value === DEVICE_TYPE.DRYER) {
+    return dryerBalanceInfo.value
+  }
+  return videoBalanceInfo.value
+})
+/** 当前学生是否开通账户信息模块 */
+const hasAccountModules = computed(() => {
+  return studentModules.value.includes(MINIAPP_MODULE_KEY_ACCOUNT_INFO)
+})
+/** 当前学生是否开通充值模块 */
+const hasRechargeModules = computed(() => {
+  return studentModules.value.includes(MINIAPP_MODULE_KEY_RECHARGE)
+})
+/** 当前学生可见的首页菜单 */
+const filteredMenuList = computed(() => {
+  const modules = new Set(studentModules.value)
+  return MENU_LIST.filter((item) => {
+    if (item.id === MINIAPP_MODULE_KEY_FACE_COLLECTION) return false
+    if (!item.id) return true
+    return modules.has(item.id)
+  })
+})
+/** 账户信息菜单项 */
+const accountInfoMenuItem = computed(() => {
+  return filteredMenuList.value.find(item => item.id === MINIAPP_MODULE_KEY_ACCOUNT_INFO) || null
+})
+/** 除账户信息外的首页菜单项 */
+const otherMenuList = computed(() => {
+  return filteredMenuList.value.filter(item => item.id !== MINIAPP_MODULE_KEY_ACCOUNT_INFO)
+})
+/** 当前学生 ID，修改时同步切换学生上下文 */
+const selectedStudentId = computed<number | null>({
+  get: () => studentInfo.value?.studentId ?? null,
+  set: (id) => {
+    if (id == null || id === studentInfo.value?.studentId) return
+    handleStudentChange(id)
+  },
+})
+
+/**
+ * 查询当前手机号是否存在于亲情号列表中
+ * @returns 查询结果，请求失败时返回失败状态码
+ */
+async function axiosGetCheckSelfApi() {
+  try {
+    const result = await getCheckSelfApi({ phone: unref(phone) || unref(userInfo).phone })
+
+    if (result.code === 0) {
+      const { exists, contactInfo: selfContactInfo } = result.data
+      isInFamilyContact.value = exists
+
+      if (exists && selfContactInfo) {
+        currentStudentStore.setContactInfo(selfContactInfo)
+      } else {
+        currentStudentStore.setContactInfo(null)
+        toast.warning('当前手机号不在该学生亲情号中，请先添加亲情号')
+      }
+    }
+
+    return result
+  } catch (error) {
+    console.error('获取联系人信息失败:', error)
+    isInFamilyContact.value = false
+    return { code: -1 }
+  }
+}
+
+/** 关注公众号 */
+function handleGoToOfficialAccount() {
+  uni.navigateTo({
+    url: COMMON_FOLLOW_PATH,
+  })
+}
+/**
+ * 按菜单业务规则执行页面跳转
+ * @param path 普通菜单的目标路径
+ * @param item 当前菜单项
+ */
+function handleNavigationToPath(path?: string, item: THomeMenuItem = null) {
+  if (item && item.id === MINIAPP_MODULE_KEY_MESSAGE && !isInFamilyContact.value) {
+    toast.show(MESSAGE_CONTACT_REQUIRED_TEXT)
+    return
+  }
+
+  if (item && (item.id === 'face' || item.title === '人脸采集') && !hasAgreementSigned.value) {
+    uni.navigateTo({
+      url: FACE_CONSENT_PATH,
+    })
+    return
+  }
+
+  if (item && item.id === 'score') {
+    const { scoreUrl, schoolName, roleInfo } = unref(userInfo)
+    const { currentChild } = roleInfo as User.Common.IParentRoleInfoVo
+    navigateToScore({
+      scoreUrl,
+      schoolName,
+      onlyCode: currentChild!.UUID,
+      // 成绩页默认显示“返回小程序”按钮
+      rt: 0,
+    })
+    return
+  }
+
+  if (item && item.id === MINIAPP_MODULE_KEY_PARENT_MESSAGE) {
+    const { scoreUrl, schoolName, userName, roleInfo } = unref(userInfo) || {}
+    const tel = unref(phone) || unref(userInfo)?.phone || ''
+    const { currentChild } = roleInfo as User.Common.IParentRoleInfoVo
+
+    if (!scoreUrl) {
+      toast.show(PARENT_MESSAGE_URL_MISSING_TEXT)
+      return
+    }
+
+    navigateToParentMessage({
+      scoreUrl,
+      schoolName: schoolName || '',
+      onlyCode: currentChild!.UUID,
+      tel,
+      nickname: userName || '',
+      // 家长留言页默认显示“返回小程序”按钮
+      rt: 0,
+    })
+    return
+  }
+
+  if (!path) return
+
+  uni.navigateTo({
+    url: path,
+  })
+}
+/**
+ * 切换当前学生并刷新关联数据
+ * @param childId 目标学生用户 ID
+ */
+async function handleStudentChange(childId: number) {
+  pageError.value = ''
+  pageLoading.value = true
+
+  try {
+    const previousStudentId = parentStore.currentStudentId
+    const result = await postParentSwitchChildApi({ childUserId: childId })
+
+    if (result.code === 0) {
+      if (previousStudentId !== childId) {
+        // 清理上一名学生的缓存，避免设备和业务数据串用
+        currentStudentStore.clearStudentData()
+      }
+
+      parentStore.setCurrentStudentId(childId)
+      const selectedStudent = students.value.find(student => student.id === childId)
+      currentStudentStore.setDevices(selectedStudent?.devices ?? [])
+
+      const { token } = result.data
+      if (token) {
+        userStore.setToken(token)
+        await userStore.getUserInfo()
+      }
+
+      // 等待学生上下文更新后再查询依赖当前学生的亲情号状态
+      await nextTick()
+      await batchRequestHandler([axiosGetCheckSelfApi()], {
+        auto: false,
+      })
+    }
+  } catch (error) {
+    console.error('切换学生失败', error)
+  } finally {
+    pageError.value = ''
+    pageLoading.value = false
+  }
+}
+/** 登录成功处理 */
+async function handleLoginSuccess() {
+  await batchRequestHandler([axiosGetCheckSelfApi()])
+}
+
+onShow(() => {
+  // 首次数据由登录成功回调加载，页面再次显示时才刷新
+  if (unref(pageLoaded)) {
+    batchRequestHandler([userStore.getUserInfo(), axiosGetCheckSelfApi()])
+  }
+})
 </script>
 
 <template>
@@ -185,7 +437,7 @@ const {
           </view>
 
           <!-- 功能按钮网格 -->
-          <view grid="~ cols-4 gap-4">
+          <view grid="~ cols-4 gap-4" p-b="4">
             <!-- 账户信息 -->
             <view
               v-if="accountInfoMenuItem"

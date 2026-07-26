@@ -235,7 +235,7 @@ defineExpose({
     <view p="4 t-2!" flex="~ col" gap="4">
       <!-- 人脸状态与图片区域 -->
       <WhiteCard
-        v-if="currentStudent?.faceImageUrl"
+        v-if="studentInfo?.faceImageUrl"
         :custom-style="{
           backgroundColor: noticeConfig.bgColor,
           borderColor: noticeConfig.borderColor,
@@ -247,7 +247,7 @@ defineExpose({
           </view>
           <view flex="~ justify-center">
             <image
-              :src="currentStudent.faceImageUrl"
+              :src="studentInfo.faceImageUrl"
               mode="aspectFill"
               w="48"
               h="48"
@@ -375,7 +375,7 @@ defineExpose({
         <view m="b-4">
           <view flex="~ justify-center">
             <image
-              :src="currentStudent?.faceImageUrl"
+              :src="studentInfo?.faceImageUrl"
               mode="aspectFit"
               w="full"
               h="64"

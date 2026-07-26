@@ -82,7 +82,7 @@ export function usePackageDetail() {
 
   /** 刷新页面数据 */
   function refreshPageData() {
-    const { query } = currRoute()
+    const { query } = currRoute() as { path: string, query: { id?: string } }
     if (!query.id) return
     const packageId = Number(query.id)
     if (Number.isNaN(packageId)) return

@@ -4,16 +4,16 @@
  * Copyright (C) 2018-2022 QIUN (R) 秋云 https://www.ucharts.cn All rights reserved.
  * Licensed ( http://www.apache.org/licenses/LICENSE-2.0 )
  * 复制使用请保留本段注释，感谢支持开源！
- * 
+ *
  * uCharts (R) 官方网站
  * https://www.uCharts.cn
- * 
+ *
  * 开源地址:
  * https://gitee.com/uCharts/uCharts
- * 
+ *
  * uni-app插件市场地址：
  * http://ext.dcloud.net.cn/plugin?id=271
- * 
+ *
  */
 
 'use strict';
@@ -7703,4 +7703,6 @@ uCharts.prototype.scrollEnd = function(e) {
   }
 };
 
-export default uCharts;
+/** @type {any} */
+var uChartsExport = uCharts;
+export default uChartsExport;

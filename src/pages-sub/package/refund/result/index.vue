@@ -266,7 +266,7 @@ async function axiosGetPackageRefundDetailApi(id: number) {
 }
 
 function onLoginSuccess() {
-  const { query } = currRoute()
+  const { query } = currRoute() as { path: string, query: { id?: string } }
   const id = query?.id
 
   if (!id) {

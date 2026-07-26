@@ -28,13 +28,13 @@ export function useConsumptionRecords() {
       ...query,
       page,
       pageSize,
-    }
+    } as ConsumptionRecordsQuery
 
     if (!showDeviceType.value && !params.deviceType) {
       params.deviceType = defaultDeviceType.value
     }
 
-    return params as ConsumptionRecordsQuery
+    return params
   }
 
   /**

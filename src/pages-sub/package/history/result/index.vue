@@ -232,11 +232,11 @@ function handleRefundSuccess() {
 
 /** 刷新页面数据 */
 function refreshPageData() {
-  const { query } = currRoute()
+  const { query } = currRoute() as { path: string, query: { orderNo?: string } }
 
   if (query?.orderNo) {
     batchRequestHandler([
-      axiosGetPackageOrderDetailApi(query.orderNo as string),
+      axiosGetPackageOrderDetailApi(query.orderNo),
       axiosGetPendingPaymentApi(),
     ])
   }

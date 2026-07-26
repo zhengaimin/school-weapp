@@ -176,7 +176,7 @@ async function handleCancel() {
 
 /** 登录成功处理 */
 async function onLoginSuccess() {
-  const { query } = currRoute()
+  const { query } = currRoute() as { path: string, query: { id?: string } }
   if (query.id) {
     batchRequestHandler([axiosGetRefundDetailApi(+query.id)])
   }

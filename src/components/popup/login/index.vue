@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
 
-import { postWxPhoneApi } from '@/api/modules/user'
+import { getWxCode, postWxPhoneApi } from '@/api/modules/user'
 import { useUserStore } from '@/store/user'
 
 interface Props {}
@@ -76,12 +76,13 @@ async function onGetPhoneNumber(e: any) {
     })
 
     try {
-      const result = await postWxPhoneApi({ code })
+      const { code: loginCode } = await getWxCode()
+      const result = await postWxPhoneApi({ code, loginCode })
 
       if (result.code === 0) {
-        const { phone_number } = result.data
-        phone.value = phone_number
-        userInfo.value.phone = phone_number
+        const { phoneNumber } = result.data
+        phone.value = phoneNumber
+        userInfo.value.phone = phoneNumber
 
         loginSuccess()
       } else {

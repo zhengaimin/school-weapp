@@ -286,7 +286,7 @@ onUnmounted(() => {
                 <!-- 文件消息 -->
                 <view v-else-if="item.type === 'file'" rounded-lg bg-white p-3>
                   <view flex items-center gap-2>
-                    <text i-file-text-fill text-lg text-green-500 />
+                    <text i-carbon-document text-lg text-green-500 />
                     <view flex-1>
                       <text block truncate text-sm text-gray-800>
                         {{ item.fileName || '未知文件' }}
@@ -442,7 +442,7 @@ onUnmounted(() => {
                   <!-- 文件消息 -->
                   <view v-else-if="item.type === 'file'" rounded-lg bg-primary p-3>
                     <view flex items-center gap-2>
-                      <text i-file-text-fill text-lg text-white />
+                      <text i-carbon-document text-lg text-white />
                       <view flex-1>
                         <text block truncate text-sm text-white>
                           {{ item.fileName || '未知文件' }}

@@ -224,7 +224,7 @@ async function handleCancelOrder() {
 
 /** 登录成功处理 */
 async function onLoginSuccess() {
-  const { query } = currRoute()
+  const { query } = currRoute() as { path: string, query: { orderId?: string } }
   const orderId = Number(query.orderId)
   batchRequestHandler([axiosGetPaymentDetailApi(orderId)])
 }

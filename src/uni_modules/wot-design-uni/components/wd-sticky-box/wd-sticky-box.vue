@@ -61,7 +61,7 @@ function handleResize(detail: any) {
   // wd-sticky-box 大小变化时，重新监听所有吸顶元素
   const temp = observerMap.value
   observerMap.value = new Map()
-  for (const [uid] of temp) {
+  for (const [uid] of temp as any) {
     const child = stickyList.find((sticky) => {
       return sticky.$.uid === uid
     })

@@ -1,4 +1,4 @@
-const _b64chars: string[] = [...'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/']
+const _b64chars: string[] = [...('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/' as any)]
 const _mkUriSafe = (src: string): string => src.replace(/[+/]/g, (m0: string) => (m0 === '+' ? '-' : '_')).replace(/=+\$/m, '')
 const fromUint8Array = (src: Uint8Array, rfc4648 = false): string => {
   let b64 = ''

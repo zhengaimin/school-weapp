@@ -136,9 +136,10 @@ const swiperIndicator = computed(() => {
     indicatorPosition: indicatorPosition || 'bottom'
   }
   if (isObj(indicator)) {
-    swiperIndicator.type = indicator.type || 'dots'
-    swiperIndicator.minShowNum = indicator.minShowNum || 2
-    swiperIndicator.showControls = indicator.showControls || false
+    const indicatorOptions = indicator as any
+    swiperIndicator.type = indicatorOptions.type || 'dots'
+    swiperIndicator.minShowNum = indicatorOptions.minShowNum || 2
+    swiperIndicator.showControls = indicatorOptions.showControls || false
   }
   return swiperIndicator
 })

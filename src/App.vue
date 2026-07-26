@@ -2,6 +2,7 @@
 import { onLaunch } from '@dcloudio/uni-app'
 import { provide, ref } from 'vue'
 import { useAppStore } from '@/store/app'
+import { ensureVoipRuntimeGuards } from '@/utils/voip'
 import 'abortcontroller-polyfill/dist/abortcontroller-polyfill-only'
 
 const { initNavBarInfo } = useAppStore()
@@ -11,6 +12,12 @@ provide('isFirstLaunch', isFirstLaunch)
 
 onLaunch(() => {
   initNavBarInfo()
+  // 官方要求 onVoipEvent 在通话开始前绑定，且勿放在页面 onLoad 重复绑
+  try {
+    ensureVoipRuntimeGuards()
+  } catch (error) {
+    console.error('ensureVoipRuntimeGuards onLaunch:', error)
+  }
 })
 </script>
 

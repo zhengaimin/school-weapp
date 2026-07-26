@@ -47,7 +47,7 @@ export const FAMILY_EDIT_PATH = '/pages-sub/family/edit/index'
 
 // ==================== 设备 (device) ====================
 export const DEVICE_SUBSCRIBE_PATH = '/pages-sub/device/subscribe/index'
-export const DEVICE_VOIP_CALL_PATH = '/pages-sub/device/voip/index'
+export const VOIP_CALL_PATH = '/pages/voip/index'
 
 // ==================== 人脸 (face) ====================
 export const FACE_COLLECTION_PATH = '/pages-sub/face/collection/index'
