@@ -1,3 +1,4 @@
+/** 学生概览接口类型定义 */
 import type { TDeviceType } from '@/constant/modules/business/package/common'
 
 export namespace Overview {
@@ -9,6 +10,8 @@ export namespace Overview {
     deviceName: string
     /** 余额 */
     balance: string
+    /** 赠费余额，可消费但不可退款 */
+    giftBalance: string
     /** 剩余分钟数（套餐+赠送） */
     remainingMinutes: number
     /** 本月支出（前端 mock） */

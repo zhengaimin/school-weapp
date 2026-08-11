@@ -34,8 +34,6 @@ import {
   redirectToWmpfVoipCallPage,
   scheduleCloseVoipMiniProgram,
   VOIP_PAGE_VERSION,
-  WMPF_VOIP_DEVICE_SN,
-  WMPF_VOIP_LISTENER_OPEN_ID,
 } from '@/utils/voip'
 
 defineOptions({
@@ -44,8 +42,8 @@ defineOptions({
   },
 })
 
-/** 当前联调统一使用体验版，接听方打开体验版小程序 */
-const VOIP_MINIPROGRAM_STATE: TWmpfVoipMiniProgramState = 'trial'
+/** 接听方打开线上版小程序 */
+const VOIP_MINIPROGRAM_STATE: TWmpfVoipMiniProgramState = 'formal'
 const userStore = useUserStore()
 
 /** voip 页 url 参数：sn / openid / name / roomType / timeLimit / callSessionId */
@@ -80,7 +78,7 @@ const listenerName = ref('')
 const roomType = ref<TWmpfVoipRoomType>('voice')
 /** 业务类型 */
 const businessType = ref<TWmpfVoipBusinessType>(1)
-/** 接听方点击通知时打开的小程序版本（固定体验版） */
+/** 接听方点击通知时打开的小程序版本（固定线上版） */
 const miniprogramState = ref<TWmpfVoipMiniProgramState>(VOIP_MINIPROGRAM_STATE)
 /** 通知打开小程序时附带的 query */
 const customQuery = ref('')
@@ -169,20 +167,18 @@ function failAndCloseMiniProgram(message: string, detail?: unknown) {
 
 /**
  * 从当前路由 url 取参数（sn / openid / name / roomType / callSessionId）并写入页面状态。
- * url 参数缺失时回落到环境变量，保证无参进入仍可建房。
+ * openid 缺失时回落到当前登录用户 openId。
  */
 function acceptParams() {
   const { query } = currRoute()
   const routeQuery = (query || {}) as IVoipRouteQuery
 
-  // sn → 主叫（设备 SN），缺失回落环境变量
-  callerId.value = (routeQuery.sn && routeQuery.sn.trim()) || WMPF_VOIP_DEVICE_SN
-  // openid → 接听方，缺失依次回落环境变量 / 当前登录用户 openId
+  callerId.value = (routeQuery.sn && routeQuery.sn.trim()) || ''
   if (routeQuery.openid && routeQuery.openid.trim()) {
     listenerId.value = routeQuery.openid.trim()
   } else {
     const wechatInfo = userStore.userInfo?.wechatInfo
-    listenerId.value = WMPF_VOIP_LISTENER_OPEN_ID || wechatInfo?.MiniOpenID || wechatInfo?.miniOpenID || ''
+    listenerId.value = wechatInfo?.MiniOpenID || wechatInfo?.miniOpenID || ''
   }
   // name → 接听方名称
   listenerName.value = (routeQuery.name && routeQuery.name.trim()) || ''
@@ -197,7 +193,7 @@ function acceptParams() {
   timeLimit.value = Number.isFinite(timeLimitSec) && timeLimitSec > 0
     ? Math.floor(timeLimitSec)
     : undefined
-  // 联调阶段固定体验版
+  // 接听方固定打开线上版
   miniprogramState.value = VOIP_MINIPROGRAM_STATE
 }
 

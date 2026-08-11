@@ -1,3 +1,4 @@
+/** 用户接口类型定义 */
 import type {
   TAmountType,
   TBalanceBusinessType,
@@ -27,6 +28,8 @@ export namespace User {
       totalBalance: string | null
       /** 可用余额 */
       availableBalance: string | null
+      /** 赠费余额，可消费但不可退款 */
+      giftBalance: string | null
       /** 冻结余额 */
       frozenBalance: string | null
       /** 累计充值 */
@@ -58,6 +61,8 @@ export namespace User {
       departmentName: string | null
       /** 当前总余额 */
       balance: string | null
+      /** 赠费余额，可消费但不可退款 */
+      giftBalance: string | null
       /** 详细余额信息 */
       balanceInfo: IBalanceInfoVo | null
       /** IC卡号 */
@@ -82,6 +87,10 @@ export namespace User {
       currentChild: ICurrentChildVo
       /** 关联的孩子数量 */
       childrenCount: number
+      /** 当前总余额 */
+      balance: string
+      /** 赠费余额，可消费但不可退款 */
+      giftBalance: string
     }
 
     /** 教师角色特定信息 */
@@ -112,6 +121,8 @@ export namespace User {
       schoolId: number
       /** 学校名称 */
       schoolName: string
+      /** 客服电话 */
+      customerServicePhone: string
       /** 成绩h5页面地址 */
       scoreUrl: string
       /** 学校支持的设备类型列表（VIDEO-话机，DRYER-吹风机等） */
@@ -178,7 +189,7 @@ export namespace User {
     /** 获取用户余额 - 请求参数 */
     export interface ReqGetBalanceApi {
       /** 设备类型：VIDEO-视频话机，DRYER-吹风机 */
-      deviceType: TDeviceType
+      deviceType?: TDeviceType
     }
 
     /** 用户余额接口返回的设备类型 */
@@ -188,6 +199,8 @@ export namespace User {
     export interface IStudentBalanceInfoVo {
       /** 可用余额 */
       availableBalance?: string
+      /** 赠费余额，可消费但不可退款 */
+      giftBalance?: string
       /** 班级名称 */
       className?: string
       /** 冻结余额 */

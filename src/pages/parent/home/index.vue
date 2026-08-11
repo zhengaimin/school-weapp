@@ -19,6 +19,7 @@ import { postParentSwitchChildApi } from '@/api/modules/students'
 import Notice from '@/components/common/notice/index.vue'
 import Page from '@/components/common/page/index.vue'
 import Icon from '@/components/icon/index.vue'
+import CustomerService from '@/components/popup/customer-service/index.vue'
 import {
   DEVICE_TYPE,
   MENU_LIST,
@@ -73,10 +74,14 @@ const { defaultDeviceType } = useDeviceType()
 
 /** 是否展示余额区域 */
 const showBalanceSection = SHOW_BALANCE_SECTION
+/** 是否展示首页客服入口 */
+const showCustomerServiceEntry = false
 /** 当前学生的消费统计 */
 const consumptionStats = ref<User.Consumption.IConsumptionStatisticsVo>()
 /** 当前手机号是否已加入亲情号 */
 const isInFamilyContact = ref<boolean>(false)
+/** 是否展示客服电话弹窗 */
+const showCustomerService = ref(false)
 
 /** 包含系统导航栏高度的首页头部高度 */
 const headerHeight = computed(() => {
@@ -85,6 +90,17 @@ const headerHeight = computed(() => {
 /** 首页头部信息的顶部位置 */
 const headerInfoTop = computed(() => {
   return `calc(${HOME_HEADER_INFO_TOP} + ${navBarInfo.value.navBarHeight}px)`
+})
+/** 客服悬浮按钮的可拖动边界，顶部避开系统导航栏 */
+const customerServiceGap = computed(() => ({
+  top: (navBarInfo.value?.navBarHeight || 0) + 8,
+  right: 0,
+  bottom: 32,
+  left: 0,
+}))
+/** 是否展示客服入口和弹窗 */
+const hasCustomerServicePhone = computed(() => {
+  return !!userInfo.value?.customerServicePhone?.trim()
 })
 /** 首页滚动内容区域高度 */
 const contentHeight = computed(() => {
@@ -169,7 +185,12 @@ async function axiosGetCheckSelfApi() {
         currentStudentStore.setContactInfo(selfContactInfo)
       } else {
         currentStudentStore.setContactInfo(null)
-        toast.warning('当前手机号不在该学生亲情号中，请先添加亲情号')
+        await uni.showModal({
+          title: '提示',
+          content: '当前手机号不在该学生亲情号中，请先添加亲情号',
+          showCancel: false,
+          confirmText: '确定',
+        })
       }
     }
 
@@ -192,9 +213,14 @@ function handleGoToOfficialAccount() {
  * @param path 普通菜单的目标路径
  * @param item 当前菜单项
  */
-function handleNavigationToPath(path?: string, item: THomeMenuItem = null) {
+async function handleNavigationToPath(path?: string, item: THomeMenuItem = null) {
   if (item && item.id === MINIAPP_MODULE_KEY_MESSAGE && !isInFamilyContact.value) {
-    toast.show(MESSAGE_CONTACT_REQUIRED_TEXT)
+    await uni.showModal({
+      title: '提示',
+      content: MESSAGE_CONTACT_REQUIRED_TEXT,
+      showCancel: false,
+      confirmText: '确定',
+    })
     return
   }
 
@@ -524,6 +550,30 @@ onShow(() => {
         </scroll-view>
       </view>
     </view>
+    <wd-fab
+      v-if="showCustomerServiceEntry && hasCustomerServicePhone"
+      position="right-center"
+      :draggable="true"
+      :expandable="false"
+      :gap="customerServiceGap"
+      :z-index="30"
+    >
+      <template #trigger>
+        <view
+          class="customer-service-trigger"
+          flex="~ items-center justify-center"
+          aria-label="联系客服"
+          @click="showCustomerService = true"
+        >
+          <Icon name="customer-service-line" icon-color="#fff" icon-size="36rpx" />
+        </view>
+      </template>
+    </wd-fab>
+    <CustomerService
+      v-if="showCustomerServiceEntry && hasCustomerServicePhone"
+      v-model="showCustomerService"
+      :phone="userInfo?.customerServicePhone || ''"
+    />
   </Page>
 </template>
 
@@ -531,6 +581,14 @@ onShow(() => {
 // 顶部背景区域
 .header-bg {
   background: linear-gradient(135deg, #3269dd 0%, #5b8cff 100%);
+}
+
+.customer-service-trigger {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 50%;
+  background-color: rgb(50 105 221 / 95%);
+  box-shadow: 0 8rpx 20rpx rgb(15 31 57 / 20%);
 }
 
 // 深层样式

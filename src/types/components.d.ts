@@ -10,6 +10,7 @@ declare module 'vue' {
     BottomPopup: typeof import('./../components/popup/bottom-popup/index.vue')['default']
     Button: typeof import('./../components/common/button/index.vue')['default']
     Cell: typeof import('./../components/form/cell/index.vue')['default']
+    CustomerService: typeof import('./../components/popup/customer-service/index.vue')['default']
     DatetimePickerPopup: typeof import('./../components/popup/datetime-picker-popup/index.vue')['default']
     DefaultBg: typeof import('./../components/common/default-bg/index.vue')['default']
     DetailBlock: typeof import('./../components/common/detail-block/index.vue')['default']

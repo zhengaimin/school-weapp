@@ -1,3 +1,4 @@
+<!-- 设备余额、套餐及赠送时长信息卡片 -->
 <script lang="ts" setup>
 import type { Gifts } from '@/api/interface/modules/gifts'
 import type { Overview } from '@/api/interface/modules/overview'
@@ -26,8 +27,6 @@ const hasRemainingMinutes = computed(() => isVideoDevice.value && props.device.r
 const giftCount = computed(() => props.giftRecords?.length ?? 0)
 /** 是否展示赠费 */
 const hasGiftRecords = computed(() => giftCount.value > 0)
-/** 赠费标题 */
-const giftTitle = computed(() => isVideoDevice.value ? '赠时长' : '赠费')
 /** 套餐类型标签 */
 const packageTypeLabel = computed(() => {
   const packageType = props.activePackage?.snapshotInfo?.packageType || props.activePackage?.packageContent.packageType
@@ -38,6 +37,11 @@ const availableBalance = computed(() => {
   if (props.balanceInfo?.availableBalanceFormatted) return props.balanceInfo.availableBalanceFormatted
   if (props.balanceInfo?.availableBalance) return props.balanceInfo.availableBalance
   return props.device.balance || '--'
+})
+/** 赠费余额 */
+const giftBalance = computed(() => {
+  const amount = Number(props.balanceInfo?.giftBalance ?? props.device.giftBalance ?? 0)
+  return Number.isNaN(amount) ? '0.00' : amount.toFixed(2)
 })
 
 const lastUpdateTime = computed(() => {
@@ -100,6 +104,14 @@ function handlePackageClick() {
         </text>
         <text class="device-card__amount-value">
           {{ availableBalance }}
+        </text>
+      </view>
+      <view flex="~ row items-center justify-between" m="t-1">
+        <text text="xs gray-500">
+          赠费
+        </text>
+        <text text="sm blue-600" font="medium">
+          ¥{{ giftBalance }}
         </text>
       </view>
     </view>
@@ -182,11 +194,11 @@ function handlePackageClick() {
 
     <view v-if="hasGiftRecords" h="1px" bg="#f3f4f6" m="b-4" />
 
-    <!-- 赠费信息 -->
+    <!-- 赠送时长信息 -->
     <view v-if="hasGiftRecords" flex="~ col gap-3">
       <view flex="~ row items-center justify-between">
         <text text="sm gray-700" font="bold">
-          {{ giftTitle }}
+          赠送时长
         </text>
         <text text="xs gray-400">
           共 {{ giftCount }} 条

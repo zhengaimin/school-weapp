@@ -2,6 +2,8 @@ export namespace Schools {
   export interface ISchoolVo {
     address: string
     code: string
+    /** 客服电话 */
+    customerServicePhone: string
     id: number
     name: string
     tenantID: number

@@ -21,7 +21,7 @@ import { getFamilyContactsApi } from '@/api/modules/family/contacts'
 import { useParentStore } from '@/store/auth/parent'
 import { useUserStore } from '@/store/user'
 
-type CurrentStudentInfo = Omit<User.Common.ICurrentChildVo, 'balanceInfo'> & {
+type CurrentStudentInfo = Omit<User.Common.ICurrentChildVo, 'balanceInfo' | 'giftBalance'> & {
   id?: number
   avatar?: string
   schoolName?: string

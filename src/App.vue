@@ -12,7 +12,7 @@ provide('isFirstLaunch', isFirstLaunch)
 
 onLaunch(() => {
   initNavBarInfo()
-  // 官方要求 onVoipEvent 在通话开始前绑定，且勿放在页面 onLoad 重复绑
+  // 插件事件必须在通话开始前完成绑定，页面加载时再执行一次幂等兜底。
   try {
     ensureVoipRuntimeGuards()
   } catch (error) {

@@ -211,8 +211,6 @@ interface IWmpfChannel {
 
 let wmpfVoipPlugin: IWmpfVoipPlugin | null = null
 const wmpfVoipPluginName = import.meta.env.VITE_WMPF_VOIP_PLUGIN_NAME || 'wmpf-voip'
-export const WMPF_VOIP_DEVICE_SN = import.meta.env.VITE_WMPF_VOIP_DEVICE_SN || 'GTD2202310278007732'
-export const WMPF_VOIP_LISTENER_OPEN_ID = import.meta.env.VITE_WMPF_VOIP_LISTENER_OPEN_ID || 'o5KRp17_viVMfo_Kck1QbCju9ANA'
 export const WMPF_VOIP_MODEL_ID = import.meta.env.VITE_WMPF_VOIP_MODEL_ID || 'kBD0lTsIkrMDUZ3ySeCEcQ'
 /** 设备侧通过 WMPF Channel 下发的挂断事件名（closeWxaApp 无法真正结束对端微信通话） */
 export const WMPF_DEVICE_HANGUP_EVENT = 'deviceHangup'
@@ -239,7 +237,7 @@ const VOIP_LIFECYCLE_HANGUP_GRACE_MS = 5000
  */
 export const CLOSE_AFTER_REMOTE_END_MS = 300
 /** VOIP 调试页版本，联调时用于确认设备加载的是否为最新小程序包 */
-export const VOIP_PAGE_VERSION = '20260726.5'
+export const VOIP_PAGE_VERSION = '20260727.1'
 
 /** 通话结束类事件名（统一小写比较） */
 const CALL_END_EVENT_NAMES = new Set([

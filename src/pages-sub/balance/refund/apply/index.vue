@@ -1,3 +1,4 @@
+<!-- 学生余额退款申请页面 -->
 <route lang="jsonc" type="page">
 {
   "layout": "default",
@@ -23,6 +24,8 @@ import WhiteCard from '@/components/common/white-card/index.vue'
 import Cell from '@/components/form/cell/index.vue'
 import Form from '@/components/form/index/index.vue'
 import Radio from '@/components/form/radio/index.vue'
+import Icon from '@/components/icon/index.vue'
+import CustomerService from '@/components/popup/customer-service/index.vue'
 import { DEVICE_TYPE, REFUND_TYPE, REFUND_TYPE_OPTIONS } from '@/constant/modules'
 import { BALANCE_REFUND_HISTORY_PATH, BALANCE_REFUND_RESULT_PATH } from '@/constant/router'
 import { useBalance } from '@/hooks/useBalance'
@@ -30,6 +33,7 @@ import { useDeviceType } from '@/hooks/useDeviceType'
 import { useForm } from '@/hooks/useForm'
 import { usePage } from '@/hooks/usePage'
 import { useCurrentStudentStore } from '@/store/business/currentStudent'
+import { useUserStore } from '@/store/user'
 import { useRefundEmitter } from '@/utils/emit/refund'
 import { toast } from '@/utils/toast'
 
@@ -53,9 +57,12 @@ const { onRefundSuccess } = useRefundEmitter()
 
 const currentStudentStore = useCurrentStudentStore()
 const { studentInfo, studentFullInfo, devices } = storeToRefs(currentStudentStore)
+const { userInfo } = storeToRefs(useUserStore())
 
 /** 待处理退款信息 */
 const pendingRefundInfo = ref<Refund.Application.ResGetPendingApi | null>(null)
+/** 是否展示余额异常客服弹框 */
+const showBalanceCustomerService = ref(false)
 /** 优先使用的设备类型 */
 const primaryDeviceType = computed<TDeviceType>(() => {
   return devices.value?.[0]?.deviceType || defaultDeviceType.value
@@ -97,17 +104,52 @@ const currentBalanceInfo = computed(() => {
 const availableBalance = computed(() => +currentBalanceInfo.value?.availableBalance || 0)
 /** 可用余额文案 */
 const availableBalanceText = computed(() => `¥${Number(availableBalance.value).toFixed(2)}`)
+/** 不可退赠费余额 */
+const giftBalance = computed(() => +currentBalanceInfo.value?.giftBalance || 0)
+/** 赠费余额文案 */
+const giftBalanceText = computed(() => `¥${Number(giftBalance.value).toFixed(2)}`)
+/** 可退现金余额 */
+const refundableBalance = computed(() => Math.max(availableBalance.value - giftBalance.value, 0))
+/** 可退余额文案 */
+const refundableBalanceText = computed(() => `¥${refundableBalance.value.toFixed(2)}`)
+/** 可用余额与可退余额是否不同 */
+const hasRefundableBalanceDifference = computed(() => {
+  return availableBalance.value.toFixed(2) !== refundableBalance.value.toFixed(2)
+})
+/** 全额退款金额文案 */
+const fullRefundAmountText = computed(() => refundableBalanceText.value)
+/** 顶部余额概览 */
+const balanceSummaryItems = computed(() => [
+  {
+    label: '可用余额',
+    value: availableBalanceText.value,
+    warning: false,
+  },
+  {
+    label: '赠费',
+    value: giftBalanceText.value,
+    warning: false,
+  },
+  {
+    label: '可退余额',
+    value: refundableBalanceText.value,
+    highlight: true,
+    warning: hasRefundableBalanceDifference.value,
+  },
+])
 /** 退费金额选项 */
 const refundTypeOptions = computed(() => {
-  return REFUND_TYPE_OPTIONS.map(option => ({
-    ...option,
-    suffix: availableBalanceText.value,
-  }))
+  return REFUND_TYPE_OPTIONS.map((option) => {
+    return {
+      ...option,
+      suffix: option.value === REFUND_TYPE.FULL ? fullRefundAmountText.value : undefined,
+    }
+  })
 })
 /** 是否存在待处理退款 */
 const hasPendingRefund = computed(() => !!pendingRefundInfo.value?.hasPending)
 /** 是否余额不足 */
-const hasInsufficientBalance = computed(() => Number(availableBalance.value) <= 0)
+const hasInsufficientBalance = computed(() => refundableBalance.value <= 0)
 /** 是否禁止提交 */
 const cannotSubmit = computed(
   () =>
@@ -333,7 +375,7 @@ defineExpose({
           <!-- 余额不足公告 -->
           <Notice
             v-else-if="hasInsufficientBalance"
-            :title="`您的账户余额为¥${availableBalance.toFixed(2)}，暂时无法发起退款申请。`"
+            :title="`您的可用余额为${availableBalanceText}，赠费${giftBalanceText}不可退款，当前无可退余额。`"
             type="warning"
             :clickable="false"
             :show-popup="false"
@@ -342,26 +384,49 @@ defineExpose({
 
         <!-- 学生信息卡片 -->
         <WhiteCard>
-          <view flex="~ row">
+          <view flex="~ row" items-start>
             <RoleAvatar custom-class="mr-3" size="small" />
             <view flex="1 col" gap-1>
-              <view flex="~ items-center justify-between">
-                <view text="sm text-primary" font="medium">
-                  {{ studentInfo?.studentName || '未选择学生' }}
-                </view>
-                <view text="xs text-secondary">
-                  当前余额
-                </view>
+              <view text="sm text-primary" font="medium">
+                {{ studentInfo?.studentName || '未选择学生' }}
               </view>
-              <view flex="~ items-center justify-between">
-                <view text="xs text-secondary">
-                  {{ studentFullInfo }}
-                </view>
-                <view text="sm primary" font="medium">
-                  {{ availableBalanceText }}
-                </view>
+              <view text="xs text-secondary">
+                {{ studentFullInfo }}
               </view>
             </view>
+          </view>
+        </WhiteCard>
+
+        <WhiteCard>
+          <view flex="~ row items-stretch">
+            <template v-for="(item, index) in balanceSummaryItems" :key="item.label">
+              <view flex="1 ~ col items-center justify-center" gap="1" p="x-1.5">
+                <view flex="~ items-center" gap="0.5">
+                  <text text="xs">
+                    {{ item.label }}
+                  </text>
+                  <view
+                    v-if="item.warning"
+                    flex="~ items-center justify-center"
+                    h-5
+                    w-5
+                    @click.stop="showBalanceCustomerService = true"
+                  >
+                    <Icon name="error-warning-line" icon-color="#f59e0b" icon-size="28rpx" />
+                  </view>
+                </view>
+                <text text="xs" font="medium">
+                  {{ item.value }}
+                </text>
+              </view>
+              <view
+                v-if="index < balanceSummaryItems.length - 1"
+                w="1px"
+                bg="gray-100"
+                rounded="full"
+                m="y-1.5"
+              />
+            </template>
           </view>
         </WhiteCard>
 
@@ -420,5 +485,12 @@ defineExpose({
         </TButton>
       </view>
     </view>
+    <CustomerService
+      v-if="hasRefundableBalanceDifference"
+      v-model="showBalanceCustomerService"
+      title=""
+      :phone="userInfo?.customerServicePhone || ''"
+      message="余额异常，请联系客服退款"
+    />
   </Page>
 </template>

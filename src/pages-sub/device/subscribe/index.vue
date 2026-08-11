@@ -87,7 +87,12 @@ async function handleToggleSubscription(device: Devices.IDeviceGroupVo) {
 
   const familyContactId = unref(contactInfo)?.id
   if (familyContactId == null) {
-    toast.warning('当前手机号不在该学生亲情号中，请先添加亲情号')
+    await uni.showModal({
+      title: '提示',
+      content: '当前手机号不在该学生亲情号中，请先添加亲情号',
+      showCancel: false,
+      confirmText: '确定',
+    })
     return
   }
 

@@ -29,12 +29,8 @@ interface ImportMetaEnv {
   readonly VITE_WMPF_VOIP_PLUGIN_PROVIDER: string
   /** VOIP 通话插件版本 */
   readonly VITE_WMPF_VOIP_PLUGIN_VERSION: string
-  /** VOIP 临时调试设备 SN */
-  readonly VITE_WMPF_VOIP_DEVICE_SN: string
   /** VOIP 临时调试设备型号 ID */
   readonly VITE_WMPF_VOIP_MODEL_ID: string
-  /** VOIP 临时调试接听方 openId */
-  readonly VITE_WMPF_VOIP_LISTENER_OPEN_ID: string
   // 更多环境变量...
 }
 
