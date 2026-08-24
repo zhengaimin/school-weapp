@@ -762,20 +762,40 @@ export namespace Pkg {
       packageRecordId: number
     }
 
-    /** 套餐退款预览 - 响应 */
+    /** 退款计算明细（首月比例两场景 + 固定/首月比例=否） */
+    export interface IRefundCalculation {
+      /** 套餐原价 */
+      originalPrice: string
+      /** 每月单价 */
+      monthlyPrice: string
+      /** 套餐总月数 */
+      totalMonths: number
+      /** 已过月数（含当月） */
+      elapsedMonths: number
+      /** 剩余月数（当月不退） */
+      remainingMonths: number
+      /** 最终退费金额 */
+      refundAmount: string
+      /** 场景：未生效全额退/首月内退/次月后退/按自然月退 */
+      scenario: string
+      /** 首月实收（仅首月比例场景，非比例场景为0） */
+      firstMonthActualPrice: string
+      /** 已生效完整自然月数（不含首月、不含当月） */
+      fullMonths: number
+      /** 当月扣除金额（月单价×当月扣除比例，首月内退为0） */
+      currentMonthDeduct: string
+    }
+
+    /** 套餐退款预览 - 响应（对齐后端 PackageRefundPreviewResponse） */
     export interface ResPostRefundPreviewApi {
-      /** 套餐购买记录 ID */
-      packageRecordId: number
-      /** 套餐名称 */
-      packageName: string
-      /** 购买价格 */
-      purchasePrice: number
-      /** 已使用价值 */
-      usedValue: number
-      /** 可退款金额 */
-      refundableAmount: number
-      /** 退款说明 */
-      refundDescription: string
+      /** 是否可退款 */
+      canRefund: boolean
+      /** 不可退款原因 */
+      refundReason: string
+      /** 预估退费金额 */
+      refundAmount: string
+      /** 退费计算明细 */
+      calculation: IRefundCalculation | null
     }
 
     /** 套餐内容 */
