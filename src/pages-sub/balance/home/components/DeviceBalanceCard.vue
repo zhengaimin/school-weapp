@@ -116,6 +116,45 @@ function handlePackageClick() {
       </view>
     </view>
 
+    <!-- 时长来源分层（话机）：①平台套餐月清 ②独立赠送 ③独立充值套餐 ③.5充值赠送 -->
+    <view v-if="isVideoDevice" flex="~ col gap-2" m="b-4" p="4" bg="#fafafa" rounded="lg">
+      <text text="sm gray-700" font="medium" m="b-1">
+        时长来源明细
+      </text>
+      <view flex="~ row items-center justify-between">
+        <text text="xs gray-500">
+          平台套餐月清
+        </text>
+        <text text="sm gray-800" font="medium">
+          {{ balanceInfo?.platformMonthlyMinutes ?? 0 }} 分钟
+        </text>
+      </view>
+      <view flex="~ row items-center justify-between">
+        <text text="xs gray-500">
+          独立赠送
+        </text>
+        <text text="sm gray-800" font="medium">
+          {{ balanceInfo?.adminGiftMinutes ?? 0 }} 分钟
+        </text>
+      </view>
+      <view flex="~ row items-center justify-between">
+        <text text="xs gray-500">
+          独立充值套餐
+        </text>
+        <text text="sm gray-800" font="medium">
+          {{ balanceInfo?.packageMinutes ?? 0 }} 分钟
+        </text>
+      </view>
+      <view flex="~ row items-center justify-between">
+        <text text="xs gray-500">
+          充值赠送
+        </text>
+        <text text="sm gray-800" font="medium">
+          {{ balanceInfo?.rechargeBonusMinutes ?? 0 }} 分钟
+        </text>
+      </view>
+    </view>
+
     <!-- 套餐信息 -->
     <view v-if="activePackage" :class="[hasGiftRecords ? 'mb-4' : '']" @click="handlePackageClick">
       <view flex="~ row items-center justify-between" m="b-3">

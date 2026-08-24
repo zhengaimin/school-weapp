@@ -225,6 +225,18 @@ export namespace User {
       totalRefund?: string
       /** 余额更新时间 */
       updatedAt?: string
+      /** 套餐通话剩余分钟数 */
+      packageMinutes?: number
+      /** 赠送通话剩余分钟数（合计） */
+      giftMinutes?: number
+      /** ①平台套餐月清剩余分钟数 */
+      platformMonthlyMinutes?: number
+      /** ①平台套餐月清已使用分钟数 */
+      platformMonthlyMinutesUsed?: number
+      /** ②独立赠送剩余分钟数（管理员赠送/活动） */
+      adminGiftMinutes?: number
+      /** ③.5充值赠送剩余分钟数 */
+      rechargeBonusMinutes?: number
       [property: string]: any
     }
 
