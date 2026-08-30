@@ -25,7 +25,6 @@ import Cell from '@/components/form/cell/index.vue'
 import Form from '@/components/form/index/index.vue'
 import Radio from '@/components/form/radio/index.vue'
 import Icon from '@/components/icon/index.vue'
-import CustomerService from '@/components/popup/customer-service/index.vue'
 import { DEVICE_TYPE, REFUND_TYPE, REFUND_TYPE_OPTIONS } from '@/constant/modules'
 import { BALANCE_REFUND_HISTORY_PATH, BALANCE_REFUND_RESULT_PATH } from '@/constant/router'
 import { useBalance } from '@/hooks/useBalance'
@@ -34,6 +33,7 @@ import { useForm } from '@/hooks/useForm'
 import { usePage } from '@/hooks/usePage'
 import { useCurrentStudentStore } from '@/store/business/currentStudent'
 import { useUserStore } from '@/store/user'
+import { copyToClipboard } from '@/utils/clipboard'
 import { useRefundEmitter } from '@/utils/emit/refund'
 import { toast } from '@/utils/toast'
 
@@ -57,12 +57,14 @@ const { onRefundSuccess } = useRefundEmitter()
 
 const currentStudentStore = useCurrentStudentStore()
 const { studentInfo, studentFullInfo, devices } = storeToRefs(currentStudentStore)
-const { userInfo } = storeToRefs(useUserStore())
+const userStore = useUserStore()
 
 /** 待处理退款信息 */
 const pendingRefundInfo = ref<Refund.Application.ResGetPendingApi | null>(null)
-/** 是否展示余额异常客服弹框 */
-const showBalanceCustomerService = ref(false)
+/** 是否展示余额异常提示 */
+const showBalanceWarning = ref(false)
+/** 是否有客服电话 */
+const hasCustomerServicePhone = computed(() => !!userStore.userInfo?.customerServicePhone?.trim())
 /** 优先使用的设备类型 */
 const primaryDeviceType = computed<TDeviceType>(() => {
   return devices.value?.[0]?.deviceType || defaultDeviceType.value
@@ -240,6 +242,14 @@ function handleViewHistory() {
   })
 }
 
+/** 复制客服电话 */
+function handleCopyPhone() {
+  const phone = userStore.userInfo?.customerServicePhone
+  if (phone) {
+    copyToClipboard(phone, '客服电话')
+  }
+}
+
 /** 提交退费申请 */
 async function handleSubmitRefund() {
   try {
@@ -410,7 +420,7 @@ defineExpose({
                     flex="~ items-center justify-center"
                     h-5
                     w-5
-                    @click.stop="showBalanceCustomerService = true"
+                    @click.stop="showBalanceWarning = true"
                   >
                     <Icon name="error-warning-line" icon-color="#f59e0b" icon-size="28rpx" />
                   </view>
@@ -485,12 +495,87 @@ defineExpose({
         </TButton>
       </view>
     </view>
-    <CustomerService
-      v-if="hasRefundableBalanceDifference"
-      v-model="showBalanceCustomerService"
-      title=""
-      :phone="userInfo?.customerServicePhone || ''"
-      message="余额异常，请联系客服退款"
-    />
+
+    <wd-popup
+      v-model="showBalanceWarning"
+      position="center"
+      :close-on-click-modal="false"
+      :root-portal="true"
+      custom-style="width: 82vw; border-radius: 24rpx;"
+    >
+      <view class="balance-warning-popup" flex="~ col items-center" p="x-5 y-6">
+        <text class="balance-warning-popup__title">
+          提示
+        </text>
+        <text
+          class="balance-warning-popup__message"
+          :class="{ 'balance-warning-popup__message--no-phone': !hasCustomerServicePhone }"
+        >
+          {{ hasCustomerServicePhone ? '余额异常，请联系客服退款' : '余额异常，请联系客服' }}
+        </text>
+        <view
+          v-if="hasCustomerServicePhone"
+          class="balance-warning-popup__phone-wrapper"
+          flex="~ items-center justify-center"
+          gap="2"
+          w-full
+          @click="handleCopyPhone"
+        >
+          <text class="balance-warning-popup__phone">
+            {{ userStore.userInfo?.customerServicePhone }}
+          </text>
+          <Icon
+            name="file-copy-line"
+            icon-color="#7b8ba6"
+            icon-size="30rpx"
+          />
+        </view>
+        <view class="balance-warning-popup__action" w-full>
+          <TButton type="primary" full size="medium" @click="showBalanceWarning = false">
+            确认
+          </TButton>
+        </view>
+      </view>
+    </wd-popup>
   </Page>
 </template>
+
+<style lang="scss" scoped>
+.balance-warning-popup {
+  box-sizing: border-box;
+
+  &__title {
+    color: #0f1f39;
+    font-size: 32rpx;
+    font-weight: 600;
+    line-height: 44rpx;
+  }
+
+  &__message {
+    margin-top: 20rpx;
+    color: #7b8ba6;
+    font-size: 28rpx;
+    line-height: 40rpx;
+
+    &--no-phone {
+      color: #0f1f39;
+    }
+  }
+
+  &__phone-wrapper {
+    margin-top: 20rpx;
+  }
+
+  &__phone {
+    color: #0f1f39;
+    font-size: 40rpx;
+    font-weight: 500;
+    line-height: 48rpx;
+    white-space: nowrap;
+  }
+
+  &__action {
+    margin-top: 32rpx;
+  }
+}
+</style>
