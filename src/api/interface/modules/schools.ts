@@ -29,6 +29,15 @@ export namespace Schools {
     [property: string]: any
   }
 
+  /** 获取学校列表请求：name 为必填关键词，模糊匹配（防止全量泄露客户信息） */
+  export interface ReqGetSchoolsApi {
+    /** 学校名称关键词，至少 2 个字符 */
+    name: string
+    tenantId?: number
+    page?: number
+    pageSize?: number
+  }
+
   export interface ResGetSchoolsApi {
     schools: ISchoolVo[]
     total: number

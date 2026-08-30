@@ -69,10 +69,20 @@ const searchResult = ref<{
 const selectedStudent = ref<Students.IStudentVo | null>(null)
 /** 学生信息弹框显示状态 */
 const showStudentInfoModal = ref(false)
-/** 原始学校选项 */
-const rawSchoolOptions = ref<any[]>([])
-/** 学校选项 */
-const schoolOptions = ref<{ label: string, value: string | number }[]>([])
+/** 学校搜索关键词（输入框显示值） */
+const schoolKeyword = ref('')
+/** 学校模糊搜索结果 */
+const schoolSearchResult = ref<any[]>([])
+/** 学校下拉是否展开 */
+const showSchoolDropdown = ref(false)
+/** 学校搜索中 */
+const schoolSearching = ref(false)
+/** 已选中的学校（含 tenantId 等，供搜索学生用） */
+const selectedSchool = ref<any | null>(null)
+/** 学校搜索关键词最小长度（少于此长度不请求，防止全量泄露） */
+const SCHOOL_KEYWORD_MIN = 2
+/** 防抖定时器 */
+let schoolSearchTimer: ReturnType<typeof setTimeout> | null = null
 
 /** 表单验证规则 */
 const rules = {
@@ -104,23 +114,59 @@ function hideSearchResult() {
   searchResult.value = { type: null }
 }
 
-/** 获取学校列表 */
-async function axiosGetSchoolsApi() {
-  try {
-    const result = await getSchoolsApi({ page: 1, pageSize: 100 })
-    if (result.code === 0 && result.data?.schools) {
-      const { data } = result
-      rawSchoolOptions.value = data.schools
-      schoolOptions.value = data.schools.map(item => ({
-        label: item.name,
-        value: item.id,
-      }))
-    }
-    return result
-  } catch (error) {
-    console.error('获取学校列表', error)
-    return { code: -1 }
+/** 按关键词模糊搜索学校（少于 SCHOOL_KEYWORD_MIN 字不请求，防止全量泄露） */
+async function axiosSearchSchoolsApi(keyword: string) {
+  const name = keyword.trim()
+  if (name.length < SCHOOL_KEYWORD_MIN) {
+    schoolSearchResult.value = []
+    showSchoolDropdown.value = false
+    return
   }
+  try {
+    schoolSearching.value = true
+    const result = await getSchoolsApi({ name, page: 1, pageSize: 20 })
+    if (result.code === 0 && result.data?.schools) {
+      schoolSearchResult.value = result.data.schools
+    } else {
+      schoolSearchResult.value = []
+    }
+    showSchoolDropdown.value = true
+  } catch (error) {
+    console.error('搜索学校', error)
+    schoolSearchResult.value = []
+    showSchoolDropdown.value = true
+  } finally {
+    schoolSearching.value = false
+  }
+}
+
+/** 学校关键词输入（防抖触发模糊搜索） */
+function handleSchoolKeywordInput() {
+  // 输入变化即视为未选中，清空已选与后续步骤
+  if (selectedSchool.value) {
+    selectedSchool.value = null
+    formData.value.school = ''
+    formData.value.name = ''
+    formData.value.searchValue = ''
+    hideSearchResult()
+  }
+  if (schoolSearchTimer) clearTimeout(schoolSearchTimer)
+  schoolSearchTimer = setTimeout(() => {
+    axiosSearchSchoolsApi(schoolKeyword.value)
+  }, 400)
+}
+
+/** 选择某个学校 */
+function handleSelectSchool(school: any) {
+  selectedSchool.value = school
+  formData.value.school = school.id
+  schoolKeyword.value = school.name
+  showSchoolDropdown.value = false
+  schoolSearchResult.value = []
+  // 切换学校后重置后续输入
+  formData.value.name = ''
+  formData.value.searchValue = ''
+  hideSearchResult()
 }
 /** 搜索学生 */
 async function axiosPostPublicStudentApi(params: Students.ReqPostPublicStudentApi) {
@@ -177,12 +223,6 @@ async function axiosPostBindStudentApi(params: { studentId: number }) {
   }
 }
 
-/** 学校变化处理 */
-async function handleSchoolChange() {
-  formData.value.name = ''
-  formData.value.searchValue = ''
-  hideSearchResult()
-}
 /** 学生姓名输入变化 */
 function handleStudentNameInput() {
   hideSearchResult()
@@ -198,16 +238,16 @@ async function handleSearchStudent() {
 
     submitLoading.value = true
     const { school, name, searchType, searchValue } = formData.value
-    const selectedSchool = rawSchoolOptions.value.find(s => s.id === school)
+    const chosenSchool = selectedSchool.value
 
-    if (!selectedSchool) {
-      toast.show('未找到学校信息')
+    if (!chosenSchool || !school) {
+      toast.show('请先搜索并选择学校')
       return
     }
 
     const params: Students.ReqPostPublicStudentApi = {
       schoolId: +school,
-      tenantId: +selectedSchool.tenantId,
+      tenantId: +(chosenSchool.tenantId ?? chosenSchool.tenantID),
       name: name.trim(),
     }
     if (searchType === SEARCH_TYPE.CODE) params.studentCode = searchValue.trim()
@@ -260,9 +300,9 @@ async function handleConfirmBinding() {
   }
 }
 
-/** 登录成功处理 */
+/** 登录成功处理（不再全量拉取学校，改为用户输入关键词后按需模糊搜索） */
 async function onLoginSuccess() {
-  batchRequestHandler([axiosGetSchoolsApi()])
+  pageLoading.value = false
 }
 </script>
 
@@ -289,15 +329,36 @@ async function onLoginSuccess() {
         <WhiteCard>
           <Form ref="formRef" :model="formData" :rules="rules">
             <view flex="~ col" gap="2.5">
-              <!-- 学校选择 -->
+              <!-- 学校搜索：输入关键词模糊查询，从结果中选择（不全量展示，防泄露） -->
               <Cell id="school" required label="学校" prop="school">
-                <Picker
-                  v-model="formData.school"
-                  :options="schoolOptions"
-                  title="选择学校"
-                  placeholder="请选择学校"
-                  @change="handleSchoolChange"
-                />
+                <view class="school-search">
+                  <wd-input
+                    v-model="schoolKeyword"
+                    placeholder="请输入学校名称搜索"
+                    clearable
+                    @input="handleSchoolKeywordInput"
+                    @clear="handleSchoolKeywordInput"
+                  />
+                  <!-- 搜索结果下拉 -->
+                  <view v-if="showSchoolDropdown" class="school-dropdown">
+                    <view v-if="schoolSearching" class="school-dropdown-tip">
+                      搜索中...
+                    </view>
+                    <template v-else-if="schoolSearchResult.length">
+                      <view
+                        v-for="school in schoolSearchResult"
+                        :key="school.id"
+                        class="school-dropdown-item"
+                        @click="handleSelectSchool(school)"
+                      >
+                        {{ school.name }}
+                      </view>
+                    </template>
+                    <view v-else class="school-dropdown-tip">
+                      未找到相关学校
+                    </view>
+                  </view>
+                </view>
               </Cell>
 
               <!-- 学生姓名输入 -->
@@ -433,3 +494,47 @@ async function onLoginSuccess() {
     </BottomPopup>
   </Page>
 </template>
+
+<style lang="scss" scoped>
+.school-search {
+  position: relative;
+  width: 100%;
+}
+
+.school-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  left: 0;
+  z-index: 10;
+  max-height: 480rpx;
+  margin-top: 8rpx;
+  overflow-y: auto;
+  background: #fff;
+  border: 1rpx solid #ebedf0;
+  border-radius: 12rpx;
+  box-shadow: 0 8rpx 24rpx rgb(0 0 0 / 8%);
+}
+
+.school-dropdown-item {
+  padding: 22rpx 24rpx;
+  font-size: 28rpx;
+  color: #323233;
+  border-bottom: 1rpx solid #f5f5f5;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &:active {
+    background: #f7f8fa;
+  }
+}
+
+.school-dropdown-tip {
+  padding: 24rpx;
+  font-size: 26rpx;
+  color: #969799;
+  text-align: center;
+}
+</style>

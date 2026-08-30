@@ -11,8 +11,8 @@ const SCHOOLS_API = {
   MODULES: `${API}/miniapp/modules`,
 }
 
-/** 获取学校列表 */
-export function getSchoolsApi(params) {
+/** 获取学校列表（name 关键词模糊搜索，必填，防止全量泄露） */
+export function getSchoolsApi(params: Schools.ReqGetSchoolsApi) {
   return http.get<Schools.ResGetSchoolsApi>(SCHOOLS_API.SCHOOLS, params)
 }
 
