@@ -80,14 +80,12 @@ function isCurrentPage(targetPath: string) {
 
   return false
 }
-
 /** 延迟跳转，避免与当前渲染/路由切换冲突 */
 function delayedRedirect(url: string) {
   setTimeout(() => {
     uni.redirectTo({ url })
   }, 500)
 }
-
 /** 延迟导航，用于 push 形式的路由切换 */
 function delayedNavigate(url: string) {
   setTimeout(() => {
@@ -96,10 +94,9 @@ function delayedNavigate(url: string) {
 }
 
 /** 处理滚动事件 */
-function handleScroll(e) {
+function handleScroll(e: any) {
   emit('scroll', e)
 }
-
 /** 初始化用户信息和学生列表 */
 async function initInfo() {
   if (!isFirstLaunch.value) {
@@ -120,7 +117,6 @@ async function initInfo() {
     isFirstLaunch.value = false
   }
 }
-
 /** 已登录后的处理流程 */
 async function handleLoggedInFlow() {
   if (!unref(phone)) {
@@ -172,7 +168,6 @@ async function mpWeixinLogin() {
     return false
   }
 }
-
 /** H5 等其他环境的登录逻辑 */
 async function otherEnvLogin() {
   try {

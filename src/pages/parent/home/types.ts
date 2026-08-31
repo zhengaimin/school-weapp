@@ -15,7 +15,7 @@ export interface INavigateToScoreParams {
   tel?: string
   /** 家长昵称（家长留言场景可选） */
   nickname?: string
-  /** 返回小程序按钮显示控制：0 显示；1 不显示 */
+  /** 返回小程序按钮显示控制：1 显示；0 隐藏 */
   rt: 0 | 1
 }
 

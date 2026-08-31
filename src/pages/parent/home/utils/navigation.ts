@@ -15,7 +15,7 @@ function navigateToWebview(targetPath: string) {
  */
 export function navigateToScore(params: INavigateToScoreParams) {
   const { scoreUrl, schoolName, onlyCode, rt } = params
-  const targetPath = `${scoreUrl}?onlyCode=${onlyCode}&schoolName=${schoolName}&rt=${rt}`
+  const targetPath = `${scoreUrl}?onlycode=${onlyCode}&schoolname=${schoolName}&act=score&rt=${rt}`
   return navigateToWebview(targetPath)
 }
 
@@ -26,6 +26,6 @@ export function navigateToScore(params: INavigateToScoreParams) {
  */
 export function navigateToParentMessage(params: INavigateToScoreParams) {
   const { scoreUrl, schoolName, onlyCode, tel, nickname, rt } = params
-  const targetPath = `${scoreUrl}?onlyCode=${onlyCode}&schoolName=${schoolName}&tel=${tel}&nickname=${nickname}&rt=${rt}`
+  const targetPath = `${scoreUrl}?onlycode=${onlyCode}&schoolname=${schoolName}&tel=${tel}&nickname=${nickname}&act=msg&rt=${rt}`
   return navigateToWebview(targetPath)
 }

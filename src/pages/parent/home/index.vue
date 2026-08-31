@@ -11,7 +11,6 @@
 <script setup lang="ts">
 import type { THomeMenuItem } from './types'
 import type { User } from '@/api/interface/modules/user'
-import dayjs from 'dayjs'
 import { storeToRefs } from 'pinia'
 import { computed, nextTick, ref, unref } from 'vue'
 import { getCheckSelfApi } from '@/api/modules/family/contacts'
@@ -19,9 +18,7 @@ import { postParentSwitchChildApi } from '@/api/modules/students'
 import Notice from '@/components/common/notice/index.vue'
 import Page from '@/components/common/page/index.vue'
 import Icon from '@/components/icon/index.vue'
-import CustomerService from '@/components/popup/customer-service/index.vue'
 import {
-  DEVICE_TYPE,
   MENU_LIST,
   MINIAPP_MODULE_KEY_ACCOUNT_INFO,
   MINIAPP_MODULE_KEY_FACE_COLLECTION,
@@ -34,8 +31,6 @@ import {
   COMMON_FOLLOW_PATH,
   FACE_CONSENT_PATH,
 } from '@/constant/router'
-import { useBalance } from '@/hooks/useBalance'
-import { useDeviceType } from '@/hooks/useDeviceType'
 import { usePage } from '@/hooks/usePage'
 import { useAppStore } from '@/store/app'
 import { useParentStore } from '@/store/auth/parent'
@@ -49,7 +44,7 @@ import {
   HOME_HEADER_INFO_TOP,
   MESSAGE_CONTACT_REQUIRED_TEXT,
   PARENT_MESSAGE_URL_MISSING_TEXT,
-  SHOW_BALANCE_SECTION,
+  SCORE_URL_MISSING_TEXT,
 } from './constants'
 import { getGreeting } from './data'
 import { navigateToParentMessage, navigateToScore } from './utils/navigation'
@@ -67,21 +62,11 @@ const parentStore = useParentStore()
 const currentStudentStore = useCurrentStudentStore()
 const { userInfo, phone } = storeToRefs(userStore)
 const { students } = storeToRefs(parentStore)
-const { studentInfo, devices } = storeToRefs(currentStudentStore)
+const { studentInfo } = storeToRefs(currentStudentStore)
 const { navBarInfo } = storeToRefs(useAppStore())
-const { dryerBalanceInfo, videoBalanceInfo } = useBalance()
-const { defaultDeviceType } = useDeviceType()
 
-/** 是否展示余额区域 */
-const showBalanceSection = SHOW_BALANCE_SECTION
-/** 是否展示首页客服入口 */
-const showCustomerServiceEntry = false
-/** 当前学生的消费统计 */
-const consumptionStats = ref<User.Consumption.IConsumptionStatisticsVo>()
 /** 当前手机号是否已加入亲情号 */
 const isInFamilyContact = ref<boolean>(false)
-/** 是否展示客服电话弹窗 */
-const showCustomerService = ref(false)
 
 /** 包含系统导航栏高度的首页头部高度 */
 const headerHeight = computed(() => {
@@ -90,17 +75,6 @@ const headerHeight = computed(() => {
 /** 首页头部信息的顶部位置 */
 const headerInfoTop = computed(() => {
   return `calc(${HOME_HEADER_INFO_TOP} + ${navBarInfo.value.navBarHeight}px)`
-})
-/** 客服悬浮按钮的可拖动边界，顶部避开系统导航栏 */
-const customerServiceGap = computed(() => ({
-  top: (navBarInfo.value?.navBarHeight || 0) + 8,
-  right: 0,
-  bottom: 32,
-  left: 0,
-}))
-/** 是否展示客服入口和弹窗 */
-const hasCustomerServicePhone = computed(() => {
-  return !!userInfo.value?.customerServicePhone?.trim()
 })
 /** 首页滚动内容区域高度 */
 const contentHeight = computed(() => {
@@ -123,21 +97,6 @@ const hasAgreementSigned = computed(() => {
 /** 当前学生已开通的功能模块 */
 const studentModules = computed(() => {
   return studentInfo.value?.modules || []
-})
-/** 当前余额对应的设备类型 */
-const primaryDeviceType = computed(() => {
-  return devices.value?.[0]?.deviceType || defaultDeviceType.value || DEVICE_TYPE.VIDEO
-})
-/** 当前设备类型对应的余额信息 */
-const currentBalanceInfo = computed(() => {
-  if (primaryDeviceType.value === DEVICE_TYPE.DRYER) {
-    return dryerBalanceInfo.value
-  }
-  return videoBalanceInfo.value
-})
-/** 当前学生是否开通账户信息模块 */
-const hasAccountModules = computed(() => {
-  return studentModules.value.includes(MINIAPP_MODULE_KEY_ACCOUNT_INFO)
 })
 /** 当前学生是否开通充值模块 */
 const hasRechargeModules = computed(() => {
@@ -171,7 +130,7 @@ const selectedStudentId = computed<number | null>({
 
 /**
  * 查询当前手机号是否存在于亲情号列表中
- * @returns 查询结果，请求失败时返回失败状态码
+ * @returns 固定返回成功状态码，避免该接口异常时首页进入网络错误态
  */
 async function axiosGetCheckSelfApi() {
   try {
@@ -193,13 +152,12 @@ async function axiosGetCheckSelfApi() {
         })
       }
     }
-
-    return result
   } catch (error) {
     console.error('获取联系人信息失败:', error)
     isInFamilyContact.value = false
-    return { code: -1 }
   }
+
+  return { code: 0 }
 }
 
 /** 关注公众号 */
@@ -234,12 +192,18 @@ async function handleNavigationToPath(path?: string, item: THomeMenuItem = null)
   if (item && item.id === 'score') {
     const { scoreUrl, schoolName, roleInfo } = unref(userInfo)
     const { currentChild } = roleInfo as User.Common.IParentRoleInfoVo
+
+    if (!scoreUrl) {
+      toast.show(SCORE_URL_MISSING_TEXT)
+      return
+    }
+
     navigateToScore({
       scoreUrl,
       schoolName,
       onlyCode: currentChild!.UUID,
       // 成绩页默认显示“返回小程序”按钮
-      rt: 0,
+      rt: 1,
     })
     return
   }
@@ -261,7 +225,7 @@ async function handleNavigationToPath(path?: string, item: THomeMenuItem = null)
       tel,
       nickname: userName || '',
       // 家长留言页默认显示“返回小程序”按钮
-      rt: 0,
+      rt: 1,
     })
     return
   }
@@ -398,68 +362,6 @@ onShow(() => {
               content="关注后可及时接收通知，点击前往关注"
               @click="handleGoToOfficialAccount"
             />
-
-            <!-- 余额和消费信息（暂不展示） -->
-            <view
-              v-if="showBalanceSection && currentBalanceInfo && hasAccountModules"
-              border="rounded-xl"
-              bg="bg-secondary"
-              p="3"
-            >
-              <view flex="~ items-center justify-between">
-                <view>
-                  <view m="b-1" text="xs primary" font="medium">
-                    账户余额
-                  </view>
-                  <view text="xl gray-900" font="bold">
-                    ￥{{ currentBalanceInfo.availableBalanceFormatted }}
-                  </view>
-                </view>
-                <view text="right">
-                  <view text="xs gray-500">
-                    今日消费
-                  </view>
-                  <view text="sm gray-700" font="medium">
-                    ￥{{ consumptionStats?.todayAmount || '--' }}
-                  </view>
-                </view>
-              </view>
-
-              <view m="t-2" p="t-2" border-t="1 bg-muted solid">
-                <view flex="~ justify-between" text="xs gray-500">
-                  <text>本月消费: ￥{{ consumptionStats?.monthAmount || '--' }}</text>
-                  <text>
-                    上次充值:
-                    {{
-                      currentBalanceInfo.updatedAt
-                        ? dayjs(currentBalanceInfo.updatedAt).format('YYYY-MM-DD')
-                        : '--'
-                    }}
-                  </text>
-                </view>
-              </view>
-            </view>
-
-            <!-- 冻结金额信息（暂不展示） -->
-            <view
-              v-if="showBalanceSection && Number(currentBalanceInfo?.frozenBalance) > 0"
-              m="t-3"
-              p="2"
-              border="rounded-lg"
-              bg="orange-50"
-            >
-              <view flex="~ items-center justify-between">
-                <view flex="~ items-center" gap="2">
-                  <Icon name="lock-line" icon-color="#f59e0b" icon-size="24rpx" />
-                  <view text="xs #f59e0b">
-                    冻结金额
-                  </view>
-                </view>
-                <view text="sm #f59e0b">
-                  ￥{{ Number(currentBalanceInfo?.frozenBalance).toFixed(2) }}
-                </view>
-              </view>
-            </view>
           </view>
 
           <!-- 功能按钮网格 -->
@@ -550,30 +452,6 @@ onShow(() => {
         </scroll-view>
       </view>
     </view>
-    <wd-fab
-      v-if="showCustomerServiceEntry && hasCustomerServicePhone"
-      position="right-center"
-      :draggable="true"
-      :expandable="false"
-      :gap="customerServiceGap"
-      :z-index="30"
-    >
-      <template #trigger>
-        <view
-          class="customer-service-trigger"
-          flex="~ items-center justify-center"
-          aria-label="联系客服"
-          @click="showCustomerService = true"
-        >
-          <Icon name="customer-service-line" icon-color="#fff" icon-size="36rpx" />
-        </view>
-      </template>
-    </wd-fab>
-    <CustomerService
-      v-if="showCustomerServiceEntry && hasCustomerServicePhone"
-      v-model="showCustomerService"
-      :phone="userInfo?.customerServicePhone || ''"
-    />
   </Page>
 </template>
 
@@ -581,14 +459,6 @@ onShow(() => {
 // 顶部背景区域
 .header-bg {
   background: linear-gradient(135deg, #3269dd 0%, #5b8cff 100%);
-}
-
-.customer-service-trigger {
-  width: 80rpx;
-  height: 80rpx;
-  border-radius: 50%;
-  background-color: rgb(50 105 221 / 95%);
-  box-shadow: 0 8rpx 20rpx rgb(15 31 57 / 20%);
 }
 
 // 深层样式

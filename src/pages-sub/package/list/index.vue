@@ -97,13 +97,8 @@ const deviceTypeOptions = computed(() => {
 const currentStatus = computed<PackageListStatusTab>(() => {
   return activeTabIndex.value as PackageListStatusTab
 })
-/** 筛选栏高度：根据是否有设备类型筛选动态计算 */
-const filterHeight = computed(() => {
-  // 有设备筛选时：(30rpx * 2) + gap(8rpx) + padding(32rpx) ≈ 100rpx
-  // 无设备筛选时：30rpx + padding(32rpx) ≈ 62rpx
-  return deviceTypeOptions.value.length > 1 ? '100rpx' : '62rpx'
-})
-const contentStyle = computed(() => getContentHeight(filterHeight.value))
+/** 内容区域高度：扣除底部按钮区域 padding(24rpx * 2) + 按钮(44px ≈ 88rpx) + 顶部边框(2rpx) ≈ 140rpx */
+const contentStyle = computed(() => getContentHeight('140rpx'))
 /** 是否显示待支付订单 */
 const hasPendingPayment = computed(() => pendingPayment.value?.hasPending)
 /** 生效中套餐是否为空 */
