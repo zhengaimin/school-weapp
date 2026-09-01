@@ -24,16 +24,13 @@ import Cell from '@/components/form/cell/index.vue'
 import Form from '@/components/form/index/index.vue'
 import Picker from '@/components/form/picker/index.vue'
 import BottomPopup from '@/components/popup/bottom-popup/index.vue'
-import { DEVICE_TYPE, ROLE_TYPE, SEARCH_TYPE, SEARCH_TYPE_OPTIONS } from '@/constant/modules'
+import { ROLE_TYPE, SEARCH_TYPE, SEARCH_TYPE_OPTIONS } from '@/constant/modules'
 import { TABBAR_HOME_PATH } from '@/constant/router'
-import { useBalance } from '@/hooks/useBalance'
-import { useDeviceType } from '@/hooks/useDeviceType'
 import { useForm } from '@/hooks/useForm'
 import { usePage } from '@/hooks/usePage'
 import { useParentStore } from '@/store/auth/parent'
 import { useCurrentStudentStore } from '@/store/business/currentStudent'
 import { useUserStore } from '@/store/user'
-import { sleep } from '@/utils'
 import { toast } from '@/utils/toast'
 
 defineOptions({
@@ -46,9 +43,7 @@ const userStore = useUserStore()
 const parentStore = useParentStore()
 const currentStudentStore = useCurrentStudentStore()
 const { needBind, studentsIdMap } = storeToRefs(parentStore)
-const { axiosGetUserBalanceApi } = useBalance()
-const { defaultDeviceType } = useDeviceType()
-const { pageLoading, pageError, batchRequestHandler, onLoginFail, getContentHeight } = usePage()
+const { pageLoading, pageError, onLoginFail, getContentHeight } = usePage()
 const { formRef, submitLoading, scrollIntoView, validate, scrollToFirstError } = useForm('.bind-scroll')
 
 /** 表单数据 */
@@ -207,14 +202,11 @@ async function axiosPostBindStudentApi(params: { studentId: number }) {
 
     if (result.data.token) {
       userStore.setToken(result.data.token)
-      await userStore.getUserInfo()
-      const resolvedDeviceType = defaultDeviceType.value || DEVICE_TYPE.VIDEO
-      await axiosGetUserBalanceApi(resolvedDeviceType)
-      currentStudentStore.setContactInfo(null)
-      setTimeout(() => {
-        uni.navigateBack()
-      }, 500)
+      void userStore.getUserInfo().catch((error) => {
+        console.error('刷新用户资料失败:', error)
+      })
     }
+    currentStudentStore.setContactInfo(null)
 
     return result
   } catch (error) {
@@ -282,8 +274,10 @@ async function handleConfirmBinding() {
       toast.info('绑定成功！')
       showStudentInfoModal.value = false
 
-      await sleep(500)
-      await batchRequestHandler([parentStore.axiosGetStudentListApi()], { auto: false })
+      // 学生列表进入首页后继续刷新，避免阻塞绑定成功后的路由切换
+      void parentStore.axiosGetStudentListApi().catch((error) => {
+        console.error('刷新学生列表失败:', error)
+      })
 
       uni.redirectTo({
         url: `${TABBAR_HOME_PATH}?role=${ROLE_TYPE.PARENT}`,

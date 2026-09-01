@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import type { FilterOption } from '@/components/common/filter-selector/index.vue'
-
 export interface TabOption {
   label: string
   value: string | number
@@ -11,26 +9,19 @@ type StyleVariant = 'segmented' | 'pill' | 'tag' | 'underline'
 interface Props {
   /** 状态 Tab 选项列表 */
   tabs: TabOption[]
-  /** 设备类型选项列表 */
-  deviceOptions: FilterOption[]
   /** 当前选中的状态 Tab 索引 */
   activeTab?: number
-  /** 当前选中的设备类型索引 */
-  deviceIndex?: number
   /** 样式风格 */
   variant?: StyleVariant
 }
 
 interface Emits {
   (e: 'update:activeTab', value: number): void
-  (e: 'update:deviceIndex', value: number): void
   (e: 'tabChange', index: number): void
-  (e: 'deviceChange', index: number): void
 }
 
 const props = withDefaults(defineProps<Props>(), {
   activeTab: 0,
-  deviceIndex: 0 as number,
   variant: 'segmented',
 })
 
@@ -39,11 +30,6 @@ const emit = defineEmits<Emits>()
 function handleTabChange(index: number) {
   emit('update:activeTab', index)
   emit('tabChange', index)
-}
-
-function handleDeviceChange(index: number) {
-  emit('update:deviceIndex', index)
-  emit('deviceChange', index)
 }
 </script>
 
@@ -63,25 +49,6 @@ function handleDeviceChange(index: number) {
       >
         <text class="tab-text">
           {{ tab.label }}
-        </text>
-      </view>
-    </view>
-
-    <!-- 设备类型 Tab -->
-    <view
-      v-if="deviceOptions.length > 1"
-      class="tab-row"
-      :class="[`variant-${variant}`]"
-    >
-      <view
-        v-for="(opt, index) in deviceOptions"
-        :key="opt.value"
-        class="tab-item"
-        :class="{ active: deviceIndex === index }"
-        @click="handleDeviceChange(index)"
-      >
-        <text class="tab-text">
-          {{ opt.label }}
         </text>
       </view>
     </view>

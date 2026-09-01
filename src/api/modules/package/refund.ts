@@ -31,7 +31,6 @@ export function getPackageRefundListApi(params: Pkg.Refund.ReqGetListApi) {
 
 /**
  * @description 检查是否存在待审核的套餐退费申请
- * @param {Pkg.Refund.ReqGetPendingApi} params
  * @returns {Promise<Pkg.Refund.ResGetPendingApi>}
  */
 export function getCheckPendingApi(params: Pkg.Refund.ReqGetPendingApi) {
@@ -43,8 +42,10 @@ export function getCheckPendingApi(params: Pkg.Refund.ReqGetPendingApi) {
  * @param {number} id
  * @returns {Promise<Pkg.Refund.ResPostCancelApi>}
  */
-export function postCancelPackageRefundApi(id: number) {
-  return http.post<Pkg.Refund.ResPostCancelApi>(PACKAGE_REFUND_API.REFUND_CANCEL(id))
+export function postCancelPackageRefundApi(id: number, packageKind?: Pkg.Refund.ReqPostApplyRefundApi['packageKind']) {
+  return http.post<Pkg.Refund.ResPostCancelApi>(PACKAGE_REFUND_API.REFUND_CANCEL(id), undefined, {
+    packageKind,
+  })
 }
 
 /**
@@ -61,6 +62,9 @@ export function postRefundPreviewApi(params: Pkg.Refund.ReqPostRefundPreviewApi)
  * @param {number} id - 退款申请ID
  * @returns {Promise<Pkg.Refund.ResGetDetailApi>}
  */
-export function getPackageRefundDetailApi(id: number) {
-  return http.get<Pkg.Refund.ResGetDetailApi>(PACKAGE_REFUND_API.REFUND_DETAIL(id))
+export function getPackageRefundDetailApi(
+  id: number,
+  packageKind?: Pkg.Refund.ReqPostApplyRefundApi['packageKind'],
+) {
+  return http.get<Pkg.Refund.ResGetDetailApi>(PACKAGE_REFUND_API.REFUND_DETAIL(id), { packageKind })
 }

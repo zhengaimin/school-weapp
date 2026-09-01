@@ -9,26 +9,22 @@
 </route>
 
 <script lang="ts" setup>
-import type {
-  ActivePackage,
-  PackageListDeviceType,
-  PackageListStatusTab,
-} from './types'
-import { storeToRefs } from 'pinia'
-import { computed, ref, unref, watch } from 'vue'
+import type { ActivePackage, PackageListStatusTab } from './types'
+import { computed, ref, unref } from 'vue'
+import { getStudentPlatformPackagesApi } from '@/api/modules/package'
 import TButton from '@/components/common/button/index.vue'
 import Notice from '@/components/common/notice/index.vue'
 import Page from '@/components/common/page/index.vue'
 import RefreshList from '@/components/common/refresh-list/index.vue'
 import StatusTip from '@/components/common/status-tip/index.vue'
+import { PACKAGE_BUY_STATUS } from '@/constant/modules'
 import {
   PACKAGE_DETAIL_PATH,
   PACKAGE_HISTORY_PATH,
+  PACKAGE_HISTORY_RESULT_PATH,
   PACKAGE_REFUND_HISTORY_PATH,
 } from '@/constant/router'
-import { useDeviceType } from '@/hooks/useDeviceType'
 import { usePage } from '@/hooks/usePage'
-import { useCurrentStudentStore } from '@/store/business/currentStudent'
 import { usePackageEmitter } from '@/utils/emit/package'
 import { usePackage } from '../hooks/usePackage'
 import ActivePackageCard from './components/ActivePackageCard.vue'
@@ -45,20 +41,14 @@ defineOptions({
 
 const { pageLoading, pageError, pageLoaded, batchRequestHandler, onLoginFail, getContentHeight }
   = usePage()
-const currentStudentStore = useCurrentStudentStore()
-const { devices } = storeToRefs(currentStudentStore)
-const { defaultDeviceType, deviceTypeRadioOptions } = useDeviceType()
 const { onPackageRefund, onPackageTransaction } = usePackageEmitter()
 const {
   hasPendingRefund,
   pendingPayment,
-  purchasedPackageIds,
   axiosGetCheckPendingApi,
   axiosGetPendingPaymentApi,
-  axiosGetStudentActivePackageApi,
 } = usePackage()
 const {
-  query,
   loading,
   refreshLoading,
   loaded,
@@ -66,36 +56,26 @@ const {
   displayList: availableList,
   onRefreshList,
   onLoadMore,
-  syncAvailableFallbackDeviceType,
-} = useAvailablePackages(
-  computed<PackageListDeviceType>(
-    () => (devices.value?.[0]?.deviceType || defaultDeviceType.value) as PackageListDeviceType,
-  ),
-)
+} = useAvailablePackages()
 
-/** 生效中/待生效套餐的加载状态 */
+/** 生效中套餐的加载状态 */
 const activeLoading = ref(false)
 const activeRefreshLoading = ref(false)
-const activeTabIndex = ref<number>(STATUS_TAB.AVAILABLE)
-const selectedDeviceType = ref<PackageListDeviceType>(
-  (devices.value?.[0]?.deviceType || defaultDeviceType.value) as PackageListDeviceType,
-)
-const selectedDeviceIndex = ref<number>(0)
-// 双 Tab 样式风格: 'segmented' | 'pill' | 'tag' | 'underline'
+const activeTabIndex = ref(0)
+// 状态 Tab 样式风格: 'segmented' | 'pill' | 'tag' | 'underline'
 const tabVariant = ref<'segmented' | 'pill' | 'tag' | 'underline'>('segmented')
 /** 生效中套餐列表 */
 const activePackages = ref<ActivePackage[]>([])
-/** 待生效套餐列表 */
-const waitingPackages = ref<ActivePackage[]>([])
+const activePage = ref(1)
+const activeLoaded = ref(false)
 
 const activeListBusy = computed(() => activeLoading.value || activeRefreshLoading.value)
 const tabOptions = computed(() => STATUS_OPTIONS)
-const deviceTypeOptions = computed(() => {
-  const opts = deviceTypeRadioOptions.value
-  return opts?.length ? opts : []
-})
+const purchasedPackageIds = computed(
+  () => new Set(activePackages.value.map(item => item.platformPackageId)),
+)
 const currentStatus = computed<PackageListStatusTab>(() => {
-  return activeTabIndex.value as PackageListStatusTab
+  return STATUS_OPTIONS[activeTabIndex.value]?.value ?? STATUS_TAB.AVAILABLE
 })
 /** 内容区域高度：扣除底部按钮区域 padding(24rpx * 2) + 按钮(44px ≈ 88rpx) + 顶部边框(2rpx) ≈ 140rpx */
 const contentStyle = computed(() => getContentHeight('140rpx'))
@@ -105,33 +85,56 @@ const hasPendingPayment = computed(() => pendingPayment.value?.hasPending)
 const activeEmpty = computed(
   () => (activePackages.value?.length ?? 0) === 0 && !activeListBusy.value,
 )
-/** 待生效套餐是否为空 */
-const pendingEmpty = computed(
-  () => (waitingPackages.value?.length ?? 0) === 0 && !activeListBusy.value,
-)
-
-/** 获取生效/待生效套餐 */
-async function fetchActivePackages(isRefresh = false, deviceType?: PackageListDeviceType) {
+/** 获取生效中套餐 */
+async function fetchActivePackages(isRefresh = false) {
   if (isRefresh) {
     activeRefreshLoading.value = true
   } else {
     activeLoading.value = true
   }
   try {
-    const resolvedDeviceType = deviceType ?? selectedDeviceType.value
-    const result = await axiosGetStudentActivePackageApi(resolvedDeviceType)
-    if (result.code === 0 && result.data) {
-      activePackages.value = result.data?.activePackages || []
-      waitingPackages.value = result.data?.waitingPackages || []
+    const activeResult = await getStudentPlatformPackagesApi({
+      page: 1,
+      pageSize: 20,
+      status: PACKAGE_BUY_STATUS.ACTIVE,
+    })
+    if (activeResult.code === 0 && activeResult.data) {
+      activePackages.value = activeResult.data.packages || []
+      activePage.value = 1
+      activeLoaded.value = activePackages.value.length >= activeResult.data.total
     }
-    return result
+    return activeResult
   } finally {
     activeRefreshLoading.value = false
     activeLoading.value = false
   }
 }
 
-/** 刷新生效中/待生效套餐 */
+/** 加载更多生效中套餐 */
+async function handleLoadMoreActivePackages() {
+  if (activeLoaded.value || activeListBusy.value) return
+
+  activeLoading.value = true
+  const page = activePage.value + 1
+  try {
+    const result = await getStudentPlatformPackagesApi({
+      page,
+      pageSize: 20,
+      status: PACKAGE_BUY_STATUS.ACTIVE,
+    })
+    if (result.code !== 0) return result
+
+    const list = result.data?.packages || []
+    activePackages.value.push(...list)
+    activePage.value = page
+    activeLoaded.value = activePackages.value.length >= (result.data?.total ?? 0)
+    return result
+  } finally {
+    activeLoading.value = false
+  }
+}
+
+/** 刷新生效中套餐 */
 function handleRefreshActivePackages() {
   return fetchActivePackages(true)
 }
@@ -145,21 +148,11 @@ function handleGoToRefundHistory() {
 }
 /** 跳转到套餐详情页 */
 function handleGoToPackageDetail(id: number) {
-  uni.navigateTo({ url: `${PACKAGE_DETAIL_PATH}?id=${id}` })
+  uni.navigateTo({ url: `${PACKAGE_DETAIL_PATH}?id=${id}&type=available` })
 }
-/** 设备类型筛选变化处理 */
-function handleDeviceTypeChange(index: number) {
-  const deviceType = deviceTypeOptions.value[index]?.value as PackageListDeviceType
-  if (!deviceType) return
-  selectedDeviceType.value = deviceType
-  selectedDeviceIndex.value = index
-  query.value.deviceType = deviceType
-  syncAvailableFallbackDeviceType(deviceType)
-  batchRequestHandler([
-    fetchActivePackages(false, deviceType),
-    axiosGetPendingPaymentApi(deviceType),
-    axiosGetCheckPendingApi(deviceType),
-  ])
+/** 跳转到套餐购买结果页 */
+function handleGoToPackageResult(orderNo: string) {
+  uni.navigateTo({ url: `${PACKAGE_HISTORY_RESULT_PATH}?type=purchase&orderNo=${orderNo}` })
 }
 /** Tab 切换处理 */
 function handleTabChange(_index: number) {
@@ -180,56 +173,37 @@ function handleLoadMoreAvailablePackages() {
 
 /** 登录成功处理 */
 async function onLoginSuccess() {
-  const deviceType = selectedDeviceType.value
-  query.value.deviceType = deviceType
-  syncAvailableFallbackDeviceType(deviceType)
   batchRequestHandler([
     onRefreshList(),
-    fetchActivePackages(false, deviceType),
-    axiosGetPendingPaymentApi(deviceType),
-    axiosGetCheckPendingApi(deviceType),
+    fetchActivePackages(false),
+    axiosGetPendingPaymentApi(null),
+    axiosGetCheckPendingApi(),
   ])
 }
 /** 页面显示时刷新生效数据 */
 onShow(() => {
   if (unref(pageLoaded)) {
-    syncAvailableFallbackDeviceType(selectedDeviceType.value)
     batchRequestHandler([
-      fetchActivePackages(false, selectedDeviceType.value),
-      axiosGetCheckPendingApi(selectedDeviceType.value),
-      axiosGetPendingPaymentApi(selectedDeviceType.value),
+      fetchActivePackages(false),
+      axiosGetCheckPendingApi(),
+      axiosGetPendingPaymentApi(null),
     ])
   }
 })
 /** 监听退费事件后刷新数据 */
 onPackageRefund(() => {
-  syncAvailableFallbackDeviceType(selectedDeviceType.value)
   batchRequestHandler([
-    fetchActivePackages(false, selectedDeviceType.value),
-    axiosGetCheckPendingApi(selectedDeviceType.value),
+    fetchActivePackages(false),
+    axiosGetCheckPendingApi(),
   ])
 })
 /** 监听交易事件后刷新数据 */
 onPackageTransaction(() => {
-  syncAvailableFallbackDeviceType(selectedDeviceType.value)
   batchRequestHandler([
-    fetchActivePackages(false, selectedDeviceType.value),
-    axiosGetPendingPaymentApi(selectedDeviceType.value),
+    fetchActivePackages(false),
+    axiosGetPendingPaymentApi(null),
   ])
 })
-
-// 初始化设备类型索引
-watch(
-  [deviceTypeOptions, devices, defaultDeviceType],
-  ([opts, currentDevices, fallbackDeviceType]) => {
-    if (opts && opts.length > 0) {
-      const primary = (currentDevices?.[0]?.deviceType || fallbackDeviceType) as PackageListDeviceType
-      const index = opts.findIndex((o: any) => o.value === primary)
-      selectedDeviceIndex.value = index >= 0 ? index : 0
-    }
-  },
-  { immediate: true },
-)
 </script>
 
 <template>
@@ -260,17 +234,13 @@ watch(
         />
       </view>
 
-      <!-- 状态 Tab + 设备类型 Tab -->
+      <!-- 状态 Tab -->
       <PackageTabs
         :tabs="tabOptions"
-        :device-options="deviceTypeOptions"
         :active-tab="activeTabIndex"
-        :device-index="selectedDeviceIndex"
         :variant="tabVariant"
         @update:active-tab="handleActiveTabChange"
-        @update:device-index="handleDeviceTypeChange"
         @tab-change="handleTabChange"
-        @device-change="handleDeviceTypeChange"
       />
 
       <!-- 内容区域 -->
@@ -278,30 +248,21 @@ watch(
         <!-- 生效中 -->
         <RefreshList
           v-if="currentStatus === STATUS_TAB.ACTIVE"
-          loaded
+          :loaded="activeLoaded"
           :loading="activeLoading"
           :refresh-loading="activeRefreshLoading"
           :empty="activeEmpty"
           @refresh="handleRefreshActivePackages"
+          @loadmore="handleLoadMoreActivePackages"
         >
           <view p="x-4 y-2!" flex="~ col" gap="3">
-            <ActivePackageCard v-for="item in activePackages" :key="item.id" :package="item" />
+            <ActivePackageCard
+              v-for="item in activePackages"
+              :key="item.paymentId"
+              :package="item"
+              @click="handleGoToPackageResult"
+            />
             <StatusTip v-if="activeEmpty" image="content" />
-          </view>
-        </RefreshList>
-
-        <!-- 待生效 -->
-        <RefreshList
-          v-if="currentStatus === STATUS_TAB.WAITING"
-          loaded
-          :loading="activeLoading"
-          :refresh-loading="activeRefreshLoading"
-          :empty="pendingEmpty"
-          @refresh="handleRefreshActivePackages"
-        >
-          <view p="x-4 y-2!" flex="~ col" gap="3">
-            <ActivePackageCard v-for="item in waitingPackages" :key="item.id" :package="item" />
-            <StatusTip v-if="pendingEmpty" image="content" />
           </view>
         </RefreshList>
 

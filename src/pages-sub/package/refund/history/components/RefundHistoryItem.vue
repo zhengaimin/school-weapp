@@ -31,24 +31,32 @@ const statusConfig = computed(() => {
 })
 
 const iconName = computed(() => {
-  return statusConfig.value.icon
+  return statusConfig.value?.icon || 'history-line'
 })
 
 const iconColor = computed(() => {
-  return statusConfig.value.iconColor
+  return statusConfig.value?.iconColor || '#9ca3af'
+})
+/** 获取图标背景色 */
+const iconBackgroundColor = computed(() => {
+  return statusConfig.value?.bgColor || '#f3f4f6'
 })
 
-const actualAmount = computed(() => {
-  return props.record.actualAmount || props.record.applyAmount
+const statusLabel = computed(() => {
+  return props.record.statusText || statusConfig.value?.label || '退款记录'
 })
 
-const canCancel = computed(() => {
-  return props.record.status === REFUND_STATUS.PENDING
+const packagePrice = computed(() => {
+  const value = props.record.actualAmount || props.record.applyAmount
+  const price = Number(value)
+  return Number.isFinite(price) ? price.toFixed(2) : '-'
 })
+
+const canCancel = computed(() => props.record.status === REFUND_STATUS.PENDING)
 
 const deviceTypeLabel = computed(() => {
   const deviceType = props.record.deviceType
-  return deviceType ? DEVICE_TYPE_I18N[deviceType as keyof typeof DEVICE_TYPE_I18N] : ''
+  return deviceType ? DEVICE_TYPE_I18N[deviceType] : ''
 })
 
 /** 处理点击事件 */
@@ -59,31 +67,22 @@ function handleClick(event: Event) {
   })
 }
 
-/** 处理取消申请 */
 async function handleCancelRefund() {
   try {
-    await message.confirm({
-      msg: '确认取消退款申请吗？',
-    })
-
-    uni.showLoading({
-      title: '取消中...',
-      mask: true,
-    })
-
-    const result = await postCancelPackageRefundApi(props.record.id)
-
+    await message.confirm({ msg: '确认取消退款申请吗？' })
+    cancelling.value = true
+    const result = await postCancelPackageRefundApi(props.record.id, props.record.packageKind)
     if (result.code === 0) {
       toast.show('取消成功')
       emit('cancel', props.record)
     }
-  } catch (error: any) {
+  } catch (error) {
     if (error !== 'cancel') {
       console.error('取消退款申请失败:', error)
       toast.show('取消失败，请重试')
     }
   } finally {
-    uni.hideLoading()
+    cancelling.value = false
   }
 }
 </script>
@@ -92,12 +91,21 @@ async function handleCancelRefund() {
   <view relative overflow="hidden" @click.stop="handleClick">
     <WhiteCard relative>
       <!-- 背景图标 -->
-      <view absolute left--68rpx top-68rpx style="transform: translateY(-50%)">
+      <view
+        w="32"
+        h="32"
+        absolute
+        left--68rpx
+        top-68rpx
+        overflow-hidden
+        rounded-full
+        opacity-10
+        :style="{ backgroundColor: iconBackgroundColor, transform: 'translateY(-50%)' }"
+      >
         <Icon
           :name="iconName"
           :icon-color="iconColor"
           icon-size="256rpx"
-          custom-class="opacity-10"
         />
       </view>
 
@@ -106,11 +114,11 @@ async function handleCancelRefund() {
         <!-- 第一行：套餐名称和金额 -->
         <view flex="~ justify-between items-center">
           <view text="sm gray-900" font="medium">
-            {{ record.statusText }}
+            {{ statusLabel }}
           </view>
 
           <view text="lg gray-900" font="bold">
-            ¥{{ Number(actualAmount).toFixed(2) }}
+            ¥{{ packagePrice }}
           </view>
         </view>
 
@@ -127,9 +135,8 @@ async function handleCancelRefund() {
           </view>
         </view>
 
-        <!-- 第三行：操作按钮 -->
         <view v-if="canCancel" flex="~ justify-end">
-          <TButton type="danger" plain size="small" @click.stop="handleCancelRefund">
+          <TButton type="danger" plain size="small" :loading="cancelling" @click.stop="handleCancelRefund">
             取消申请
           </TButton>
         </view>

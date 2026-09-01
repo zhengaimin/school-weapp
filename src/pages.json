@@ -288,7 +288,7 @@
           "layout": "default",
           "style": {
             "navigationStyle": "custom",
-            "navigationBarTitleText": "话机套餐购买记录"
+            "navigationBarTitleText": "套餐购买记录"
           }
         },
         {

@@ -4,6 +4,7 @@ import { http } from '@/http'
 
 const PACKAGE_PAYMENT_API = {
   PURCHASE: `${API}/packages/purchase`,
+  PLATFORM_PURCHASE: `${API}/packages/platform/purchase`,
   CONTINUE_PAYMENT: `${API}/packages/payment/continue`,
   CANCEL_PAYMENT: `${API}/packages/payment/cancel`,
   PENDING_PAYMENT: `${API}/packages/payment/pending`,
@@ -17,6 +18,15 @@ const PACKAGE_PAYMENT_API = {
  */
 export function postPurchasePackageApi(params: Pkg.Payment.ReqPostPurchaseApi) {
   return http.post<Pkg.Payment.ResPostPurchaseApi>(PACKAGE_PAYMENT_API.PURCHASE, params)
+}
+
+/**
+ * @description 购买平台套餐
+ * @param {Pkg.Payment.ReqPostPlatformPurchaseApi} params
+ * @returns {Promise<Pkg.Payment.ResPostPlatformPurchaseApi>}
+ */
+export function postPurchasePlatformPackageApi(params: Pkg.Payment.ReqPostPlatformPurchaseApi) {
+  return http.post<Pkg.Payment.ResPostPlatformPurchaseApi>(PACKAGE_PAYMENT_API.PLATFORM_PURCHASE, params)
 }
 
 /**

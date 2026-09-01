@@ -21,7 +21,6 @@ import {
   REFUND_STATUS_I18N,
   REFUND_STATUS_OPTIONS,
 } from '@/constant/modules'
-import { useDeviceType } from '@/hooks/useDeviceType'
 import { useHistoryFilters } from '@/hooks/useHistoryFilters'
 import { usePage } from '@/hooks/usePage'
 import { useRefresh } from '@/hooks/useRefresh'
@@ -36,7 +35,6 @@ defineOptions({
 
 const { pageLoading, pageError, getContentHeight, batchRequestHandler, onLoginFail } = usePage()
 const { emitPackageRefund, onPackageRefund } = usePackageEmitter()
-const { hasVideoDevice, hasDryerDevice } = useDeviceType()
 
 const {
   query,
@@ -56,24 +54,49 @@ const {
 /** 内容区域样式 */
 const contentStyle = computed(() => getContentHeight('140rpx'))
 
+function refreshList() {
+  delete query.value.deviceType
+  return onRefreshList()
+}
+
 const { filters, filterConfigs, onFilterChange, applyFiltersToQuery } = useHistoryFilters({
   query,
-  onRefreshList,
+  onRefreshList: refreshList,
+  dateRange: { enabled: false },
+  deviceType: { enabled: false },
   extraFilters: [
     {
       key: 'status',
       title: '退款状态',
       type: 'select',
       concise: false,
-      options: [{ label: '全部', value: ALL }, ...REFUND_STATUS_OPTIONS],
-      inDrawer: true,
+      options: [
+        { label: '全部', value: ALL },
+        {
+          label: REFUND_STATUS_I18N[REFUND_STATUS.PENDING],
+          value: REFUND_STATUS.PENDING,
+        },
+        ...REFUND_STATUS_OPTIONS.filter(option => option.value !== REFUND_STATUS.PENDING),
+      ],
+      inDrawer: false,
       defaultValue: ALL,
       apply: (value, targetQuery) => {
-        targetQuery.status = value === ALL ? undefined : value
+        if (value === ALL) {
+          delete targetQuery.status
+          return
+        }
+
+        targetQuery.status = value
       },
     },
   ],
 })
+
+/** 登录成功处理 */
+function handleLoginSuccess() {
+  applyFiltersToQuery()
+  batchRequestHandler([refreshList()])
+}
 
 /** 处理取消申请成功 */
 function handleCancelSuccess(record: Pkg.Refund.IRefundApplicationRecord) {
@@ -84,25 +107,14 @@ function handleCancelSuccess(record: Pkg.Refund.IRefundApplicationRecord) {
   }
   emitPackageRefund()
 }
-/** 登录成功处理 */
-function handleLoginSuccess() {
-  applyFiltersToQuery()
-  batchRequestHandler([onRefreshList()])
-}
-
-const showDeviceType = computed(() => {
-  const count = Number(hasVideoDevice.value) + Number(hasDryerDevice.value)
-  return count > 1
-})
 
 onShow(() => {
   onPackageRefund((id) => {
-    if (id) {
-      const index = recordsList.value.findIndex(item => item.id === id)
-      if (index !== -1) {
-        recordsList.value[index].status = REFUND_STATUS.CANCELLED
-        recordsList.value[index].statusText = REFUND_STATUS_I18N[REFUND_STATUS.CANCELLED]
-      }
+    if (!id) return
+    const index = recordsList.value.findIndex(item => item.id === id)
+    if (index !== -1) {
+      recordsList.value[index].status = REFUND_STATUS.CANCELLED
+      recordsList.value[index].statusText = REFUND_STATUS_I18N[REFUND_STATUS.CANCELLED]
     }
   })
 })
@@ -129,7 +141,7 @@ onShow(() => {
       :loaded="loaded"
       :empty="empty"
       :style="contentStyle"
-      @refresh="onRefreshList"
+      @refresh="refreshList"
       @loadmore="onLoadMore"
     >
       <view flex="~ col" p="x-4" gap="3">
@@ -137,7 +149,6 @@ onShow(() => {
           v-for="record in recordsList"
           :key="record.id"
           :record="record"
-          :show-device-type="showDeviceType"
           @cancel="handleCancelSuccess"
         />
       </view>

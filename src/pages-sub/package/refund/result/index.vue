@@ -160,7 +160,7 @@ const refundCards = computed<ResultCard[]>(() => {
   )
 
   if (isVideoDevice.value) {
-    if (detail.value.packageContent.videoCallMinutes) {
+    if (detail.value.packageContent?.videoCallMinutes) {
       items.push({
         key: 'videoCallMinutes',
         label: '通话分钟',
@@ -169,7 +169,7 @@ const refundCards = computed<ResultCard[]>(() => {
           : `${detail.value.packageContent.videoCallMinutes}分钟`,
       })
     }
-    if (detail.value.packageContent.messageCount) {
+    if (detail.value.packageContent?.messageCount) {
       items.push({
         key: 'messageCount',
         label: '留言条数',
@@ -178,7 +178,7 @@ const refundCards = computed<ResultCard[]>(() => {
           : `${detail.value.packageContent.messageCount}条`,
       })
     }
-  } else if (detail.value.packageContent.dryerMinutes) {
+  } else if (detail.value.packageContent?.dryerMinutes) {
     items.push({
       key: 'dryerMinutes',
       label: '吹风时长',
@@ -234,7 +234,7 @@ async function handleCancelRefund() {
     })
 
     uni.showLoading({ title: '取消中...', mask: true })
-    const result = await postCancelPackageRefundApi(detail.value.id)
+    const result = await postCancelPackageRefundApi(detail.value.id, detail.value.packageKind)
 
     if (result.code === 0) {
       toast.show('取消成功')

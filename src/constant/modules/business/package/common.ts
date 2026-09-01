@@ -25,6 +25,14 @@ export const PACKAGE_TYPE = {
 
 export type TPackageType = (typeof PACKAGE_TYPE)[keyof typeof PACKAGE_TYPE]
 
+/** 套餐来源类型 */
+export const PACKAGE_KIND = {
+  DEVICE: 'DEVICE',
+  PLATFORM: 'PLATFORM',
+} as const
+
+export type TPackageKind = (typeof PACKAGE_KIND)[keyof typeof PACKAGE_KIND]
+
 // I18N
 export const PACKAGE_TYPE_I18N: TI18NMap<TPackageType> = {
   [PACKAGE_TYPE.GENERAL]: '通用套餐',
@@ -36,6 +44,14 @@ export const PACKAGE_TYPE_OPTIONS: TOptions<TPackageType> = [
   { label: PACKAGE_TYPE_I18N[PACKAGE_TYPE.GENERAL], value: PACKAGE_TYPE.GENERAL },
   { label: PACKAGE_TYPE_I18N[PACKAGE_TYPE.FIXED], value: PACKAGE_TYPE.FIXED },
 ]
+
+/** 套餐退款来源 */
+export const PACKAGE_REFUND_SOURCE = {
+  NORMAL: 'NORMAL',
+  PLATFORM: 'PLATFORM',
+} as const
+
+export type TPackageRefundSource = (typeof PACKAGE_REFUND_SOURCE)[keyof typeof PACKAGE_REFUND_SOURCE]
 
 // Types
 export const PACKAGE_STATUS = {

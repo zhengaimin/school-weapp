@@ -9,12 +9,12 @@
 </route>
 
 <script lang="ts" setup>
+import dayjs from 'dayjs'
 import { computed } from 'vue'
 import TButton from '@/components/common/button/index.vue'
 import Page from '@/components/common/page/index.vue'
-import StatusTip from '@/components/common/status-tip/index.vue'
 import WhiteCard from '@/components/common/white-card/index.vue'
-import { PACKAGE_TYPE, PACKAGE_TYPE_I18N } from '@/constant/modules'
+import { DEVICE_TYPE } from '@/constant/modules'
 import { usePackageDetail } from './hooks/usePackageDetail'
 
 defineOptions({
@@ -28,7 +28,6 @@ const {
   pageError,
   onLoginFail,
   packageDetail,
-  isVideoDevice,
   hasPendingPayment,
   showPurchaseButton,
   showButtonArea,
@@ -42,11 +41,19 @@ const {
   handleContinuePayment,
 } = usePackageDetail()
 
-/** 套餐类型文本样式 */
-const packageTypeText = computed(() => {
-  return packageDetail.value?.packageType === PACKAGE_TYPE.GENERAL
-    ? 'xs blue-600'
-    : 'xs purple-600'
+const pricingModeText = computed(() => {
+  return packageDetail.value?.pricingMode === 'FIXED_TOTAL' ? '固定总价' : '按月递减'
+})
+const validityText = computed(() => {
+  const startDate = packageDetail.value?.startDate
+  const endDate = packageDetail.value?.endDate
+  const startTime = startDate && dayjs(startDate).isValid()
+    ? dayjs(startDate).format('YYYY-MM-DD HH:mm')
+    : '-'
+  const endTime = endDate && dayjs(endDate).isValid()
+    ? dayjs(endDate).format('YYYY-MM-DD HH:mm')
+    : '-'
+  return `${startTime} 至 ${endTime}`
 })
 </script>
 
@@ -59,33 +66,27 @@ const packageTypeText = computed(() => {
     @login:success="onLoginSuccess"
     @login:fail="onLoginFail"
   >
-    <!-- 商品已下架提示 -->
-    <view v-if="packageDetail?.isPackageExists === false" h-full>
-      <StatusTip
-        custom-class="h-full flex flex-col items-center justify-center"
-        image="search"
-        tip="商品已下架"
-      />
-    </view>
-
-    <template v-else-if="packageDetail">
+    <template v-if="packageDetail">
       <!-- 内容区域 -->
       <scroll-view scroll-y :enhanced="true" :show-scrollbar="false" :style="contentHeight">
         <view p="4 t-2!" flex="~ col" gap="3">
           <!-- 套餐信息 -->
           <view flex="~ col" gap="3">
             <view bg="white" rounded="xl" p="4" shadow="sm" flex="~ col" gap="4">
-              <!-- 类型与价格 -->
+              <text text="lg gray-800" font="bold">
+                {{ packageDetail.name || '套餐' }}
+              </text>
+
               <view flex="~ row justify-between items-center">
                 <view
-                  :bg="packageDetail.packageType === PACKAGE_TYPE.GENERAL ? 'blue-50' : 'purple-50'"
-                  :text="packageTypeText"
+                  bg="blue-50"
+                  text="xs blue-600"
                   px="2.5"
                   py="1"
                   rounded="md"
                   font="bold"
                 >
-                  {{ PACKAGE_TYPE_I18N[packageDetail.packageType] }}
+                  {{ pricingModeText }}
                 </view>
 
                 <view flex="~ row items-baseline" text="red-500">
@@ -98,10 +99,23 @@ const packageTypeText = computed(() => {
                 </view>
               </view>
 
-              <!-- 核心权益网格 -->
-              <view flex="~ row justify-around" bg="gray-50" rounded="lg" p="y-3">
-                <!-- 话机：通话分钟 -->
-                <view v-if="isVideoDevice" flex="~ col items-center justify-center" gap="1">
+              <view v-if="packageDetail.modules?.length" flex="~ col" bg="gray-50" rounded="lg" p="3" gap="2">
+                <view
+                  v-for="module in packageDetail.modules"
+                  :key="module.moduleKey"
+                  flex="~ row items-center justify-between"
+                >
+                  <text text="sm gray-600">
+                    {{ module.name }}
+                  </text>
+                  <text text="sm gray-800" font="bold">
+                    {{ module.monthlyGiftMinutes === undefined ? '功能权益' : (module.monthlyGiftMinutes === -1 ? '不限' : `${module.monthlyGiftMinutes}分钟/月`) }}
+                  </text>
+                </view>
+              </view>
+
+              <view v-else flex="~ row justify-around" bg="gray-50" rounded="lg" p="y-3">
+                <view v-if="packageDetail.deviceType === DEVICE_TYPE.VIDEO" flex="~ col items-center justify-center" gap="1">
                   <text text="lg gray-800" font="bold" lh="none">
                     {{ packageDetail.packageContent?.videoCallMinutes ?? '-' }}
                   </text>
@@ -109,21 +123,15 @@ const packageTypeText = computed(() => {
                     通话分钟
                   </text>
                 </view>
-                <!-- 话机：留言条数 -->
-                <view v-if="isVideoDevice" flex="~ col items-center justify-center" gap="1">
+                <view v-if="packageDetail.deviceType === DEVICE_TYPE.VIDEO" flex="~ col items-center justify-center" gap="1">
                   <text text="lg gray-800" font="bold" lh="none">
-                    {{
-                      packageDetail.packageContent?.messageCount === -1
-                        ? '∞'
-                        : (packageDetail.packageContent?.messageCount ?? '-')
-                    }}
+                    {{ packageDetail.packageContent?.messageCount === -1 ? '∞' : (packageDetail.packageContent?.messageCount ?? '-') }}
                   </text>
                   <text text="xs gray-400">
                     留言条数
                   </text>
                 </view>
-                <!-- 吹风机：吹风时长 -->
-                <view v-if="!isVideoDevice" flex="~ col items-center justify-center" gap="1">
+                <view v-if="packageDetail.deviceType === DEVICE_TYPE.DRYER" flex="~ col items-center justify-center" gap="1">
                   <text text="lg gray-800" font="bold" lh="none">
                     {{ packageDetail.packageContent?.dryerMinutes ?? '-' }}
                   </text>
@@ -131,7 +139,6 @@ const packageTypeText = computed(() => {
                     吹风时长
                   </text>
                 </view>
-                <!-- 套餐月数 -->
                 <view flex="~ col items-center justify-center" gap="1">
                   <text text="lg gray-800" font="bold" lh="none">
                     {{ packageDetail.totalMonths ?? '-' }}
@@ -142,16 +149,16 @@ const packageTypeText = computed(() => {
                 </view>
               </view>
 
-              <!-- 有效期（仅固定套餐） -->
-              <text v-if="packageDetail.packageType === PACKAGE_TYPE.FIXED" text="xs gray-400">
-                有效期：{{ packageDetail.startDate?.slice(0, 10) }} 至
-                {{ packageDetail.endDate?.slice(0, 10) }}
+              <text v-if="packageDetail.modules?.length" text="xs gray-400">
+                套餐月数：{{ packageDetail.totalMonths }}个月
+              </text>
+              <text v-if="packageDetail.startDate || packageDetail.endDate" text="xs gray-400">
+                有效期：{{ validityText }}
               </text>
             </view>
           </view>
-
           <!-- 套餐说明 -->
-          <view v-if="packageDetail.templateDescription" flex="~ col" gap="3">
+          <view v-if="packageDetail.description" flex="~ col" gap="3">
             <view flex="~ row items-center" px="1">
               <view w="3px" h="14px" bg="primary" rounded-full mr="2" />
               <text text="sm gray-800" font="bold">
@@ -160,11 +167,10 @@ const packageTypeText = computed(() => {
             </view>
             <WhiteCard :show-border="false">
               <text text="sm gray-600" leading="relaxed">
-                {{ packageDetail.templateDescription }}
+                {{ packageDetail.description }}
               </text>
             </WhiteCard>
           </view>
-
           <!-- 使用规则 -->
           <view v-if="packageDetail.usageRules" flex="~ col" gap="3">
             <view flex="~ row items-center" px="1">

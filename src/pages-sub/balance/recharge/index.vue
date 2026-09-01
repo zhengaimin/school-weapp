@@ -177,10 +177,12 @@ async function axiosGetPaymentConfigApi() {
       paymentConfig.value = result.data
       const { fixedAmounts, minAmount, maxAmount } = result.data
 
-      // 更新充值金额选项
+      // 更新充值金额选项，兼容 "10,20" 与 "[10,20]" 两种格式
       if (fixedAmounts) {
         amountOptions.value = fixedAmounts
+          .replace(/[[\]"'\s]/g, '')
           .split(',')
+          .filter(amountStr => amountStr !== '')
           .map(amountStr => Number(amountStr))
           .filter(amount => !Number.isNaN(amount))
           .filter(

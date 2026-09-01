@@ -20,6 +20,7 @@ const emit = defineEmits<{
 }>()
 
 const visible = defineModel<boolean>('visible', { default: false })
+const popupVisible = ref(false)
 
 const { formRef, validate, submitLoading } = useForm()
 const { emitPackageRefund } = usePackageEmitter()
@@ -31,26 +32,47 @@ const formData = ref({
 /** 退款预览 */
 const preview = ref<Pkg.Refund.ResPostRefundPreviewApi | null>(null)
 const previewLoading = ref(false)
+/** 用于忽略过期的退款预览响应 */
+let previewRequestId = 0
 
 /** 拉取退款预览（预计金额 + 场景明细） */
 async function fetchPreview(id: number) {
+  const requestId = ++previewRequestId
   previewLoading.value = true
   preview.value = null
   try {
     const result = await postRefundPreviewApi({ packageRecordId: id })
-    if (result.code === 0) {
-      preview.value = result.data
+    if (requestId !== previewRequestId || !visible.value || props.id !== id) return
+
+    if (result.code !== 0) {
+      visible.value = false
+      return
     }
+
+    preview.value = result.data
+    if (!result.data.canRefund) {
+      toast.show(result.data.refundReason || '当前套餐不可退款')
+      visible.value = false
+      return
+    }
+
+    popupVisible.value = true
   } catch (error) {
     console.error('获取退款预览失败:', error)
+    if (requestId === previewRequestId) {
+      visible.value = false
+    }
   } finally {
-    previewLoading.value = false
+    if (requestId === previewRequestId) {
+      previewLoading.value = false
+    }
   }
 }
 
 watch(
   () => [visible.value, props.id] as const,
   ([show, id]) => {
+    popupVisible.value = false
     if (show && id) fetchPreview(id)
   },
   { immediate: true },
@@ -87,6 +109,7 @@ async function handleConfirm() {
       toast.show('退款申请提交成功')
       emitPackageRefund()
       visible.value = false
+      popupVisible.value = false
       formData.value.reason = ''
       preview.value = null
       emit('success', props.id)
@@ -102,21 +125,22 @@ async function handleConfirm() {
 /** 取消操作 */
 function handleCancel() {
   visible.value = false
+  popupVisible.value = false
   formData.value.reason = ''
   preview.value = null
 }
 </script>
 
 <template>
-  <BottomPopup v-model:model-value="visible" title="申请退款" height="auto" @close="handleCancel">
+  <BottomPopup v-model:model-value="popupVisible" title="申请退款" height="auto" @close="handleCancel">
     <view p="4 b-0">
-      <!-- 退款预览：预计金额 + 场景明细 -->
+      <!-- 退款预览：预计退款金额 -->
       <view v-if="previewLoading" text="sm gray-400" m="b-3">
         正在计算预计退款…
       </view>
-      <view v-else-if="preview" m="b-3" p="3" rounded="lg" :bg="preview.canRefund ? '#f0f9ff' : '#fef2f2'">
+      <view v-else-if="preview?.canRefund" m="b-3" p="3" rounded="lg" bg="#f0f9ff">
         <template v-if="preview.canRefund">
-          <view flex="~ row items-center justify-between" m="b-2">
+          <view flex="~ row items-center justify-between">
             <text text="sm gray-700" font="medium">
               预计退款金额
             </text>
@@ -124,44 +148,7 @@ function handleCancel() {
               ¥{{ preview.refundAmount }}
             </text>
           </view>
-          <view v-if="preview.calculation" flex="~ col gap-1">
-            <view flex="~ row items-center justify-between">
-              <text text="xs gray-500">
-                退款场景
-              </text>
-              <text text="xs gray-700">
-                {{ preview.calculation.scenario }}
-              </text>
-            </view>
-            <view v-if="Number(preview.calculation.firstMonthActualPrice) > 0" flex="~ row items-center justify-between">
-              <text text="xs gray-500">
-                首月实收
-              </text>
-              <text text="xs gray-700">
-                ¥{{ preview.calculation.firstMonthActualPrice }}
-              </text>
-            </view>
-            <view flex="~ row items-center justify-between">
-              <text text="xs gray-500">
-                已生效完整月
-              </text>
-              <text text="xs gray-700">
-                {{ preview.calculation.fullMonths }} 个月
-              </text>
-            </view>
-            <view v-if="Number(preview.calculation.currentMonthDeduct) > 0" flex="~ row items-center justify-between">
-              <text text="xs gray-500">
-                当月扣除
-              </text>
-              <text text="xs gray-700">
-                ¥{{ preview.calculation.currentMonthDeduct }}
-              </text>
-            </view>
-          </view>
         </template>
-        <text v-else text="sm red-500">
-          {{ preview.refundReason || '当前套餐不可退款' }}
-        </text>
       </view>
 
       <Form ref="formRef" :model="formData" :rules="rules">

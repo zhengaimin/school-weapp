@@ -16,11 +16,11 @@ import type { TDeviceType } from '@/constant/modules'
 import type { TBatchRequestList } from '@/hooks/usePage'
 import { storeToRefs } from 'pinia'
 import { computed, ref } from 'vue'
-import { getStudentActivePackageApi } from '@/api/modules'
 import { getStudentValidGiftsApi } from '@/api/modules/gifts'
+import { getStudentPlatformPackagesApi } from '@/api/modules/package'
 import { getConsumptionStatisticsApi } from '@/api/modules/user/consumption'
 import Page from '@/components/common/page/index.vue'
-import { DEVICE_TYPE } from '@/constant/modules'
+import { DEVICE_TYPE, PACKAGE_BUY_STATUS } from '@/constant/modules'
 import { useBalance } from '@/hooks/useBalance'
 import { usePage } from '@/hooks/usePage'
 import { useCurrentStudentStore } from '@/store/business/currentStudent'
@@ -46,8 +46,10 @@ const {
 const consumptionStatistics = ref<User.Consumption.IConsumptionStatisticsVo>()
 /** 有效赠费记录 */
 const validGifts = ref<Gifts.Valid.ResGetStudentValidGiftsApi>()
-/** 每个设备对应的生效套餐 */
-const deviceActivePackages = ref<Map<TDeviceType, Pkg.Query.IStudentActivePackageVo | null>>(new Map())
+/** 当前学生的有效平台套餐 */
+const activePackages = ref<Pkg.Platform.IStudentPackage[]>([])
+/** 平台套餐月清设备汇总余额 */
+const monthlyBalances = ref<Pkg.Platform.IMonthlyBalance[]>([])
 
 /** 内容区域样式 */
 const contentStyle = computed(() => getContentHeight('0'))
@@ -66,7 +68,14 @@ function getBalanceInfoByDevice(deviceType: TDeviceType) {
 }
 /** 获取设备对应的生效套餐 */
 function getActivePackageByDevice(deviceType: TDeviceType) {
-  return deviceActivePackages.value.get(deviceType) ?? null
+  return activePackages.value.find((packageItem) => {
+    const deviceModules = packageItem.modules?.filter(module => module.deviceType) ?? []
+    return deviceModules.length === 0 || deviceModules.some(module => module.deviceType === deviceType)
+  }) ?? null
+}
+/** 获取设备对应的平台套餐月清余额 */
+function getMonthlyBalanceByDevice(deviceType: TDeviceType) {
+  return monthlyBalances.value.find(item => item.deviceType === deviceType) ?? null
 }
 /** 获取设备对应的赠费记录 */
 function getGiftRecordsByDevice(deviceType: TDeviceType) {
@@ -97,12 +106,17 @@ async function axiosGetValidGiftsApi() {
     return { code: -1 }
   }
 }
-/** 获取指定设备类型的生效套餐 */
-async function axiosGetActivePackageApi(deviceType: TDeviceType) {
+/** 获取学生有效平台套餐及月清余额 */
+async function axiosGetActivePackagesApi() {
   try {
-    const result = await getStudentActivePackageApi({ deviceType })
+    const result = await getStudentPlatformPackagesApi({
+      page: 1,
+      pageSize: 100,
+      status: PACKAGE_BUY_STATUS.ACTIVE,
+    })
     if (result.code === 0) {
-      deviceActivePackages.value.set(deviceType, result.data.activePackages?.[0] ?? null)
+      activePackages.value = result.data?.packages ?? []
+      monthlyBalances.value = result.data?.monthlyBalances ?? []
     }
     return result
   } catch {
@@ -116,11 +130,11 @@ async function handleLoginSuccess() {
   const requests: TBatchRequestList = [
     axiosGetConsumptionStatisticsApi(),
     axiosGetValidGiftsApi(),
+    axiosGetActivePackagesApi(),
   ]
 
   for (const device of deviceList) {
     requests.push(axiosGetUserBalanceApi(device.deviceType))
-    requests.push(axiosGetActivePackageApi(device.deviceType))
   }
 
   await batchRequestHandler(requests)
@@ -163,6 +177,7 @@ async function handleLoginSuccess() {
           :device="device"
           :balance-info="getBalanceInfoByDevice(device.deviceType)"
           :active-package="getActivePackageByDevice(device.deviceType)"
+          :monthly-balance="getMonthlyBalanceByDevice(device.deviceType)"
           :gift-records="getGiftRecordsByDevice(device.deviceType)"
         />
       </view>

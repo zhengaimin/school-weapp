@@ -251,7 +251,7 @@ export namespace Payment {
   export namespace Config {
     /** 支付配置信息 */
     export interface IPaymentConfig {
-      /** 固定金额选项列表（逗号分隔的字符串） */
+      /** 固定金额选项列表（逗号分隔的字符串，如 "10,20" 或 "[10,20]"） */
       fixedAmounts: string
       /** 单笔支付最小金额 */
       minAmount: number | null

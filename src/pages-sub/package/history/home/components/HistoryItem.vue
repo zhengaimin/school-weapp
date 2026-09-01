@@ -5,20 +5,25 @@ import { computed } from 'vue'
 import TButton from '@/components/common/button/index.vue'
 import WhiteCard from '@/components/common/white-card/index.vue'
 import Icon from '@/components/icon/index.vue'
-import { DEVICE_TYPE_I18N, PACKAGE_STATUS, PACKAGE_STATUS_CONFIGS, PACKAGE_TYPE_I18N } from '@/constant/modules'
+import { PACKAGE_STATUS, PACKAGE_STATUS_CONFIGS } from '@/constant/modules'
 import { formatTime } from '@/utils/format'
+import { canShowRefundButton } from '../../../utils'
+
+type HistoryRecord = Pkg.Platform.IStudentPackage & {
+  packageName?: string
+  price?: number | string
+}
 
 const props = defineProps<{
-  record: Pkg.Query.IPackagePurchaseVo
+  record: Pkg.Platform.IStudentPackage
   hasPendingRefund?: boolean
-  showDeviceType?: boolean
 }>()
 
 const emit = defineEmits<{
-  click: [event: Event, record: Pkg.Query.IPackagePurchaseVo]
-  cancel: [record: Pkg.Query.IPackagePurchaseVo]
-  pay: [record: Pkg.Query.IPackagePurchaseVo]
-  refund: [record: Pkg.Query.IPackagePurchaseVo]
+  click: [event: Event, record: Pkg.Platform.IStudentPackage]
+  cancel: [record: Pkg.Platform.IStudentPackage]
+  pay: [record: Pkg.Platform.IStudentPackage]
+  refund: [record: Pkg.Platform.IStudentPackage]
 }>()
 
 /** 套餐状态 */
@@ -27,22 +32,33 @@ const recordStatus = computed(() => props.record?.status ?? null)
 const isUnpaid = computed(() => recordStatus.value === PACKAGE_STATUS.PENDING)
 /** 是否显示退款按钮 */
 const showRefundButton = computed(() => {
-  if (props.hasPendingRefund) return false
-  return props.record?.canRefund
+  return props.record.packageRecordIds.length > 0 && canShowRefundButton({
+    status: props.record.status,
+    endDate: props.record.endDate,
+    hasPendingRefund: props.hasPendingRefund,
+  })
 })
 /** 获取状态配置 */
 const statusConfig = computed(() => PACKAGE_STATUS_CONFIGS[recordStatus.value as TPackageStatus])
 /** 获取图标名称 */
-const iconName = computed(() => statusConfig.value?.icon)
+const iconName = computed(() => statusConfig.value?.icon || 'history-line')
 /** 获取图标颜色 */
-const iconColor = computed(() => statusConfig.value?.iconColor)
+const iconColor = computed(() => statusConfig.value?.iconColor || '#9ca3af')
+/** 获取图标背景色 */
+const iconBackgroundColor = computed(() => statusConfig.value?.bgColor || '#f3f4f6')
 /** 获取状态标签 */
-const statusLabel = computed(() => statusConfig.value?.label)
-/** 获取套餐类型标签 */
-const packageTypeLabel = computed(() => PACKAGE_TYPE_I18N[props.record?.snapshotInfo?.packageType])
-const deviceTypeLabel = computed(() => {
-  const deviceType = props.record?.snapshotInfo?.deviceType || props.record?.packageContent?.deviceType
-  return deviceType ? DEVICE_TYPE_I18N[deviceType as keyof typeof DEVICE_TYPE_I18N] : ''
+const statusLabel = computed(() => statusConfig.value?.label || props.record.statusText || '套餐')
+/** 获取套餐名称 */
+const packageName = computed(() => {
+  const record = props.record as HistoryRecord
+  return record.name || record.packageName || '套餐'
+})
+/** 获取套餐价格 */
+const packagePrice = computed(() => {
+  const record = props.record as HistoryRecord
+  const value = record.purchasePrice ?? record.price
+  const price = Number(value)
+  return Number.isFinite(price) ? price.toFixed(2) : '-'
 })
 
 /** 处理点击事件 */
@@ -67,12 +83,21 @@ function handleRefund() {
   <view v-if="record" relative overflow="hidden" @click.stop="handleClick">
     <WhiteCard relative>
       <!-- 背景图标 -->
-      <view absolute left--68rpx top-68rpx style="transform: translateY(-50%)">
+      <view
+        w="32"
+        h="32"
+        absolute
+        left--68rpx
+        top-68rpx
+        overflow-hidden
+        rounded-full
+        opacity-10
+        :style="{ backgroundColor: iconBackgroundColor, transform: 'translateY(-50%)' }"
+      >
         <Icon
           :name="iconName"
           :icon-color="iconColor"
           icon-size="256rpx"
-          custom-class="opacity-10"
         />
       </view>
 
@@ -81,20 +106,17 @@ function handleRefund() {
         <!-- 第一行：套餐名称和金额 -->
         <view flex="~ justify-between items-center" m="b-1">
           <view text="sm gray-900" font="medium">
-            {{ packageTypeLabel }}
+            {{ packageName }}
           </view>
 
           <view text="lg gray-900" font="bold">
-            ¥{{ Number(record?.purchasePrice).toFixed(2) }}
+            ¥{{ packagePrice }}
           </view>
         </view>
 
         <!-- 第二行：状态和时间 -->
         <view flex="~ justify-between items-center" m="b-2">
           <view text="xs gray-600">
-            <text v-if="props.showDeviceType && deviceTypeLabel">
-              {{ deviceTypeLabel }} ·
-            </text>
             {{ statusLabel }}
           </view>
           <view text="xs gray-600">

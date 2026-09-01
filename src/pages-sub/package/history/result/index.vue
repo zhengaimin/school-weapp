@@ -12,6 +12,7 @@
 import type { Pkg } from '@/api/interface/modules/package'
 import type { ResultCard, ResultItem } from '@/components/common/result-view/index.vue'
 import dayjs from 'dayjs'
+import { storeToRefs } from 'pinia'
 import { computed, ref, unref } from 'vue'
 import { getPackageOrderDetailApi } from '@/api/modules/package/payment'
 import TButton from '@/components/common/button/index.vue'
@@ -19,12 +20,13 @@ import Page from '@/components/common/page/index.vue'
 import ResultView from '@/components/common/result-view/index.vue'
 import {
   DEVICE_TYPE,
+  MINIAPP_MODULE_KEY_REFUND_APPLY,
   PACKAGE_STATUS_CONFIGS,
-  PACKAGE_TYPE_I18N,
   PAYMENT_METHOD,
 } from '@/constant/modules'
 import { PACKAGE_HISTORY_RESULT_PATH } from '@/constant/router'
 import { usePage } from '@/hooks/usePage'
+import { useCurrentStudentStore } from '@/store/business/currentStudent'
 import { currRoute } from '@/utils'
 import { usePackageEmitter } from '@/utils/emit/package'
 import RefundModal from '../../components/RefundModal.vue'
@@ -38,6 +40,8 @@ defineOptions({
 })
 
 const { pageLoading, pageError, onLoginFail, batchRequestHandler, getContentHeight } = usePage()
+const currentStudentStore = useCurrentStudentStore()
+const { modules } = storeToRefs(currentStudentStore)
 const { emitPackageTransaction, emitPackageRefund } = usePackageEmitter()
 const { pendingPayment, axiosGetPendingPaymentApi } = usePackage()
 const { axiosPostCancelPaymentApi, axiosPostContinuePaymentApi, cancelLoading, continueLoading }
@@ -52,7 +56,9 @@ const hasPendingPayment = computed(() => {
 })
 /** 是否显示退费按钮 */
 const showRefundButton = computed(() => {
-  return orderDetail.value?.canRefund ?? false
+  return modules.value.includes(MINIAPP_MODULE_KEY_REFUND_APPLY)
+    && Boolean(orderDetail.value?.packageRecordId)
+    && Boolean(orderDetail.value?.canRefund)
 })
 /** 是否需要显示底部按钮区域 */
 const showButtonArea = computed(() => {
@@ -80,7 +86,7 @@ const orderCards = computed<ResultCard[]>(() => {
     {
       key: 'amount',
       label: '支付金额',
-      value: `¥${orderDetail.value.amount}`,
+      value: `¥${formatAmount(orderDetail.value.amount)}`,
       valueClass: 'text-base text-primary font-medium',
     },
   ]
@@ -117,9 +123,9 @@ const orderCards = computed<ResultCard[]>(() => {
     },
     { key: 'divider-2', type: 'divider' },
     {
-      key: 'packageType',
+      key: 'packageName',
       label: '套餐名称',
-      value: PACKAGE_TYPE_I18N[orderDetail.value.packageType],
+      value: orderDetail.value.packageName || '套餐',
     },
     {
       key: 'totalMonths',
@@ -136,31 +142,47 @@ const orderCards = computed<ResultCard[]>(() => {
     })
   }
 
-  if (orderDetail.value.packageContent.deviceType === DEVICE_TYPE.DRYER) {
+  const packageContent = orderDetail.value.packageContent
+  if (!packageContent) {
+    if (orderDetail.value.modules?.length) {
+      items.push({
+        key: 'modules',
+        label: '套餐权益',
+        value: orderDetail.value.modules.map(module => module.name).join('、'),
+      })
+    }
+  } else if (packageContent.deviceType === DEVICE_TYPE.DRYER) {
     items.push({
       key: 'dryerMinutes',
       label: '吹风时长',
-      value: `${orderDetail.value.packageContent.dryerMinutes}分钟`,
+      value: `${packageContent.dryerMinutes}分钟`,
     })
   } else {
     items.push(
       {
         key: 'videoCallMinutes',
         label: '视频通话',
-        value: `${orderDetail.value.packageContent.videoCallMinutes}分钟`,
+        value: `${packageContent.videoCallMinutes}分钟`,
       },
       {
         key: 'messageCount',
         label: '留言条数',
-        value: orderDetail.value.packageContent.messageCount === -1
-          ? '不限'
-          : `${orderDetail.value.packageContent.messageCount}条`,
+        value: packageContent.messageCount == null
+          || packageContent.messageCount === -1
+          ? '不限制'
+          : `${packageContent.messageCount}条`,
       },
     )
   }
 
   return [{ key: 'package', items }]
 })
+
+/** 格式化金额，统一保留两位小数 */
+function formatAmount(amount: string | number) {
+  const numericAmount = Number(amount)
+  return Number.isFinite(numericAmount) ? numericAmount.toFixed(2) : '0.00'
+}
 
 /** 格式化日期（只保留年月日） */
 function formatDate(date: string | null) {
@@ -190,7 +212,7 @@ async function axiosGetPackageOrderDetailApi(orderNo: string) {
 
 /** 申请退费 */
 function handleGoToRefund() {
-  if (!orderDetail.value?.packageRecordId) {
+  if (!showRefundButton.value || !orderDetail.value?.packageRecordId) {
     return
   }
   refundModalVisible.value = true
@@ -310,6 +332,7 @@ function onLoginSuccess() {
 
     <!-- 退费弹窗 -->
     <RefundModal
+      v-if="showRefundButton"
       :id="orderDetail?.packageRecordId"
       v-model:visible="refundModalVisible"
       @success="handleRefundSuccess"

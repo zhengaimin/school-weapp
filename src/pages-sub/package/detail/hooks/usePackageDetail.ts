@@ -1,11 +1,9 @@
 import type { Pkg } from '@/api/interface/modules/package'
-import { storeToRefs } from 'pinia'
 import { computed, ref } from 'vue'
-import { getPackageDetailApi } from '@/api/modules/package/query'
-import { DEVICE_TYPE, PACKAGE_TYPE, PAYMENT_METHOD } from '@/constant/modules'
+import { getPlatformPackageDetailApi, getStudentPackageDetailApi } from '@/api/modules/package'
+import { PAYMENT_METHOD } from '@/constant/modules'
 import { PACKAGE_HISTORY_RESULT_PATH } from '@/constant/router'
 import { usePage } from '@/hooks/usePage'
-import { useCurrentStudentStore } from '@/store/business/currentStudent'
 import { currRoute } from '@/utils'
 import { usePackageEmitter } from '@/utils/emit/package'
 import { toast } from '@/utils/toast'
@@ -20,16 +18,12 @@ import { PACKAGE_DETAIL_BUTTON_AREA_HEIGHT } from '../constants'
 export function usePackageDetail() {
   const { pageLoading, pageError, batchRequestHandler, onLoginFail, getContentHeight } = usePage()
   const { emitPackageTransaction } = usePackageEmitter()
-  const currentStudentStore = useCurrentStudentStore()
-  const { devices } = storeToRefs(currentStudentStore)
   const {
-    activePackage,
     pendingPayment,
-    axiosGetStudentActivePackageApi,
     axiosGetPendingPaymentApi,
   } = usePackage()
   const {
-    axiosPostPurchasePackageApi,
+    axiosPostPurchasePlatformPackageApi,
     axiosPostCancelPaymentApi,
     axiosPostContinuePaymentApi,
     purchaseLoading,
@@ -37,43 +31,19 @@ export function usePackageDetail() {
     continueLoading,
   } = usePayment()
 
-  const packageDetail = ref<Pkg.Query.ResGetPackageDetailApi>()
+  const packageDetail = ref<Pkg.Platform.ResGetPlatformPackageDetailApi>()
+  const isPurchased = ref(false)
 
-  /** 当前套餐对应设备类型（无详情时回退学生首台设备类型） */
-  const packageDeviceType = computed(
-    () => packageDetail.value?.deviceType || devices.value?.[0]?.deviceType,
-  )
-  const isVideoDevice = computed(() => packageDeviceType.value === DEVICE_TYPE.VIDEO)
   const hasPendingPayment = computed(() => {
     return !!pendingPayment.value?.hasPending
   })
 
-  /**
-   * 是否显示购买按钮
-   * 购买规则：
-   * 1. 通用套餐可以叠加购买
-   * 2. 固定套餐不能叠加购买
-   * 3. 通用套餐、固定套餐互斥（不能同时拥有）
-   */
   const showPurchaseButton = computed(() => {
+    if (isPurchased.value) return false
     if (hasPendingPayment.value) return false
-    if (!packageDetail.value) return false
-    const currentType = activePackage.value?.snapshotInfo?.packageType
-    const targetType = packageDetail.value.packageType
-    // 没有已激活套餐，可以购买任何套餐
-    if (!activePackage.value) return true
-    // 已有通用套餐，只能叠加购买通用套餐
-    if (currentType === PACKAGE_TYPE.GENERAL && targetType === PACKAGE_TYPE.GENERAL) {
-      return true
-    }
-    // 其他情况不能购买（固定套餐不能叠加、通用与固定互斥）
-    return false
-  })
-  const shouldShowContent = computed(() => {
-    return packageDetail.value?.isPackageExists !== false
+    return packageDetail.value?.purchasable !== false
   })
   const showButtonArea = computed(() => {
-    if (!shouldShowContent.value) return false
     return showPurchaseButton.value || hasPendingPayment.value
   })
   const contentHeight = computed(() => {
@@ -82,21 +52,21 @@ export function usePackageDetail() {
 
   /** 刷新页面数据 */
   function refreshPageData() {
-    const { query } = currRoute() as { path: string, query: { id?: string } }
+    const { query } = currRoute() as { path: string, query: { id?: string, type?: string } }
     if (!query.id) return
     const packageId = Number(query.id)
     if (Number.isNaN(packageId)) return
-    batchRequestHandler([
-      axiosGetPackageDetailApi(packageId),
-      axiosGetStudentActivePackageApi(),
-      axiosGetPendingPaymentApi(),
-    ])
+    const isPurchasedDetail = query.type === 'purchased'
+    isPurchased.value = isPurchasedDetail
+    batchRequestHandler(isPurchasedDetail
+      ? [axiosGetStudentPackageDetailApi(packageId)]
+      : [axiosGetPlatformPackageDetailApi(packageId), axiosGetPendingPaymentApi(null)])
   }
 
   /** 获取套餐详情 */
-  async function axiosGetPackageDetailApi(id: number) {
+  async function axiosGetPlatformPackageDetailApi(id: number) {
     try {
-      const result = await getPackageDetailApi(id)
+      const result = await getPlatformPackageDetailApi(id)
       if (result.code === 0) {
         packageDetail.value = result.data
       }
@@ -107,16 +77,45 @@ export function usePackageDetail() {
     }
   }
 
+  /** 获取学生已购买套餐详情 */
+  async function axiosGetStudentPackageDetailApi(id: number) {
+    try {
+      const result = await getStudentPackageDetailApi(id)
+      if (result.code === 0 && result.data) {
+        const detail = result.data
+        packageDetail.value = {
+          ...detail,
+          id: detail.platformPackageId ?? detail.id,
+          name: detail.packageName || '套餐',
+          modules: detail.modules || [],
+          deviceType: detail.deviceType,
+          pricingMode: 'FIXED_TOTAL',
+          monthlyPrice: detail.purchasePrice,
+          description: detail.templateDescription,
+          templateDescription: detail.templateDescription,
+          usageRules: detail.usageRules,
+          packageContent: detail.packageContent,
+          purchasable: false,
+          status: detail.status ?? 0,
+          statusText: detail.statusText || '',
+        }
+      }
+      return result
+    } catch (error) {
+      console.error('获取已购套餐详情失败:', error)
+      throw error
+    }
+  }
+
   /** 购买套餐 */
   async function handleGoToPurchase() {
-    if (!packageDetail.value?.packageTemplateId) {
+    if (!packageDetail.value?.id) {
       toast.show('套餐信息不完整')
       return
     }
-    await axiosPostPurchasePackageApi(
+    await axiosPostPurchasePlatformPackageApi(
       {
-        packageId: packageDetail.value.packageTemplateId,
-        paymentMethod: PAYMENT_METHOD.WECHAT,
+        platformPackageId: packageDetail.value.id,
       },
       {
         onSuccess: (orderId) => {
@@ -124,7 +123,7 @@ export function usePackageDetail() {
           uni.redirectTo({ url: `${PACKAGE_HISTORY_RESULT_PATH}?orderNo=${orderId}` })
         },
         onError: (error) => {
-          console.error('购买套餐失败:', error)
+          console.error('购买平台套餐失败:', error)
           emitPackageTransaction()
         },
       },
@@ -167,7 +166,7 @@ export function usePackageDetail() {
     pageError,
     onLoginFail,
     packageDetail,
-    isVideoDevice,
+    isPurchased,
     hasPendingPayment,
     showPurchaseButton,
     showButtonArea,

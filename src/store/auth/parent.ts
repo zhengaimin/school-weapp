@@ -6,13 +6,16 @@
  * - 绑定状态
  */
 import type { Overview } from '@/api/interface/modules/overview'
+import type { User } from '@/api/interface/modules/user'
 
 import { defineStore } from 'pinia'
 import { getOverviewStudentsApi } from '@/api/modules/overview'
+import { useUserStore } from '@/store/user'
 
 export const useParentStore = defineStore(
   'parent',
   () => {
+    const userStore = useUserStore()
     const students = ref<Overview.IStudentVo[]>([])
 
     // 是否需要绑定学生
@@ -47,10 +50,15 @@ export const useParentStore = defineStore(
 
         // 自动设置当前学生ID
         if (list.length) {
+          const roleInfo = userStore.userInfo?.roleInfo as User.Common.IParentRoleInfoVo
+          const currentChildId = roleInfo?.currentChild?.studentId
           const existingId = currentStudentId.value
-          // 如果当前ID存在且在列表中，保持不变；否则选择第一个
-          const nextId
-            = existingId !== null && list.some(s => s.id === existingId) ? existingId : list[0].id
+          // profile 记录的是后台最后切换的学生，应优先于本地持久化值
+          const nextId = currentChildId !== null
+            && currentChildId !== undefined
+            && list.some(s => s.id === currentChildId)
+            ? currentChildId
+            : existingId !== null && list.some(s => s.id === existingId) ? existingId : list[0].id
           setCurrentStudentId(nextId)
         } else {
           setCurrentStudentId(null)

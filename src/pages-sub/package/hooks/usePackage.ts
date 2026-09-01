@@ -7,6 +7,7 @@ import {
   getPendingPackagePaymentApi,
   getStudentActivePackageApi,
 } from '@/api/modules'
+import { PACKAGE_KIND } from '@/constant/modules'
 import { useDeviceType } from '@/hooks/useDeviceType'
 import { useParentStore } from '@/store/auth/parent'
 import { useCurrentStudentStore } from '@/store/business/currentStudent'
@@ -32,10 +33,13 @@ export function usePackage() {
   const waitingPackages = ref<Pkg.Query.IStudentActivePackageVo[]>([])
 
   /** 获取学生当前正在使用的套餐 */
-  async function axiosGetStudentActivePackageApi(deviceType?: TDeviceType) {
+  async function axiosGetStudentActivePackageApi(deviceType?: TDeviceType | null) {
     try {
-      const resolvedDeviceType = deviceType ?? unref(primaryDeviceType)
-      const result = await getStudentActivePackageApi({ deviceType: resolvedDeviceType })
+      const resolvedDeviceType = deviceType === null ? undefined : (deviceType ?? unref(primaryDeviceType))
+      const result = await getStudentActivePackageApi({
+        deviceType: resolvedDeviceType,
+        packageKind: PACKAGE_KIND.PLATFORM,
+      })
       if (result.code === 0) {
         activePackages.value = result.data.activePackages || []
         waitingPackages.value = result.data.waitingPackages || []
@@ -53,10 +57,13 @@ export function usePackage() {
   }
 
   /** 查询当前是否存在待支付的套餐订单 */
-  async function axiosGetPendingPaymentApi(deviceType?: TDeviceType) {
+  async function axiosGetPendingPaymentApi(deviceType?: TDeviceType | null) {
     try {
-      const resolvedDeviceType = deviceType ?? unref(primaryDeviceType)
-      const result = await getPendingPackagePaymentApi({ deviceType: resolvedDeviceType })
+      const resolvedDeviceType = deviceType === null ? undefined : (deviceType ?? unref(primaryDeviceType))
+      const result = await getPendingPackagePaymentApi({
+        deviceType: resolvedDeviceType,
+        packageKind: PACKAGE_KIND.PLATFORM,
+      })
       if (result.code === 0) {
         pendingPayment.value = result.data
       }
@@ -67,11 +74,10 @@ export function usePackage() {
     }
   }
 
-  /** 检查是否存在待审核的套餐退费申请 */
-  async function axiosGetCheckPendingApi(deviceType?: TDeviceType) {
+  /** 检查是否存在待审核的平台套餐退费申请 */
+  async function axiosGetCheckPendingApi() {
     try {
-      const resolvedDeviceType = deviceType ?? unref(primaryDeviceType)
-      const result = await getCheckPendingApi({ deviceType: resolvedDeviceType })
+      const result = await getCheckPendingApi({ packageKind: PACKAGE_KIND.PLATFORM })
       if (result.code === 0) {
         hasPendingRefund.value = result.data.hasPendingAudit
         pendingRefundInfo.value = result.data.pendingApplication ?? null

@@ -5,6 +5,7 @@ import {
   postCancelPaymentApi,
   postContinuePaymentApi,
   postPurchasePackageApi,
+  postPurchasePlatformPackageApi,
 } from '@/api/modules'
 import { useMessage } from '@/uni_modules/wot-design-uni'
 import { toast } from '@/utils/toast'
@@ -40,6 +41,53 @@ export function usePayment() {
     try {
       uni.showLoading({ title: '正在创建订单...' })
       const result = await postPurchasePackageApi(params)
+
+      if (result.code !== 0 || !result.data) {
+        throw new Error('创建订单失败')
+      }
+
+      await requestWxPayment(result.data.paymentParams)
+
+      const statusResult = await getPaymentStatusApi({ orderNo: result.data.orderId })
+      if (statusResult.code === 0 && statusResult.data?.status === 1) {
+        toast.show('支付成功')
+        callbacks?.onSuccess?.(result.data.orderId)
+      } else {
+        throw new Error(statusResult.data?.statusText || '支付失败或状态异常')
+      }
+    } catch (error: any) {
+      toast.show(error.message || '操作失败')
+      callbacks?.onError?.(error)
+    } finally {
+      uni.hideLoading()
+      purchaseLoading.value = false
+      callbacks?.onFinally?.()
+    }
+  }
+
+  /** 购买平台套餐 */
+  async function axiosPostPurchasePlatformPackageApi(
+    params: Pkg.Payment.ReqPostPlatformPurchaseApi,
+    callbacks?: {
+      onSuccess?: (orderId: string) => void
+      onError?: (error: any) => void
+      onFinally?: () => void
+    },
+  ) {
+    try {
+      await message.confirm({
+        title: '确认支付',
+        msg: `您即将购买该套餐，是否确认？`,
+        zIndex: 1000,
+      })
+    } catch {
+      return
+    }
+
+    purchaseLoading.value = true
+    try {
+      uni.showLoading({ title: '正在创建订单...' })
+      const result = await postPurchasePlatformPackageApi(params)
 
       if (result.code !== 0 || !result.data) {
         throw new Error('创建订单失败')
@@ -138,6 +186,7 @@ export function usePayment() {
 
   return {
     axiosPostPurchasePackageApi,
+    axiosPostPurchasePlatformPackageApi,
     axiosPostContinuePaymentApi,
     axiosPostCancelPaymentApi,
     purchaseLoading,

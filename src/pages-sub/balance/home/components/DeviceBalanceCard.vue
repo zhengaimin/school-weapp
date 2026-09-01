@@ -9,13 +9,14 @@ import dayjs from 'dayjs'
 import { computed } from 'vue'
 import WhiteCard from '@/components/common/white-card/index.vue'
 import Icon from '@/components/icon/index.vue'
-import { DEVICE_TYPE, DEVICE_TYPE_I18N, PACKAGE_TYPE_I18N } from '@/constant/modules'
+import { DEVICE_TYPE, DEVICE_TYPE_I18N } from '@/constant/modules'
 import { PACKAGE_DETAIL_PATH } from '@/constant/router'
 
 const props = defineProps<{
   device: Overview.IDeviceVo
   balanceInfo?: User.Parent.IBalanceInfo | null
-  activePackage?: Pkg.Query.IStudentActivePackageVo | null
+  activePackage?: Pkg.Platform.IStudentPackage | null
+  monthlyBalance?: Pkg.Platform.IMonthlyBalance | null
   giftRecords?: Gifts.ValidGiftRecord[]
 }>()
 
@@ -27,11 +28,12 @@ const hasRemainingMinutes = computed(() => isVideoDevice.value && props.device.r
 const giftCount = computed(() => props.giftRecords?.length ?? 0)
 /** 是否展示赠费 */
 const hasGiftRecords = computed(() => giftCount.value > 0)
-/** 套餐类型标签 */
-const packageTypeLabel = computed(() => {
-  const packageType = props.activePackage?.snapshotInfo?.packageType || props.activePackage?.packageContent.packageType
-  return packageType ? PACKAGE_TYPE_I18N[packageType] : ''
-})
+/** 当前设备对应的平台套餐模块 */
+const deviceModules = computed(() => props.activePackage?.modules?.filter(
+  module => !module.deviceType || module.deviceType === props.device.deviceType,
+) ?? [])
+/** 是否展示时长来源明细 */
+const hasDurationDetails = computed(() => isVideoDevice.value || Boolean(props.monthlyBalance))
 
 const availableBalance = computed(() => {
   if (props.balanceInfo?.availableBalanceFormatted) return props.balanceInfo.availableBalanceFormatted
@@ -56,8 +58,9 @@ function getGiftExpireText(item: Gifts.ValidGiftRecord) {
 }
 
 function handlePackageClick() {
-  if (props.activePackage) {
-    uni.navigateTo({ url: `${PACKAGE_DETAIL_PATH}?id=${props.activePackage.packageId}` })
+  const packageRecordId = props.activePackage?.packageRecordIds?.[0]
+  if (packageRecordId) {
+    uni.navigateTo({ url: `${PACKAGE_DETAIL_PATH}?id=${packageRecordId}&type=purchased` })
   }
 }
 </script>
@@ -116,8 +119,8 @@ function handlePackageClick() {
       </view>
     </view>
 
-    <!-- 时长来源分层（话机）：①平台套餐月清 ②独立赠送 ③独立充值套餐 ③.5充值赠送 -->
-    <view v-if="isVideoDevice" flex="~ col gap-2" m="b-4" p="4" bg="#fafafa" rounded="lg">
+    <!-- 时长来源分层：平台套餐月清、独立赠送、独立充值套餐和充值赠送 -->
+    <view v-if="hasDurationDetails" flex="~ col gap-2" m="b-4" p="4" bg="#fafafa" rounded="lg">
       <text text="sm gray-700" font="medium" m="b-1">
         时长来源明细
       </text>
@@ -126,7 +129,7 @@ function handlePackageClick() {
           平台套餐月清
         </text>
         <text text="sm gray-800" font="medium">
-          {{ balanceInfo?.platformMonthlyMinutes ?? 0 }} 分钟
+          {{ monthlyBalance?.remainingMinutes ?? balanceInfo?.platformMonthlyMinutes ?? 0 }} 分钟
         </text>
       </view>
       <view flex="~ row items-center justify-between">
@@ -159,7 +162,7 @@ function handlePackageClick() {
     <view v-if="activePackage" :class="[hasGiftRecords ? 'mb-4' : '']" @click="handlePackageClick">
       <view flex="~ row items-center justify-between" m="b-3">
         <text text="sm gray-700" font="medium">
-          {{ packageTypeLabel }}
+          {{ activePackage.name || '平台套餐' }}
         </text>
         <view px="2" py="0.5" rounded="sm" bg="blue-50">
           <text text="xs blue-600" font="bold">
@@ -168,49 +171,25 @@ function handlePackageClick() {
         </view>
       </view>
       <view p="4" bg="gray-50" rounded="lg">
-        <!-- 话机：三列指标 -->
-        <view v-if="isVideoDevice" flex="~ row justify-around">
-          <view flex="~ col items-center">
-            <text text="base gray-800" font="semibold" mb="0.5">
-              {{ balanceInfo?.packageMinutes ?? '-' }}
-            </text>
+        <view flex="~ col gap-2">
+          <view
+            v-for="module in deviceModules"
+            :key="module.moduleKey"
+            flex="~ row items-center justify-between"
+          >
             <text text="xs gray-500">
-              套餐时长
+              {{ module.name }}
+            </text>
+            <text text="sm gray-800" font="medium">
+              {{ module.monthlyGiftMinutes === undefined ? '功能权益' : (module.monthlyGiftMinutes === -1 ? '不限' : `${module.monthlyGiftMinutes}分钟/月`) }}
             </text>
           </view>
-          <view flex="~ col items-center">
-            <text text="base gray-800" font="semibold" mb="0.5">
-              {{ balanceInfo?.packageMessageCount === -1 ? '无限' : balanceInfo?.packageMessageCount }}
-            </text>
-            <text text="xs gray-500">
-              剩余留言
-            </text>
-          </view>
-          <view flex="~ col items-center">
-            <text text="base gray-800" font="semibold" mb="0.5">
-              {{ dayjs(activePackage.endDate).format('MM-DD') }}
-            </text>
+          <view flex="~ row items-center justify-between">
             <text text="xs gray-500">
               到期日
             </text>
-          </view>
-        </view>
-        <!-- 吹风机：两列指标 -->
-        <view v-else flex="~ row justify-around">
-          <view flex="~ col items-center">
-            <text text="base gray-800" font="semibold" mb="0.5">
-              {{ balanceInfo?.packageMinutes ?? '-' }}
-            </text>
-            <text text="xs gray-500">
-              套餐时长
-            </text>
-          </view>
-          <view flex="~ col items-center">
-            <text text="base gray-800" font="semibold" mb="0.5">
-              {{ dayjs(activePackage.endDate).format('MM-DD') }}
-            </text>
-            <text text="xs gray-500">
-              到期日
+            <text text="sm gray-800" font="medium">
+              {{ activePackage.endDate ? dayjs(activePackage.endDate).format('MM-DD') : '-' }}
             </text>
           </view>
         </view>
