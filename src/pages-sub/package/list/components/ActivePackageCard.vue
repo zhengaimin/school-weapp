@@ -1,9 +1,18 @@
 <script lang="ts" setup>
 import type { ActivePackage } from '../types'
+import type { Pkg } from '@/api/interface/modules/package'
 import dayjs from 'dayjs'
 import { computed } from 'vue'
 import WhiteCard from '@/components/common/white-card/index.vue'
-import { PACKAGE_BUY_STATUS, PACKAGE_BUY_STATUS_I18N } from '@/constant/modules'
+import {
+  DEVICE_TYPE_I18N,
+  PACKAGE_BUY_STATUS,
+  PACKAGE_BUY_STATUS_I18N,
+  PACKAGE_KIND,
+  PACKAGE_TYPE_I18N,
+} from '@/constant/modules'
+import { PACKAGE_TAG_CONFIGS } from '../../constants'
+import { formatPackageContentSummary } from '../../utils'
 
 const props = defineProps<{
   package: ActivePackage
@@ -13,17 +22,43 @@ const emit = defineEmits<{
 }>()
 
 const modules = computed(() => props.package.modules || [])
-const pricingModeText = computed(() => {
-  if (props.package.pricingMode === 'DECREASING') return '按月递减'
-  if (props.package.pricingMode === 'FIXED_TOTAL') return '固定总价'
-  return props.package.monthlyDecrease ? '按月递减' : '固定总价'
+const isPlatformPackage = computed(() => props.package.packageKind === PACKAGE_KIND.PLATFORM)
+/** 套餐内容快照：学生套餐列表接口只返回 snapshotInfo，套餐详情才返回 packageContent */
+const snapshot = computed(() => props.package.packageContent || props.package.snapshotInfo)
+/** 套餐类型名称：通用套餐 / 固定套餐 */
+const packageTypeText = computed(() => {
+  const packageType = snapshot.value?.packageType
+  return (packageType && PACKAGE_TYPE_I18N[packageType]) || '套餐'
+})
+/** 卡片标题：平台套餐用套餐名称，设备套餐用套餐类型名称 */
+const packageTitle = computed(() => {
+  if (isPlatformPackage.value) return props.package.packageName || '套餐'
+  return packageTypeText.value
+})
+/** 标题标签：平台套餐展示计费模式，设备套餐展示设备类型，配色按类型区分 */
+const packageTag = computed(() => {
+  // 统一学生套餐接口不返回 pricingMode，按快照的按月递减开关展示计费模式
+  if (isPlatformPackage.value) {
+    const isDecreasing = !!snapshot.value?.monthlyDecrease
+    return {
+      text: isDecreasing ? '按月递减' : '固定总价',
+      style: isDecreasing ? PACKAGE_TAG_CONFIGS.DECREASING : PACKAGE_TAG_CONFIGS.FIXED_TOTAL,
+    }
+  }
+
+  const deviceType = props.package.deviceType || snapshot.value?.deviceType
+  if (!deviceType) return { text: packageTypeText.value, style: PACKAGE_TAG_CONFIGS.DEFAULT }
+  return { text: DEVICE_TYPE_I18N[deviceType], style: PACKAGE_TAG_CONFIGS[deviceType] }
 })
 const moduleSummary = computed(() => {
-  if (!modules.value.length) return '暂无权益信息'
+  if (modules.value.length) {
+    return modules.value
+      .map(module => module.kind === 'FEATURE' ? module.name : `${module.name} ${getModuleValue(module)}`)
+      .join('、')
+  }
 
-  return modules.value
-    .map(module => module.kind === 'FEATURE' ? module.name : `${module.name} ${getModuleValue(module)}`)
-    .join('、')
+  // 普通设备套餐没有模块权益，改用套餐内容快照展示设备额度
+  return formatPackageContentSummary(snapshot.value) || '暂无权益信息'
 })
 const statusClass = computed(() => {
   switch (props.package.status) {
@@ -51,7 +86,7 @@ function handleClick() {
   if (orderNo) emit('click', orderNo)
 }
 
-function getModuleValue(module: ActivePackage['modules'][number]) {
+function getModuleValue(module: Pkg.Platform.IModule) {
   if (module.kind === 'FEATURE') return '功能权益'
   if (module.monthlyGiftMinutes === -1) return '不限分钟'
   if (module.monthlyGiftMinutes !== undefined) return `${module.monthlyGiftMinutes} 分钟/月`
@@ -65,10 +100,10 @@ function getModuleValue(module: ActivePackage['modules'][number]) {
       <view min-w-0 flex="~ col" gap="1">
         <view flex="~ row items-center" gap="2">
           <text class="package-name">
-            {{ package.name || '套餐' }}
+            {{ packageTitle }}
           </text>
-          <text class="package-tag pricing-tag" shrink-0>
-            {{ pricingModeText }}
+          <text class="package-tag" shrink-0 :style="packageTag.style">
+            {{ packageTag.text }}
           </text>
         </view>
       </view>
@@ -82,8 +117,8 @@ function getModuleValue(module: ActivePackage['modules'][number]) {
         <text class="module-title">
           套餐权益
         </text>
-        <text class="module-count">
-          {{ package.modules?.length || 0 }} 项
+        <text v-if="modules.length" class="module-count">
+          {{ modules.length }} 项
         </text>
       </view>
       <text class="module-summary">
@@ -112,7 +147,6 @@ function getModuleValue(module: ActivePackage['modules'][number]) {
 
 .package-name { flex: 1; min-width: 0; overflow: hidden; color: #1f2937; font-size: 30rpx; font-weight: 700; line-height: 1.35; text-overflow: ellipsis; white-space: nowrap; }
 .package-tag { border-radius: 6rpx; font-size: 21rpx; line-height: 1.4; padding: 4rpx 10rpx; }
-.pricing-tag { background: #f1f5f9; color: #64748b; }
 .status-badge { border-radius: 6rpx; font-size: 22rpx; padding: 6rpx 12rpx; }
 .status-badge.active { background: #ecfdf3; color: #15945a; }
 .status-badge.waiting { background: #eff6ff; color: #2563eb; }

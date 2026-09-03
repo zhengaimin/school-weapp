@@ -1,12 +1,12 @@
 import type { AvailablePackage } from '../types'
 import { computed } from 'vue'
-import { getAvailablePlatformPackagesApi } from '@/api/modules/package'
+import { getAvailablePackagesApi } from '@/api/modules/package'
 import { useRefresh } from '@/hooks/useRefresh'
 
 /** 可购买套餐列表逻辑 */
 export function useAvailablePackages() {
   const refreshState = useRefresh<AvailablePackage>({
-    get: getAvailablePlatformPackagesApi,
+    get: getAvailablePackagesApi,
     immediate: false,
     listField: 'packages',
   })

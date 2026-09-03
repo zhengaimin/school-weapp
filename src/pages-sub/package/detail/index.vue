@@ -14,7 +14,8 @@ import { computed } from 'vue'
 import TButton from '@/components/common/button/index.vue'
 import Page from '@/components/common/page/index.vue'
 import WhiteCard from '@/components/common/white-card/index.vue'
-import { DEVICE_TYPE } from '@/constant/modules'
+import { DEVICE_TYPE, DEVICE_TYPE_I18N, PACKAGE_KIND, PACKAGE_TYPE_I18N } from '@/constant/modules'
+import { PACKAGE_TAG_CONFIGS } from '../constants'
 import { usePackageDetail } from './hooks/usePackageDetail'
 
 defineOptions({
@@ -41,20 +42,48 @@ const {
   handleContinuePayment,
 } = usePackageDetail()
 
-const pricingModeText = computed(() => {
-  return packageDetail.value?.pricingMode === 'FIXED_TOTAL' ? '固定总价' : '按月递减'
+/** 是否平台套餐 */
+const isPlatformPackage = computed(() => packageDetail.value?.packageKind === PACKAGE_KIND.PLATFORM)
+/** 套餐标签：平台套餐展示计费模式，设备套餐展示设备类型，配色按类型区分 */
+const packageTag = computed(() => {
+  if (isPlatformPackage.value) {
+    const isDecreasing = packageDetail.value?.pricingMode === 'DECREASING'
+    return {
+      text: isDecreasing ? '按月递减' : '固定总价',
+      style: isDecreasing ? PACKAGE_TAG_CONFIGS.DECREASING : PACKAGE_TAG_CONFIGS.FIXED_TOTAL,
+    }
+  }
+
+  const deviceType = packageDetail.value?.deviceType || packageDetail.value?.packageContent?.deviceType
+  if (deviceType) return { text: DEVICE_TYPE_I18N[deviceType], style: PACKAGE_TAG_CONFIGS[deviceType] }
+
+  const packageType = packageDetail.value?.packageType
+  return {
+    text: packageType ? PACKAGE_TYPE_I18N[packageType] : '套餐',
+    style: PACKAGE_TAG_CONFIGS.DEFAULT,
+  }
 })
+/** 购买价格 */
+const purchasePriceText = computed(() => {
+  const price = Number(packageDetail.value?.purchasePrice)
+  return Number.isFinite(price) ? price.toFixed(2) : '-'
+})
+/** 套餐月数 */
+const totalMonthsText = computed(() => {
+  const totalMonths = packageDetail.value?.totalMonths
+  return totalMonths ? `${totalMonths}个月` : '-'
+})
+/** 套餐起止日期；通用套餐购买前没有具体日期，此时不展示 */
 const validityText = computed(() => {
   const startDate = packageDetail.value?.startDate
   const endDate = packageDetail.value?.endDate
-  const startTime = startDate && dayjs(startDate).isValid()
-    ? dayjs(startDate).format('YYYY-MM-DD HH:mm')
-    : '-'
-  const endTime = endDate && dayjs(endDate).isValid()
-    ? dayjs(endDate).format('YYYY-MM-DD HH:mm')
-    : '-'
-  return `${startTime} 至 ${endTime}`
+  if (!startDate && !endDate) return ''
+  return `${formatDate(startDate)} 至 ${formatDate(endDate)}`
 })
+
+function formatDate(date?: string) {
+  return date && dayjs(date).isValid() ? dayjs(date).format('YYYY-MM-DD') : '-'
+}
 </script>
 
 <template>
@@ -72,21 +101,21 @@ const validityText = computed(() => {
         <view p="4 t-2!" flex="~ col" gap="3">
           <!-- 套餐信息 -->
           <view flex="~ col" gap="3">
-            <view bg="white" rounded="xl" p="4" shadow="sm" flex="~ col" gap="4">
+            <view bg="white" rounded="xl" p="4" shadow="sm" flex="~ col" gap="3">
               <text text="lg gray-800" font="bold">
-                {{ packageDetail.name || '套餐' }}
+                {{ packageDetail.packageName }}
               </text>
 
               <view flex="~ row justify-between items-center">
                 <view
-                  bg="blue-50"
-                  text="xs blue-600"
+                  text="xs"
                   px="2.5"
                   py="1"
                   rounded="md"
                   font="bold"
+                  :style="packageTag.style"
                 >
-                  {{ pricingModeText }}
+                  {{ packageTag.text }}
                 </view>
 
                 <view flex="~ row items-baseline" text="red-500">
@@ -94,7 +123,7 @@ const validityText = computed(() => {
                     ¥
                   </text>
                   <text text="3xl" font="bold" lh="none">
-                    {{ packageDetail.purchasePrice }}
+                    {{ purchasePriceText }}
                   </text>
                 </view>
               </view>
@@ -114,7 +143,7 @@ const validityText = computed(() => {
                 </view>
               </view>
 
-              <view v-else flex="~ row justify-around" bg="gray-50" rounded="lg" p="y-3">
+              <view v-else-if="!isPlatformPackage" flex="~ row justify-around" bg="gray-50" rounded="lg" p="y-3">
                 <view v-if="packageDetail.deviceType === DEVICE_TYPE.VIDEO" flex="~ col items-center justify-center" gap="1">
                   <text text="lg gray-800" font="bold" lh="none">
                     {{ packageDetail.packageContent?.videoCallMinutes ?? '-' }}
@@ -139,22 +168,26 @@ const validityText = computed(() => {
                     吹风时长
                   </text>
                 </view>
-                <view flex="~ col items-center justify-center" gap="1">
-                  <text text="lg gray-800" font="bold" lh="none">
-                    {{ packageDetail.totalMonths ?? '-' }}
-                  </text>
+              </view>
+
+              <view flex="~ col" gap="1.5" pt="2" border="t gray-100">
+                <view flex="~ row items-center justify-between">
                   <text text="xs gray-400">
                     套餐月数
                   </text>
+                  <text text="xs gray-700" font="medium">
+                    {{ totalMonthsText }}
+                  </text>
+                </view>
+                <view v-if="validityText" flex="~ row items-center justify-between">
+                  <text text="xs gray-400">
+                    有效期
+                  </text>
+                  <text text="xs gray-700" font="medium">
+                    {{ validityText }}
+                  </text>
                 </view>
               </view>
-
-              <text v-if="packageDetail.modules?.length" text="xs gray-400">
-                套餐月数：{{ packageDetail.totalMonths }}个月
-              </text>
-              <text v-if="packageDetail.startDate || packageDetail.endDate" text="xs gray-400">
-                有效期：{{ validityText }}
-              </text>
             </view>
           </view>
           <!-- 套餐说明 -->

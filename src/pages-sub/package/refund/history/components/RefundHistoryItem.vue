@@ -89,7 +89,7 @@ async function handleCancelRefund() {
 
 <template>
   <view relative overflow="hidden" @click.stop="handleClick">
-    <WhiteCard relative>
+    <WhiteCard custom-class="relative">
       <!-- 背景图标 -->
       <view
         w="32"

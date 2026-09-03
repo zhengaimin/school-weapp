@@ -19,18 +19,18 @@ export function usePackage() {
   const { defaultDeviceType } = useDeviceType()
   const primaryDeviceType = computed(() => devices.value?.[0]?.deviceType || defaultDeviceType.value)
 
-  const activePackage = ref<Pkg.Query.IStudentActivePackageVo | null>(null)
+  const activePackage = ref<Pkg.Query.IStudentPackageVo | null>(null)
   const activePackageTotal = ref<number | null>(null)
-  const allPurchasedPackages = ref<Pkg.Query.IStudentActivePackageVo[]>([])
+  const allPurchasedPackages = ref<Pkg.Query.IStudentPackageVo[]>([])
   const purchasedPackageIds = ref<Set<number>>(new Set())
   const pendingPayment = ref<Pkg.Payment.ResGetPendingPaymentApi | null>(null)
   const pendingRefundInfo = ref<Pkg.Refund.IPendingApplication | null>(null)
   const hasPendingRefund = ref(false)
 
   /** 生效中套餐列表 */
-  const activePackages = ref<Pkg.Query.IStudentActivePackageVo[]>([])
+  const activePackages = ref<Pkg.Query.IStudentPackageVo[]>([])
   /** 待生效套餐列表 */
-  const waitingPackages = ref<Pkg.Query.IStudentActivePackageVo[]>([])
+  const waitingPackages = ref<Pkg.Query.IStudentPackageVo[]>([])
 
   /** 获取学生当前正在使用的套餐 */
   async function axiosGetStudentActivePackageApi(deviceType?: TDeviceType | null) {
@@ -38,7 +38,6 @@ export function usePackage() {
       const resolvedDeviceType = deviceType === null ? undefined : (deviceType ?? unref(primaryDeviceType))
       const result = await getStudentActivePackageApi({
         deviceType: resolvedDeviceType,
-        packageKind: PACKAGE_KIND.PLATFORM,
       })
       if (result.code === 0) {
         activePackages.value = result.data.activePackages || []

@@ -5,25 +5,22 @@ import { computed } from 'vue'
 import TButton from '@/components/common/button/index.vue'
 import WhiteCard from '@/components/common/white-card/index.vue'
 import Icon from '@/components/icon/index.vue'
-import { PACKAGE_STATUS, PACKAGE_STATUS_CONFIGS } from '@/constant/modules'
+import { PACKAGE_KIND, PACKAGE_STATUS, PACKAGE_STATUS_CONFIGS, PACKAGE_TYPE_I18N } from '@/constant/modules'
 import { formatTime } from '@/utils/format'
 import { canShowRefundButton } from '../../../utils'
 
-type HistoryRecord = Pkg.Platform.IStudentPackage & {
-  packageName?: string
-  price?: number | string
-}
+type HistoryRecord = Pkg.Query.IStudentPackageVo
 
 const props = defineProps<{
-  record: Pkg.Platform.IStudentPackage
+  record: HistoryRecord
   hasPendingRefund?: boolean
 }>()
 
 const emit = defineEmits<{
-  click: [event: Event, record: Pkg.Platform.IStudentPackage]
-  cancel: [record: Pkg.Platform.IStudentPackage]
-  pay: [record: Pkg.Platform.IStudentPackage]
-  refund: [record: Pkg.Platform.IStudentPackage]
+  click: [event: Event, record: HistoryRecord]
+  cancel: [record: HistoryRecord]
+  pay: [record: HistoryRecord]
+  refund: [record: HistoryRecord]
 }>()
 
 /** 套餐状态 */
@@ -48,16 +45,16 @@ const iconColor = computed(() => statusConfig.value?.iconColor || '#9ca3af')
 const iconBackgroundColor = computed(() => statusConfig.value?.bgColor || '#f3f4f6')
 /** 获取状态标签 */
 const statusLabel = computed(() => statusConfig.value?.label || props.record.statusText || '套餐')
-/** 获取套餐名称 */
+/** 获取套餐名称：平台套餐用套餐名称，设备套餐用套餐类型名称 */
 const packageName = computed(() => {
-  const record = props.record as HistoryRecord
-  return record.name || record.packageName || '套餐'
+  if (props.record.packageKind === PACKAGE_KIND.PLATFORM) return props.record.packageName || '套餐'
+
+  const packageType = props.record.packageContent?.packageType
+  return (packageType && PACKAGE_TYPE_I18N[packageType]) || '套餐'
 })
 /** 获取套餐价格 */
 const packagePrice = computed(() => {
-  const record = props.record as HistoryRecord
-  const value = record.purchasePrice ?? record.price
-  const price = Number(value)
+  const price = Number(props.record.purchasePrice)
   return Number.isFinite(price) ? price.toFixed(2) : '-'
 })
 
@@ -81,7 +78,7 @@ function handleRefund() {
 
 <template>
   <view v-if="record" relative overflow="hidden" @click.stop="handleClick">
-    <WhiteCard relative>
+    <WhiteCard custom-class="relative">
       <!-- 背景图标 -->
       <view
         w="32"

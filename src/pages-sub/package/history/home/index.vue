@@ -11,7 +11,7 @@
 <script lang="ts" setup>
 import type { Pkg } from '@/api/interface/modules/package'
 import { computed, ref } from 'vue'
-import { getStudentPlatformPackagesApi } from '@/api/modules/package'
+import { getStudentPackagesApi } from '@/api/modules/package'
 import FilterGroup from '@/components/common/filter-group/index.vue'
 import Page from '@/components/common/page/index.vue'
 import RefreshList from '@/components/common/refresh-list/index.vue'
@@ -49,8 +49,8 @@ const {
   empty,
   onRefreshList,
   onLoadMore,
-} = useRefresh<Pkg.Platform.IStudentPackage>({
-  get: getStudentPlatformPackagesApi,
+} = useRefresh<Pkg.Query.IStudentPackageVo>({
+  get: getStudentPackagesApi,
   listField: 'packages',
   immediate: false,
 })
@@ -98,14 +98,14 @@ const { filters, filterConfigs, onFilterChange, applyFiltersToQuery } = useHisto
 })
 
 /** 跳转到套餐记录详情 */
-function goToPackageDetail(_event: Event, record: Pkg.Platform.IStudentPackage) {
+function goToPackageDetail(_event: Event, record: Pkg.Query.IStudentPackageVo) {
   const orderNo = record.paymentOrderNo || ''
   uni.navigateTo({
     url: `${PACKAGE_HISTORY_RESULT_PATH}?type=purchase&orderNo=${orderNo}`,
   })
 }
 /** 取消订单 */
-async function handleCancelOrder(record: Pkg.Platform.IStudentPackage) {
+async function handleCancelOrder(record: Pkg.Query.IStudentPackageVo) {
   await axiosPostCancelPaymentApi(
     { orderNo: String(record.paymentOrderNo) },
     {
@@ -113,8 +113,8 @@ async function handleCancelOrder(record: Pkg.Platform.IStudentPackage) {
         // 发送套餐交易事件
         emitPackageTransaction()
 
-        // 根据支付记录 ID 更新对应套餐状态
-        const index = recordsList.value.findIndex(item => item.paymentId === record.paymentId)
+        // 根据套餐记录 ID 更新对应套餐状态
+        const index = recordsList.value.findIndex(item => item.id === record.id)
         if (index !== -1) {
           // 更新订单状态为已取消
           recordsList.value[index].status = PACKAGE_BUY_STATUS.CANCELLED
@@ -129,7 +129,7 @@ async function handleCancelOrder(record: Pkg.Platform.IStudentPackage) {
   )
 }
 /** 支付订单 */
-async function handlePayOrder(record: Pkg.Platform.IStudentPackage) {
+async function handlePayOrder(record: Pkg.Query.IStudentPackageVo) {
   await axiosPostContinuePaymentApi(
     { orderNo: String(record.paymentOrderNo), paymentMethod: PAYMENT_METHOD.WECHAT },
     {
@@ -144,7 +144,7 @@ async function handlePayOrder(record: Pkg.Platform.IStudentPackage) {
   )
 }
 /** 申请退款 */
-function handleRefundRequest(record: Pkg.Platform.IStudentPackage) {
+function handleRefundRequest(record: Pkg.Query.IStudentPackageVo) {
   const packageRecordId = record.packageRecordIds?.[0]
   if (!packageRecordId) return
   currentRefundId.value = packageRecordId
@@ -212,7 +212,7 @@ onShow(() => {
       <view flex="~ col" p="x-4" gap="3">
         <HistoryItem
           v-for="record in recordsList"
-          :key="record.paymentId"
+          :key="record.id"
           :record="record"
           :has-pending-refund="hasPendingRefund"
           @click="goToPackageDetail"

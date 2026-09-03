@@ -17,7 +17,7 @@ import type { TBatchRequestList } from '@/hooks/usePage'
 import { storeToRefs } from 'pinia'
 import { computed, ref } from 'vue'
 import { getStudentValidGiftsApi } from '@/api/modules/gifts'
-import { getStudentPlatformPackagesApi } from '@/api/modules/package'
+import { getStudentPackagesApi } from '@/api/modules/package'
 import { getConsumptionStatisticsApi } from '@/api/modules/user/consumption'
 import Page from '@/components/common/page/index.vue'
 import { DEVICE_TYPE, PACKAGE_BUY_STATUS } from '@/constant/modules'
@@ -46,8 +46,8 @@ const {
 const consumptionStatistics = ref<User.Consumption.IConsumptionStatisticsVo>()
 /** 有效赠费记录 */
 const validGifts = ref<Gifts.Valid.ResGetStudentValidGiftsApi>()
-/** 当前学生的有效平台套餐 */
-const activePackages = ref<Pkg.Platform.IStudentPackage[]>([])
+/** 当前学生的有效套餐 */
+const activePackages = ref<Pkg.Query.IStudentPackageVo[]>([])
 /** 平台套餐月清设备汇总余额 */
 const monthlyBalances = ref<Pkg.Platform.IMonthlyBalance[]>([])
 
@@ -106,10 +106,10 @@ async function axiosGetValidGiftsApi() {
     return { code: -1 }
   }
 }
-/** 获取学生有效平台套餐及月清余额 */
+/** 获取学生有效套餐及月清余额 */
 async function axiosGetActivePackagesApi() {
   try {
-    const result = await getStudentPlatformPackagesApi({
+    const result = await getStudentPackagesApi({
       page: 1,
       pageSize: 100,
       status: PACKAGE_BUY_STATUS.ACTIVE,

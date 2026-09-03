@@ -10,7 +10,7 @@ import { DEVICE_TYPE, PACKAGE_TYPE_I18N } from '@/constant/modules'
 import { PACKAGE_DETAIL_PATH } from '@/constant/router'
 
 const props = defineProps<{
-  package: Pkg.Query.IStudentActivePackageVo
+  package: Pkg.Query.IStudentPackageVo
   deviceType?: TDeviceType
   balanceInfo?: User.Parent.IBalanceInfo | null
 }>()
@@ -31,7 +31,7 @@ function handleClick() {
       <view flex="~ row items-center" gap="2">
         <view w="1" h="3" bg="blue-500" rounded-full />
         <text text="base gray-900" font="bold">
-          {{ PACKAGE_TYPE_I18N[package?.snapshotInfo.packageType] }}
+          {{ PACKAGE_TYPE_I18N[package?.snapshotInfo?.packageType] }}
         </text>
       </view>
       <view px="2" py="0.5" rounded="sm" bg="blue-50">

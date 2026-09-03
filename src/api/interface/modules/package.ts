@@ -10,7 +10,7 @@ import type {
 } from '@/constant/modules'
 
 export namespace Pkg {
-  /** 平台套餐接口模型 */
+  /** 平台套餐公共结构 */
   export namespace Platform {
     /** 平台套餐模块权益 */
     export interface IModule {
@@ -30,128 +30,6 @@ export namespace Pkg {
       monthlyClear: boolean
     }
 
-    /** 平台套餐信息 */
-    export interface IPackage {
-      /** 平台套餐 ID */
-      id: number
-      /** 套餐来源类型 */
-      packageKind?: TPackageKind
-      /** 平台套餐 ID（统一接口字段） */
-      platformPackageId?: number | null
-      /** 统一接口套餐名称 */
-      packageName?: string
-      /** 套餐名称 */
-      name: string
-      /** 套餐模块 */
-      modules: IModule[]
-      /** 单设备套餐类型（旧套餐兼容） */
-      deviceType?: TDeviceType
-      /** 计费模式 */
-      pricingMode: 'DECREASING' | 'FIXED_TOTAL'
-      /** 月价格 */
-      monthlyPrice: number
-      /** 购买价格 */
-      purchasePrice: number
-      /** 套餐总月数 */
-      totalMonths: number
-      /** 剩余月数 */
-      remainingMonths?: number
-      /** 开始日期 */
-      startDate?: string
-      /** 结束日期 */
-      endDate?: string
-      /** 套餐说明 */
-      description?: string
-      /** 旧套餐内容快照 */
-      packageContent?: Query.IAvailablePackageContent
-      /** 旧套餐说明 */
-      templateDescription?: string
-      /** 旧套餐使用规则 */
-      usageRules?: string
-      /** 是否可购买 */
-      purchasable?: boolean
-    }
-
-    /** 获取平台套餐详情 - 响应 */
-    export interface ResGetPlatformPackageDetailApi extends IPackage {
-      /** 平台套餐状态 */
-      status: number
-      /** 平台套餐状态中文文案 */
-      statusText: string
-    }
-
-    /** 可购买平台套餐列表请求 */
-    export interface ReqGetAvailableApi {
-      /** 页码 */
-      page?: number
-      /** 每页数量 */
-      pageSize?: number
-    }
-
-    /** 可购买平台套餐列表响应 */
-    export interface ResGetAvailableApi {
-      /** 总数量 */
-      total: number
-      /** 当前页码 */
-      page: number
-      /** 每页数量 */
-      pageSize: number
-      /** 学生 ID */
-      studentId: number
-      /** 学校 ID */
-      schoolId: number
-      /** 套餐列表 */
-      packages: IPackage[]
-    }
-
-    /** 学生已购买的平台套餐 */
-    export interface IStudentPackage {
-      /** 支付记录 ID */
-      paymentId: number
-      /** 套餐来源类型 */
-      packageKind?: TPackageKind
-      /** 平台套餐 ID */
-      platformPackageId: number
-      /** 关联套餐记录 ID */
-      packageRecordIds: number[]
-      /** 套餐名称 */
-      name: string
-      /** 套餐模块 */
-      modules: IModule[]
-      /** 计费模式 */
-      pricingMode?: 'DECREASING' | 'FIXED_TOTAL'
-      /** 是否按月递减（兼容旧接口字段） */
-      monthlyDecrease?: boolean
-      /** 购买价格 */
-      purchasePrice: number
-      /** 购买时间 */
-      purchaseDate: string
-      /** 支付时间 */
-      paymentDate: string | null
-      /** 支付订单号 */
-      paymentOrderNo: string
-      /** 开始日期 */
-      startDate: string
-      /** 结束日期 */
-      endDate: string
-      /** 套餐状态 */
-      status: TPackageBuyStatus
-      /** 状态文本 */
-      statusText: string
-      /** 套餐是否存在 */
-      isPackageExists: boolean
-    }
-
-    /** 学生平台套餐列表请求 */
-    export interface ReqGetStudentApi {
-      /** 页码 */
-      page?: number
-      /** 每页数量 */
-      pageSize?: number
-      /** 套餐状态 */
-      status?: TPackageBuyStatus
-    }
-
     /** 平台套餐月清设备汇总余额 */
     export interface IMonthlyBalance {
       /** 设备类型 */
@@ -160,24 +38,6 @@ export namespace Pkg {
       remainingMinutes: number
       /** 已用分钟数 */
       usedMinutes: number
-    }
-
-    /** 学生平台套餐列表响应 */
-    export interface ResGetStudentApi {
-      /** 总数量 */
-      total: number
-      /** 当前页码 */
-      page: number
-      /** 每页数量 */
-      pageSize: number
-      /** 学生 ID */
-      studentId: number
-      /** 套餐列表 */
-      packages: IStudentPackage[]
-      /** 是否展示平台套餐月清剩余分钟 */
-      showRemainingMinutes: boolean
-      /** 当前学生的平台套餐月清设备汇总余额 */
-      monthlyBalances: IMonthlyBalance[]
     }
   }
 
@@ -194,76 +54,64 @@ export namespace Pkg {
       deviceType?: TDeviceType
     }
 
-    /**
-     * 套餐内容
-     * 话机 - 视频通话分钟数 | 留言条数
-     * 吹风机 - 吹风机分钟数
-     */
+    /** 套餐内容；按设备类型返回对应字段 */
     export interface IPackageContent {
-      deviceType: TDeviceType
-      /** 视频通话分钟数 */
-      videoCallMinutes: number
-      /** 留言条数 */
-      messageCount: number
-      /** 吹风机分钟数 */
-      dryerMinutes: number
-      firstMonthRatio: boolean
-      monthlyDecrease: boolean
-      monthlyReset: boolean
-      packageCode: string
-      packageType: string
-      totalMonths: number
-    }
-
-    /** 可购买套餐内容（按 OpenAPI 同步，字段按需可选） */
-    export interface IAvailablePackageContent {
       /** 设备类型 */
       deviceType?: TDeviceType
       /** 视频通话分钟数 */
       videoCallMinutes?: number
-      /** 留言条数 */
+      /** 留言条数（-1 表示无限制） */
       messageCount?: number
       /** 吹风机分钟数 */
       dryerMinutes?: number
+      /** 套餐总月数 */
+      totalMonths?: number
+      /** 是否按月递减计费 */
+      monthlyDecrease?: boolean
+      /** 后端按套餐类型扩展的其他内容字段 */
       [property: string]: unknown
     }
 
-    /** 套餐信息 */
+    /** 可购买套餐信息 */
     export interface IPackage {
-      /** 套餐ID */
+      /** 套餐ID；DEVICE 为套餐模板 ID，PLATFORM 为平台套餐 ID */
       id: number
       /** 套餐来源类型 */
-      packageKind?: TPackageKind
-      /** 平台套餐 ID */
-      platformPackageId?: number | null
-      /** 套餐编码 */
+      packageKind: TPackageKind
+      /** 套餐编码；平台套餐为空字符串 */
       templateCode: string
       /** 套餐名称 */
       packageName: string
-      /** 平台套餐兼容名称 */
-      name?: string
       /** 套餐内容 */
-      packageContent?: IAvailablePackageContent
+      packageContent?: IPackageContent
       /** 实际购买价格 */
       purchasePrice: number
       /** 基础月价格 */
       monthlyPrice: number
+      /** 平台套餐首月按天折算开关；普通设备套餐不返回 */
+      firstMonthProration?: boolean
       /** 套餐总月数 */
       totalMonths: number
+      /** 剩余月数；平台套餐按可购买窗口动态计算 */
+      remainingMonths?: number
       /** 套餐说明 */
       templateDescription?: string
       /** 使用规则 */
       usageRules?: string
       /** 套餐类型 */
       packageType: TPackageType
-      /** 设备类型 */
-      deviceType?: TDeviceType
-      /** 平台套餐模块权益 */
+      /** 设备类型；平台套餐为空字符串，具体设备见 modules */
+      deviceType?: TDeviceType | ''
+      /** 平台套餐模块权益；普通设备套餐为空数组 */
       modules?: Platform.IModule[]
-      /** 平台套餐计费模式 */
-      pricingMode?: 'DECREASING' | 'FIXED_TOTAL'
+      /** 平台套餐计费模式；普通设备套餐为空字符串 */
+      pricingMode?: 'DECREASING' | 'FIXED_TOTAL' | ''
+      /** 平台套餐状态；普通设备套餐为空字符串 */
+      status?: 'DISABLED' | 'NOT_STARTED' | 'ACTIVE' | 'EXPIRED' | ''
+      /** 平台套餐状态中文文案；普通设备套餐为空字符串 */
+      statusText?: string
       /** 是否可购买 */
-      purchasable?: boolean
+      purchasable: boolean
       /** 套餐开始时间（固定套餐专用） */
       startTime?: string
       /** 套餐结束时间（固定套餐专用） */
@@ -290,155 +138,121 @@ export namespace Pkg {
       packages: IPackage[]
     }
 
-    /** 快照信息 */
-    export interface ISnapshotInfo {
+    /** 套餐内容快照；设备套餐返回套餐额度字段，平台套餐只返回 packageName 与 modules */
+    export interface IPackageSnapshotData {
+      /** 套餐编码；平台套餐不返回 */
+      packageCode?: string
+      /** 套餐名称；平台套餐返回 */
+      packageName?: string
+      /** 套餐类型；平台套餐不返回 */
+      packageType?: TPackageType
+      /** 设备类型；平台套餐不返回 */
+      deviceType?: TDeviceType
+      /** 视频通话分钟数（VIDEO 设备类型） */
+      videoCallMinutes?: number | null
+      /** 语音通话分钟数（预留字段） */
+      voiceCallMinutes?: number | null
+      /** 留言条数（-1 表示无限制，VIDEO 设备类型） */
+      messageCount?: number | null
+      /** 吹风机使用分钟数（DRYER 设备类型） */
+      dryerMinutes?: number | null
+      /** 套餐总月数 */
+      totalMonths?: number
+      /** 是否月末清零 */
+      monthlyReset?: boolean
+      /** 首月比例扣款 */
+      firstMonthRatio?: boolean
+      /** 是否按月递减计费 */
+      monthlyDecrease?: boolean
+      /** 首月按天折算开关 */
+      firstMonthProration?: boolean
+      /** 首月实收金额 */
+      firstMonthActualPrice?: string | number
+      /** 套餐模块权益；设备套餐快照不返回模块名称 */
+      modules?: Platform.IModule[]
+      /** 固定套餐开始时间 */
+      startTime?: string | null
+      /** 固定套餐结束时间 */
+      endTime?: string | null
+    }
+
+    /** 当前最新的套餐模板信息 */
+    export interface ICurrentTemplate {
+      /** 套餐模板ID */
+      id: number
+      /** 套餐编码 */
+      templateCode: string
       /** 套餐名称 */
       packageName: string
-      /** 套餐类型 */
-      packageType: TPackageType
-      /** 设备类型 */
-      deviceType: string
-      /** 视频通话分钟数 */
-      videoCallMinutes: number
-      /** 留言条数 */
-      messageCount: number
-      /** 吹风机分钟数 */
-      dryerMinutes: number
-      /** 总月数 */
-      totalMonths: number
-      /** 是否按月重置 */
-      monthlyReset: boolean
-      /** 首月是否按比例计算 */
-      firstMonthRatio: boolean
-      /** 是否按月递减 */
-      monthlyDecrease: boolean
     }
 
-    /** 剩余额度信息 */
-    export interface IRemainingAmount {
-      /** 套餐剩余分钟数 */
-      packageMinutes: number
-      /** 套餐剩余留言条数 */
-      packageMessageCount: number
-      /** 赠送剩余分钟数 */
-      giftMinutes: number
+    /** 购买人信息 */
+    export interface IPurchaserInfo {
+      /** 购买人用户ID */
+      userId: number
+      /** 购买人姓名 */
+      userName: string
     }
 
-    /** 套餐购买信息 */
-    export interface IPackagePurchaseVo {
-      /** 套餐记录ID */
+    /** 学生套餐记录 */
+    export interface IStudentPackageVo {
+      /** 主套餐记录ID；平台套餐为同支付单下第一条记录 */
       id: number
       /** 套餐来源类型 */
-      packageKind?: TPackageKind
-      /** 同支付单下的套餐记录 ID 列表 */
-      packageRecordIds?: number[]
-      /** 套餐模板ID */
-      packageId: number
-      /** 平台套餐 ID */
-      platformPackageId?: number | null
-      /** 支付记录 ID */
-      paymentId?: number | null
+      packageKind: TPackageKind
+      /** 套餐ID；DEVICE 为套餐模板 ID，PLATFORM 为平台套餐 ID */
+      packageId: number | null
+      /** 同支付单下的套餐记录 ID 列表；平台套餐可能包含多条设备套餐记录 */
+      packageRecordIds: number[]
+      /** 支付记录ID */
+      paymentId: number | null
+      /** 平台套餐ID；普通设备套餐为空 */
+      platformPackageId: number | null
       /** 套餐名称 */
       packageName: string
-      /** 平台套餐兼容名称 */
-      name?: string
-      /** 套餐内容快照 */
-      packageContent: IPackageContent
-      /** 平台套餐模块权益 */
-      modules?: Platform.IModule[]
+      /** 套餐内容快照；学生套餐列表接口不返回，取 snapshotInfo */
+      packageContent?: IPackageSnapshotData
       /** 购买日期 */
       purchaseDate: string
-      /** 购买价格 */
-      purchasePrice: number
-      /** 支付日期 */
+      /** 支付日期（支付成功时才有值） */
       paymentDate: string | null
       /** 支付订单号 */
       paymentOrderNo: string
-      /** 开始日期 */
-      startDate: string
-      /** 结束日期 */
-      endDate: string
-      /** 状态 */
-      status: TPackageBuyStatus
-      /** 状态编码 */
-      statusCode?: string
-      /** 状态文本 */
-      statusText: string
-      /** 剩余额度 */
-      remainingAmount: IRemainingAmount
-      /** 购买者信息 */
-      purchaserInfo: IPurchaserInfo | null
-      /** 快照信息 */
-      snapshotInfo: {
-        /** 套餐编码 */
-        packageCode: string
-        /** 套餐类型 */
-        packageType: TPackageType
-        /** 设备类型 */
-        deviceType: string
-        /** 视频通话分钟数 */
-        videoCallMinutes: number
-        /** 留言条数 */
-        messageCount: number
-        /** 总月数 */
-        totalMonths: number
-        /** 是否按月重置 */
-        monthlyReset: boolean
-        /** 首月是否按比例计算 */
-        firstMonthRatio: boolean
-        /** 是否按月递减 */
-        monthlyDecrease: boolean
-      }
-      /** 套餐是否存在 */
+      /** 套餐快照信息 */
+      snapshotInfo: IPackageSnapshotData | null
+      /** 套餐模板是否还存在（未下架） */
       isPackageExists: boolean
-      /** 是否可退款 */
+      /** 当前最新的套餐模板信息 */
+      currentTemplate: ICurrentTemplate | null
+      /** 生效日期 */
+      startDate: string
+      /** 到期日期 */
+      endDate: string
+      /** 套餐状态 */
+      status: TPackageBuyStatus
+      /** 套餐状态编码 */
+      statusCode?: string
+      /** 套餐状态文本 */
+      statusText: string
+      /** 设备类型；平台套餐主记录返回主设备类型，完整组成见 modules */
+      deviceType?: TDeviceType
+      /** 平台套餐模块权益；普通设备套餐为空数组 */
+      modules?: Platform.IModule[]
+      /** 是否展示平台套餐月清剩余分钟；仅平台套餐返回 */
+      showRemainingMinutes?: boolean | null
+      /** 平台套餐月清设备汇总余额；仅平台套餐返回 */
+      monthlyBalances?: Platform.IMonthlyBalance[]
+      /** 购买价格 */
+      purchasePrice: number
+      /** 是否可以退款 */
       canRefund: boolean
-      /** 当前模板 */
-      currentTemplate: {
-        /** 模板ID */
-        id: number
-        /** 租户ID */
-        tenantId: number
-        /** 学校ID */
-        schoolId: number
-        /** 模板编码 */
-        templateCode: string
-        /** 套餐类型 */
-        packageType: TPackageType
-        /** 套餐内容 */
-        packageContent: string
-        /** 基础价格 */
-        basePrice: number
-        /** 总月数 */
-        totalMonths: number
-        /** 是否按月重置 */
-        monthlyReset: boolean
-        /** 首月是否按比例计算 */
-        firstMonthRatio: boolean
-        /** 是否按月递减 */
-        monthlyDecrease: boolean
-        /** 开始时间 */
-        startTime: string | null
-        /** 结束时间 */
-        endTime: string | null
-        /** 是否默认 */
-        isDefault: boolean
-        /** 模板描述 */
-        templateDescription: string
-        /** 使用规则 */
-        usageRules: string
-        /** 状态 */
-        status: TPackageBuyStatus
-        /** 排序 */
-        sortOrder: number
-        /** 创建时间 */
-        createdAt: string
-        /** 更新时间 */
-        updatedAt: string
-      }
+      /** 不可退款原因（canRefund 为 false 时返回） */
+      refundReason?: string
+      /** 购买人信息 */
+      purchaserInfo: IPurchaserInfo | null
     }
 
-    /** 获取套餐购买记录 - 请求 */
+    /** 获取学生套餐列表 - 请求 */
     export interface ReqGetStudentApi {
       /** 页码，默认1 */
       page?: number
@@ -448,13 +262,13 @@ export namespace Pkg {
       status?: TPackageBuyStatus
       /** 购买人ID筛选（支付人用户ID） */
       purchaserId?: number
-      /** 设备类型 */
-      deviceType?: TDeviceType
-      /** 套餐来源类型 */
+      /** 套餐来源类型筛选；不传返回全部 */
       packageKind?: TPackageKind
+      /** 设备类型筛选；不传返回全部 */
+      deviceType?: TDeviceType
     }
 
-    /** 获取套餐购买记录 - 响应 */
+    /** 获取学生套餐列表 - 响应 */
     export interface ResGetStudentApi {
       /** 总数量 */
       total: number
@@ -465,117 +279,29 @@ export namespace Pkg {
       /** 学生ID */
       studentId: number
       /** 套餐列表 */
-      packages: IPackagePurchaseVo[]
-      /** 平台套餐月清设备汇总余额 */
-      monthlyBalances?: Platform.IMonthlyBalance[]
-      /** 是否展示平台套餐月清剩余分钟 */
-      showRemainingMinutes?: boolean
+      packages: IStudentPackageVo[]
+      /** 是否展示平台套餐月清剩余分钟；关闭时 monthlyBalances 为空数组 */
+      showRemainingMinutes: boolean
+      /** 当前学生平台套餐月清层的设备汇总余额，不归属于某一个套餐 */
+      monthlyBalances: Platform.IMonthlyBalance[]
     }
 
-    /** 购买者信息 */
-    export interface IPurchaserInfo {
-      /** 用户ID */
-      userId: number
-      /** 用户名称 */
-      userName: string
-    }
-
-    /** 套餐内容快照 */
-    export interface IPackageSnapshotData {
-      /** 套餐编码 */
-      packageCode: string
-      /** 套餐类型 */
-      packageType: TPackageType
-      /** 设备类型 */
-      deviceType: TDeviceType
-      /** 视频通话分钟数 */
-      videoCallMinutes: number | null
-      /** 语音通话分钟数 */
-      voiceCallMinutes: number | null
-      /** 留言条数（-1表示无限制） */
-      messageCount: number | null
-      /** 吹风机使用分钟数 */
-      dryerMinutes: number | null
-      /** 套餐总月数 */
-      totalMonths: number
-      /** 是否月末清零 */
-      monthlyReset: boolean
-      /** 首月比例扣款 */
-      firstMonthRatio: boolean
-      /** 是否按月递减计费 */
-      monthlyDecrease: boolean
-      /** 固定套餐开始时间 */
-      startTime: string | null
-      /** 固定套餐结束时间 */
-      endTime: string | null
-    }
-
-    /** 活跃套餐信息 */
-    export interface IStudentActivePackageVo {
-      /** 套餐记录ID */
-      id: number
-      /** 套餐来源类型 */
-      packageKind?: TPackageKind
-      /** 同支付单下的套餐记录 ID 列表 */
-      packageRecordIds?: number[]
-      /** 平台套餐 ID */
-      platformPackageId?: number | null
-      /** 套餐模板ID */
-      packageId: number
-      /** 套餐名称 */
-      packageName: string
-      /** 套餐内容快照 */
-      packageContent: IPackageSnapshotData
-      /** 购买日期 */
-      purchaseDate: string
-      /** 支付日期 */
-      paymentDate: string | null
-      /** 支付订单号 */
-      paymentOrderNo: string
-      /** 套餐快照信息 */
-      snapshotInfo: IPackageSnapshotData | null
-      /** 套餐模板是否还存在 */
-      isPackageExists: boolean
-      /** 当前最新的套餐模板信息 */
-      currentTemplate: any | null
-      /** 生效日期 */
-      startDate: string
-      /** 到期日期 */
-      endDate: string
-      /** 状态 */
-      status: TPackageBuyStatus
-      /** 状态编码 */
-      statusCode?: string
-      /** 状态文本 */
-      statusText: string
-      /** 购买价格 */
-      purchasePrice: number
-      /** 是否可退款 */
-      canRefund: boolean
-      /** 不可退款原因 */
-      refundReason?: string
-      /** 剩余额度 */
-      remainingAmount: IRemainingAmount
-      /** 购买人信息 */
-      purchaserInfo: IPurchaserInfo
-    }
-
-    /** 获取学生当前正在使用的套餐 - 请求 */
+    /** 获取学生当前有效和待激活的套餐 - 请求 */
     export interface ReqGetStudentActiveApi {
-      /** 设备类型 */
-      deviceType?: TDeviceType
-      /** 套餐来源类型 */
+      /** 套餐来源类型筛选；不传返回全部 */
       packageKind?: TPackageKind
+      /** 设备类型筛选；不传返回全部 */
+      deviceType?: TDeviceType
     }
 
-    /** 获取学生当前正在使用的套餐 - 响应 */
+    /** 获取学生当前有效和待激活的套餐 - 响应 */
     export interface ResGetStudentActiveApi {
       /** 学生ID */
       studentId: number
       /** 已激活的套餐列表 */
-      activePackages: IStudentActivePackageVo[]
+      activePackages: IStudentPackageVo[]
       /** 待激活的套餐列表 */
-      waitingPackages: IStudentActivePackageVo[] | null
+      waitingPackages: IStudentPackageVo[] | null
       /** 总数量（已激活+待激活） */
       totalCount: number
     }
@@ -596,85 +322,65 @@ export namespace Pkg {
       usedMessageCount: number
     }
 
-    /** 获取学生已购买套餐详情 - 响应 */
+    /** 获取学生套餐详情 - 响应 */
     export interface ResGetPackageDetailApi {
-      /** 套餐记录ID */
+      /** 主套餐记录ID；平台套餐为同支付单下第一条记录 */
       id: number
       /** 套餐来源类型 */
-      packageKind?: TPackageKind
+      packageKind: TPackageKind
+      /** 套餐ID；DEVICE 为套餐模板 ID，PLATFORM 为平台套餐 ID */
+      packageId: number | null
       /** 同支付单下的套餐记录 ID 列表 */
-      packageRecordIds?: number[]
-      /** 平台套餐 ID */
-      platformPackageId?: number | null
+      packageRecordIds: number[]
       /** 套餐模板ID */
       packageTemplateId: number | null
+      /** 平台套餐ID；普通设备套餐为空 */
+      platformPackageId: number | null
       /** 套餐名称 */
-      packageName?: string
-      /** 模板代码 */
+      packageName: string
+      /** 套餐编码 */
       templateCode: string
       /** 套餐类型 */
       packageType: TPackageType
-      /** 设备类型 */
-      deviceType: TDeviceType
-      /** 平台套餐模块权益 */
+      /** 设备类型；平台套餐主记录返回主设备类型，完整组成见 modules */
+      deviceType?: TDeviceType
+      /** 平台套餐模块权益；普通设备套餐为空数组 */
       modules?: Platform.IModule[]
-      /** 平台套餐计费模式 */
-      pricingMode?: 'DECREASING' | 'FIXED_TOTAL'
-      /** 是否可购买 */
-      purchasable?: boolean
       /** 套餐内容 */
-      packageContent: {
-        /** 留言条数 */
-        messageCount?: number
-        /** 视频通话分钟数 */
-        videoCallMinutes?: number
-        /** 吹风机分钟数 */
-        dryerMinutes?: number
-      }
-      /** 套餐总月数 */
-      totalMonths: number
-      /** 购买时间 */
+      packageContent: IPackageContent
+      /** 购买日期 */
       purchaseDate: string
       /** 购买价格 */
       purchasePrice: number
-      /** 支付时间 */
+      /** 支付日期 */
       paymentDate: string | null
       /** 支付订单号 */
       paymentOrderNo: string
-      /** 购买者信息 */
+      /** 购买人信息 */
       purchaserInfo: IPurchaserInfo | null
-      /** 开始时间 */
-      startDate: string | null
-      /** 结束时间 */
-      endDate: string | null
+      /** 生效日期 */
+      startDate: string
+      /** 到期日期 */
+      endDate: string
       /** 套餐状态 */
-      status?: TPackageBuyStatus
-      /** 状态编码 */
+      status: TPackageBuyStatus
+      /** 套餐状态编码 */
       statusCode?: string
       /** 状态文本 */
-      statusText?: string
-      /** 套餐是否存在 */
+      statusText: string
+      /** 套餐是否还存在（未下架） */
       isPackageExists: boolean
-      /** 当前模板信息 */
-      currentTemplate: {
-        /** 基础价格 */
-        basePrice: number
-        /** 模板ID */
-        id: number
-        /** 套餐类型 */
-        packageType: TPackageType
-        /** 模板代码 */
-        templateCode: string
-      } | null
+      /** 当前最新的套餐模板信息 */
+      currentTemplate: ICurrentTemplate | null
       /** 使用情况 */
-      usageInfo?: IUsageInfo | null
+      usageInfo: IUsageInfo | null
       /** 是否可退款 */
       canRefund: boolean
       /** 剩余可退款金额 */
       remainingRefundAmount: string
       /** 退款状态 */
       refundStatus: string
-      /** 模板描述 */
+      /** 套餐说明 */
       templateDescription: string
       /** 使用规则 */
       usageRules: string

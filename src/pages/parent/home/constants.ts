@@ -7,8 +7,8 @@ export const HOME_HEADER_INFO_TOP = '16rpx'
 /** 首页滚动内容区域高度偏移 */
 export const HOME_CONTENT_OFFSET = '(260rpx - 48rpx)'
 
-/** 留言功能受限提示 */
-export const MESSAGE_CONTACT_REQUIRED_TEXT = '您的手机号未在亲情号中，无法使用留言功能'
+/** 留言功能受限提示（当前手机号未加入亲情号时拦截菜单） */
+export const MESSAGE_CONTACT_REQUIRED_TEXT = '当前手机号不在该学生亲情号中，请先添加亲情号'
 
 /** 成绩地址缺失提示 */
 export const SCORE_URL_MISSING_TEXT = '未配置成绩查询地址'

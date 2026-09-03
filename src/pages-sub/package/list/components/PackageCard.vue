@@ -1,7 +1,11 @@
 <script lang="ts" setup>
 import type { AvailablePackage } from '../types'
+import type { Pkg } from '@/api/interface/modules/package'
 import { computed } from 'vue'
 import WhiteCard from '@/components/common/white-card/index.vue'
+import { DEVICE_TYPE_I18N, PACKAGE_KIND, PACKAGE_TYPE_I18N } from '@/constant/modules'
+import { PACKAGE_TAG_CONFIGS } from '../../constants'
+import { formatPackageContentSummary } from '../../utils'
 
 interface Props {
   package: AvailablePackage
@@ -14,26 +18,50 @@ const emit = defineEmits<{
 }>()
 
 const modules = computed(() => props.package.modules || [])
-const moduleSummary = computed(() => {
-  if (!modules.value.length) return `套餐周期 ${props.package.totalMonths ?? '-'}个月`
+const isPlatformPackage = computed(() => props.package.packageKind === PACKAGE_KIND.PLATFORM)
+/** 套餐类型名称：通用套餐 / 固定套餐 */
+const packageTypeText = computed(() => PACKAGE_TYPE_I18N[props.package.packageType] || '套餐')
+/** 卡片标题：平台套餐用套餐名称，设备套餐用套餐类型名称 */
+const packageTitle = computed(() => {
+  if (!isPlatformPackage.value) return packageTypeText.value
+  return props.package.packageName || '套餐'
+})
+/** 左下角标签：平台套餐展示计费模式，设备套餐展示设备类型，配色按类型区分 */
+const packageTag = computed(() => {
+  if (isPlatformPackage.value) {
+    const isDecreasing = props.package.pricingMode === 'DECREASING'
+    return {
+      text: isDecreasing ? '按月递减' : '固定总价',
+      style: isDecreasing ? PACKAGE_TAG_CONFIGS.DECREASING : PACKAGE_TAG_CONFIGS.FIXED_TOTAL,
+    }
+  }
 
-  return modules.value
-    .map(module => module.kind === 'FEATURE' ? module.name : `${module.name} ${getModuleValue(module)}`)
-    .join('、')
+  const deviceType = props.package.deviceType || props.package.packageContent?.deviceType
+  if (!deviceType) return { text: packageTypeText.value, style: PACKAGE_TAG_CONFIGS.DEFAULT }
+  return { text: DEVICE_TYPE_I18N[deviceType], style: PACKAGE_TAG_CONFIGS[deviceType] }
 })
-const pricingModeText = computed(() => {
-  if (props.package.pricingMode === 'DECREASING') return '按月递减'
-  if (props.package.pricingMode === 'FIXED_TOTAL') return '固定总价'
-  return '套餐计费'
+const moduleSummary = computed(() => {
+  if (modules.value.length) {
+    return modules.value
+      .map(module => module.kind === 'FEATURE' ? module.name : `${module.name} ${getModuleValue(module)}`)
+      .join('、')
+  }
+
+  // 普通设备套餐没有模块权益，改用套餐内容展示设备额度
+  return formatPackageContentSummary(props.package.packageContent)
+    || `套餐周期 ${props.package.totalMonths ?? '-'}个月`
 })
-const price = computed(() => props.package.monthlyPrice)
+const price = computed(() => {
+  const value = Number(props.package.monthlyPrice)
+  return Number.isFinite(value) ? value.toFixed(2) : '-'
+})
 const priceUnit = computed(() => '/月')
 
 function formatDate(date?: string) {
   return date?.slice(0, 10) || '-'
 }
 
-function getModuleValue(module: AvailablePackage['modules'][number]) {
+function getModuleValue(module: Pkg.Platform.IModule) {
   if (module.kind === 'FEATURE') return '功能权益'
   if (module.monthlyGiftMinutes === -1) return '不限分钟'
   if (module.monthlyGiftMinutes !== undefined) return `${module.monthlyGiftMinutes} 分钟/月`
@@ -47,7 +75,7 @@ function getModuleValue(module: AvailablePackage['modules'][number]) {
       <view min-w-0 flex="~ col" gap="1">
         <view flex="~ row items-center" gap="2">
           <text class="package-name">
-            {{ package.name || '套餐' }}
+            {{ packageTitle }}
           </text>
           <view v-if="isPurchased" class="status-badge purchased">
             <text>
@@ -61,7 +89,7 @@ function getModuleValue(module: AvailablePackage['modules'][number]) {
           ¥
         </text>
         <text class="price-value">
-          {{ price ?? '-' }}
+          {{ price }}
         </text>
         <text class="price-unit">
           {{ priceUnit }}
@@ -74,8 +102,8 @@ function getModuleValue(module: AvailablePackage['modules'][number]) {
         <text class="module-title">
           套餐权益
         </text>
-        <text class="module-count">
-          {{ modules.length || 1 }} 项
+        <text v-if="modules.length" class="module-count">
+          {{ modules.length }} 项
         </text>
       </view>
       <text class="module-summary">
@@ -83,20 +111,20 @@ function getModuleValue(module: AvailablePackage['modules'][number]) {
       </text>
     </view>
 
-    <view v-if="package.description" class="description">
-      <text>{{ package.description }}</text>
+    <view v-if="package.templateDescription" class="description">
+      <text>{{ package.templateDescription }}</text>
     </view>
 
-    <text v-if="package.startDate || package.endDate" class="validity validity-row">
-      {{ formatDate(package.startDate) }} 至 {{ formatDate(package.endDate) }}
+    <text v-if="package.startTime || package.endTime" class="validity validity-row">
+      {{ formatDate(package.startTime) }} 至 {{ formatDate(package.endTime) }}
     </text>
 
     <view class="package-footer">
       <view flex="~ row items-center" gap="2" class="package-tags">
-        <text class="package-tag pricing-tag">
-          {{ pricingModeText }}
+        <text class="package-tag" :style="packageTag.style">
+          {{ packageTag.text }}
         </text>
-        <text v-if="package.purchasable === false" class="package-tag unavailable-tag">
+        <text v-if="!package.purchasable" class="package-tag unavailable-tag">
           暂不可购买
         </text>
       </view>
@@ -127,7 +155,6 @@ function getModuleValue(module: AvailablePackage['modules'][number]) {
 
 .package-tags { flex-wrap: wrap; }
 .package-tag { border-radius: 6rpx; font-size: 21rpx; line-height: 1.4; padding: 4rpx 10rpx; }
-.pricing-tag { background: #f1f5f9; color: #64748b; }
 .unavailable-tag { background: #fef2f2; color: #dc2626; }
 .price { color: #e05252; }
 .price-symbol { font-size: 24rpx; font-weight: 700; }

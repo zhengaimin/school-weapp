@@ -23,10 +23,12 @@ export function usePage() {
   const pageLoaded = ref(false)
 
   const getContentHeight = (px: string = '0', { tabbar = false } = {}) => {
-    const { navBarHeight, windowHeight } = unref(navBarInfo)
+    const { navBarHeight } = unref(navBarInfo)
 
+    // 100vh -> 页面视口高度，与 Page 组件的 h-screen 保持同一来源
+    // iOS 微信在 onLaunch 时取到的 windowHeight 按默认导航栏计算，比页面视口小 状态栏+导航栏 的高度，不能用于定高
     // navBarHeight -> 顶部导航栏高度 | env(safe-area-inset-bottom) -> 底部安全区高度(小横条)
-    let calc = `${windowHeight} - ${navBarHeight}px - env(safe-area-inset-bottom)`
+    let calc = `100vh - ${navBarHeight}px - env(safe-area-inset-bottom)`
 
     if (px && px !== '0') {
       calc += ` - ${px}`

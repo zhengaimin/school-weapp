@@ -143,13 +143,8 @@ async function axiosGetCheckSelfApi() {
       if (exists && selfContactInfo) {
         currentStudentStore.setContactInfo(selfContactInfo)
       } else {
+        // 未绑定只在点击亲情号、留言菜单时拦截提示，首页不主动弹框
         currentStudentStore.setContactInfo(null)
-        await uni.showModal({
-          title: '提示',
-          content: '当前手机号不在该学生亲情号中，请先添加亲情号',
-          showCancel: false,
-          confirmText: '确定',
-        })
       }
     }
   } catch (error) {
@@ -172,6 +167,7 @@ function handleGoToOfficialAccount() {
  * @param item 当前菜单项
  */
 async function handleNavigationToPath(path?: string, item: THomeMenuItem = null) {
+  // 留言菜单需要当前手机号已在亲情号中，未绑定时拦截并提示
   if (item && item.id === MINIAPP_MODULE_KEY_MESSAGE && !isInFamilyContact.value) {
     await uni.showModal({
       title: '提示',

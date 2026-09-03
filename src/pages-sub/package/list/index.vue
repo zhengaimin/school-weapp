@@ -9,9 +9,9 @@
 </route>
 
 <script lang="ts" setup>
-import type { ActivePackage, PackageListStatusTab } from './types'
+import type { ActivePackage, AvailablePackage, PackageListStatusTab } from './types'
 import { computed, ref, unref } from 'vue'
-import { getStudentPlatformPackagesApi } from '@/api/modules/package'
+import { getStudentPackagesApi } from '@/api/modules/package'
 import TButton from '@/components/common/button/index.vue'
 import Notice from '@/components/common/notice/index.vue'
 import Page from '@/components/common/page/index.vue'
@@ -72,7 +72,7 @@ const activeLoaded = ref(false)
 const activeListBusy = computed(() => activeLoading.value || activeRefreshLoading.value)
 const tabOptions = computed(() => STATUS_OPTIONS)
 const purchasedPackageIds = computed(
-  () => new Set(activePackages.value.map(item => item.platformPackageId)),
+  () => new Set(activePackages.value.map(item => item.packageId)),
 )
 const currentStatus = computed<PackageListStatusTab>(() => {
   return STATUS_OPTIONS[activeTabIndex.value]?.value ?? STATUS_TAB.AVAILABLE
@@ -93,7 +93,7 @@ async function fetchActivePackages(isRefresh = false) {
     activeLoading.value = true
   }
   try {
-    const activeResult = await getStudentPlatformPackagesApi({
+    const activeResult = await getStudentPackagesApi({
       page: 1,
       pageSize: 20,
       status: PACKAGE_BUY_STATUS.ACTIVE,
@@ -117,7 +117,7 @@ async function handleLoadMoreActivePackages() {
   activeLoading.value = true
   const page = activePage.value + 1
   try {
-    const result = await getStudentPlatformPackagesApi({
+    const result = await getStudentPackagesApi({
       page,
       pageSize: 20,
       status: PACKAGE_BUY_STATUS.ACTIVE,
@@ -147,16 +147,25 @@ function handleGoToRefundHistory() {
   uni.navigateTo({ url: PACKAGE_REFUND_HISTORY_PATH })
 }
 /** 跳转到套餐详情页 */
-function handleGoToPackageDetail(id: number) {
-  uni.navigateTo({ url: `${PACKAGE_DETAIL_PATH}?id=${id}&type=available` })
+function handleGoToPackageDetail(pkg: AvailablePackage) {
+  uni.navigateTo({
+    url: `${PACKAGE_DETAIL_PATH}?id=${pkg.id}&type=available&packageKind=${pkg.packageKind}`,
+  })
 }
 /** 跳转到套餐购买结果页 */
 function handleGoToPackageResult(orderNo: string) {
   uni.navigateTo({ url: `${PACKAGE_HISTORY_RESULT_PATH}?type=purchase&orderNo=${orderNo}` })
 }
-/** Tab 切换处理 */
-function handleTabChange(_index: number) {
-  // Tab 切换仅改变显示状态，不需要额外请求
+/** Tab 切换处理：切换到对应 Tab 时刷新对应列表接口 */
+function handleTabChange(index: number) {
+  const status = STATUS_OPTIONS[index]?.value ?? STATUS_TAB.AVAILABLE
+  if (status === STATUS_TAB.ACTIVE) {
+    // 生效中列表可能因购买/退费变化，切换时拉取最新数据
+    fetchActivePackages(false)
+  } else {
+    // 可购买列表仅在登录成功时加载，切换时确保展示最新套餐
+    onRefreshList()
+  }
 }
 /** 状态 Tab 变化处理 */
 function handleActiveTabChange(index: number) {
@@ -258,7 +267,7 @@ onPackageTransaction(() => {
           <view p="x-4 y-2!" flex="~ col" gap="3">
             <ActivePackageCard
               v-for="item in activePackages"
-              :key="item.paymentId"
+              :key="item.id"
               :package="item"
               @click="handleGoToPackageResult"
             />
@@ -282,7 +291,7 @@ onPackageTransaction(() => {
               :key="pkg.id"
               :package="pkg"
               :is-purchased="purchasedPackageIds.has(pkg.id)"
-              @click="handleGoToPackageDetail(pkg.id)"
+              @click="handleGoToPackageDetail(pkg)"
             />
             <StatusTip v-if="availableEmpty" image="content" />
           </view>

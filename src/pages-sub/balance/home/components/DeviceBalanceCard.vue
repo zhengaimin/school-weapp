@@ -15,7 +15,7 @@ import { PACKAGE_DETAIL_PATH } from '@/constant/router'
 const props = defineProps<{
   device: Overview.IDeviceVo
   balanceInfo?: User.Parent.IBalanceInfo | null
-  activePackage?: Pkg.Platform.IStudentPackage | null
+  activePackage?: Pkg.Query.IStudentPackageVo | null
   monthlyBalance?: Pkg.Platform.IMonthlyBalance | null
   giftRecords?: Gifts.ValidGiftRecord[]
 }>()
@@ -162,7 +162,7 @@ function handlePackageClick() {
     <view v-if="activePackage" :class="[hasGiftRecords ? 'mb-4' : '']" @click="handlePackageClick">
       <view flex="~ row items-center justify-between" m="b-3">
         <text text="sm gray-700" font="medium">
-          {{ activePackage.name || '平台套餐' }}
+          {{ activePackage.packageName || '平台套餐' }}
         </text>
         <view px="2" py="0.5" rounded="sm" bg="blue-50">
           <text text="xs blue-600" font="bold">
