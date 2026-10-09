@@ -139,7 +139,10 @@ async function handleLoggedInFlow() {
   // 检查路由栈第一个页面是否为启动页
   const pages = getCurrentPages()
   const isFromLaunchPage = pages.length > 0 && `/${pages[0].route}` === LAUNCH_PATH
-  const shouldGoToHome = !isCurrentPage(TABBAR_HOME_PATH) && isFromLaunchPage
+  // 待绑定家长需要停留在绑定页，避免绑定页与首页相互重定向
+  const shouldGoToHome = !isCurrentPage(TABBAR_HOME_PATH)
+    && isFromLaunchPage
+    && !(isParent && unref(needBind))
   if (shouldGoToHome) {
     const _role = unref(role)
     delayedRedirect(`${TABBAR_HOME_PATH}?role=${_role}`)

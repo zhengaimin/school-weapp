@@ -267,7 +267,7 @@ async function handleConfirmBinding() {
     })
 
     if (result.code === 0) {
-      if (unref(needBind) && result.data?.token) {
+      if (unref(needBind)) {
         parentStore.setNeedBind(false)
       }
 
