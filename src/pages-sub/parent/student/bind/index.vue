@@ -303,6 +303,7 @@ async function onLoginSuccess() {
 <template>
   <Page
     title="绑定学生"
+    :skip-login="true"
     :loading="pageLoading"
     :error="pageError"
     :scroll-y="false"

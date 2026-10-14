@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
 
-import { getWxCode, postWxPhoneApi } from '@/api/modules/user'
+import { getWxCode, postPublicBindWxPhoneApi } from '@/api/modules/user'
 import { useUserStore } from '@/store/user'
 
 interface Props {}
@@ -77,7 +77,7 @@ async function onGetPhoneNumber(e: any) {
 
     try {
       const { code: loginCode } = await getWxCode()
-      const result = await postWxPhoneApi({ code, loginCode })
+      const result = await postPublicBindWxPhoneApi({ code, loginCode })
 
       if (result.code === 0) {
         const { phoneNumber } = result.data

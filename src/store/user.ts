@@ -41,9 +41,7 @@ export const useUserStore = defineStore(
       const data = res.data
       // 保存用户信息
       userInfo.value = data
-      if (data.phone) {
-        setPhone(data.phone)
-      }
+      setPhone(data.phone || '')
 
       return { code: 0, msg: '获取用户信息成功', data: res.data }
     }
@@ -60,15 +58,21 @@ export const useUserStore = defineStore(
 
       // 调用登录接口
       const result = await postWxLoginApi({ code })
-      if (result.code === 0 && result.data.token) {
-        console.log(result.data.token)
-        setToken(result.data.token)
+      if (result.code === 0) {
+        if (result.data.needBind) {
+          setPhone('')
+          setUserInfo(null)
+        }
+        if (result.data.token) {
+          setToken(result.data.token)
+        }
       }
       return result
     }
     const logout = () => {
       token.value = null
       userInfo.value = null
+      phone.value = ''
     }
 
     /**

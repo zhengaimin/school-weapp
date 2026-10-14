@@ -3,7 +3,7 @@
   "layout": "default",
   "style": {
     "navigationStyle": "custom",
-    "navigationBarTitleText": "VOIP 通话",
+    "navigationBarTitleText": " ",
     "disableScroll": true
   }
 }
@@ -33,7 +33,9 @@ import {
   notifyAppVoipPageEvent,
   redirectToWmpfVoipCallPage,
   scheduleCloseVoipMiniProgram,
+  showVoipFailureTipThenClose,
   VOIP_PAGE_VERSION,
+  VOIP_SUBSCRIPTION_ABNORMAL_TIP,
 } from '@/utils/voip'
 
 defineOptions({
@@ -156,13 +158,19 @@ function setPageError(message: string, detail?: unknown) {
  * 建房失败：展示错误后立即关闭小程序。
  * @param message 主错误文案
  * @param detail 补充详情
+ * @param userTipContent 需弹窗展示给用户的提示文案；不传则只写错误区并按默认延迟关闭
  */
-function failAndCloseMiniProgram(message: string, detail?: unknown) {
+function failAndCloseMiniProgram(message: string, detail?: unknown, userTipContent?: string) {
   setPageError(message, detail)
   notifyAppVoipPageEvent('create.fail', false, appCallSessionId.value)
   console.error('voip create room failed:', message, detail)
-  // 建房失败稍等展示错误再关；仍通知 App 关 WMPF
-  scheduleCloseVoipMiniProgram(`create_fail:${message}`, CLOSE_AFTER_CALL_MS)
+  if (!userTipContent) {
+    // 建房失败稍等展示错误再关；仍通知 App 关 WMPF
+    scheduleCloseVoipMiniProgram(`create_fail:${message}`, CLOSE_AFTER_CALL_MS)
+    return
+  }
+  // 先弹窗让用户看清提示，确认后再关；complete 内重排关闭会覆盖默认延迟
+  showVoipFailureTipThenClose(`create_fail:${message}`, userTipContent)
 }
 
 /**
@@ -254,7 +262,7 @@ async function startVoipCall() {
     failAndCloseMiniProgram('缺少拨打方或接听方参数', {
       callerId: callerId.value,
       listenerId: listenerId.value,
-    })
+    }, VOIP_SUBSCRIPTION_ABNORMAL_TIP)
     return
   }
 
@@ -290,6 +298,7 @@ async function startVoipCall() {
     })
     if (!guardVoipInitResult(voipSessionId, result)) {
       notifyAppVoipPageEvent('initByCaller.stale', false, appCallSessionId.value)
+      showVoipFailureTipThenClose('initByCaller.stale', VOIP_SUBSCRIPTION_ABNORMAL_TIP)
       return
     }
     if (!result.isSuccess) {
@@ -300,7 +309,7 @@ async function startVoipCall() {
         result.errCode != null ? `errCode=${result.errCode}` : '',
         result.errMsg || '发起通话失败',
       ].filter(Boolean).join(' ')
-      failAndCloseMiniProgram(main, result)
+      failAndCloseMiniProgram(main, result, VOIP_SUBSCRIPTION_ABNORMAL_TIP)
       return
     }
 
@@ -324,7 +333,7 @@ async function startVoipCall() {
       clearVoipSession()
       failAndCloseMiniProgram('通话房间已创建，但跳转插件通话页失败', {
         roomId: roomId.value,
-      })
+      }, VOIP_SUBSCRIPTION_ABNORMAL_TIP)
     }
   } catch (error) {
     if (!isVoipSessionCurrent(voipSessionId)) {
@@ -337,7 +346,7 @@ async function startVoipCall() {
     const main = error instanceof Error
       ? (error.message || '发起通话失败')
       : '发起通话失败'
-    failAndCloseMiniProgram(main, error)
+    failAndCloseMiniProgram(main, error, VOIP_SUBSCRIPTION_ABNORMAL_TIP)
   } finally {
     isSubmitting.value = false
   }

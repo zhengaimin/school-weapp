@@ -20,6 +20,8 @@ const props = defineProps({
   title: string().def(''),
   showTabbar: bool().def(false),
   showBack: bool().def(true),
+  /** 当前页面是否复用上一级页面已完成的登录 */
+  skipLogin: bool().def(false),
   navbar: bool().def(true),
   navBgColor: string(),
   navTextColor: string(),
@@ -119,6 +121,17 @@ async function initInfo() {
 }
 /** 已登录后的处理流程 */
 async function handleLoggedInFlow() {
+  if (isCurrentPage(WELCOME_PATH)) {
+    emitLoginEvent('login:success')
+    return
+  }
+
+  if (isCurrentPage(LAUNCH_PATH)) {
+    delayedRedirect(WELCOME_PATH)
+    emitLoginEvent('login:success')
+    return
+  }
+
   if (!unref(phone)) {
     if (!isCurrentPage(WELCOME_PATH)) {
       delayedRedirect(WELCOME_PATH)
@@ -128,20 +141,19 @@ async function handleLoggedInFlow() {
   }
 
   const isParent = unref(role) === ROLE_TYPE.PARENT
-  if (isParent && unref(needBind) && !isCurrentPage(STUDENT_BIND_PATH)) {
-    delayedNavigate(STUDENT_BIND_PATH)
+  if (isParent && unref(needBind)) {
+    if (!isCurrentPage(STUDENT_BIND_PATH)) {
+      delayedNavigate(STUDENT_BIND_PATH)
+    }
     emitLoginEvent('login:success')
     return
   }
 
   await initInfo()
 
-  // 检查路由栈第一个页面是否为启动页
-  const pages = getCurrentPages()
-  const isFromLaunchPage = pages.length > 0 && `/${pages[0].route}` === LAUNCH_PATH
-  // 待绑定家长需要停留在绑定页，避免绑定页与首页相互重定向
-  const shouldGoToHome = !isCurrentPage(TABBAR_HOME_PATH)
-    && isFromLaunchPage
+  // 只有当前页面是启动页时才执行首页跳转，避免二级页面误重定向
+  const shouldGoToHome = isCurrentPage(LAUNCH_PATH)
+    && !isCurrentPage(TABBAR_HOME_PATH)
     && !(isParent && unref(needBind))
   if (shouldGoToHome) {
     const _role = unref(role)
@@ -159,9 +171,9 @@ async function mpWeixinLogin() {
     const wxResult = await userStore.wxLogin()
 
     if (wxResult.code === 0) {
-      const { token, needBind: _needBind } = wxResult.data
+      const { token, needBind } = wxResult.data
       token && userStore.setToken(token)
-      parentStore.setNeedBind(_needBind)
+      parentStore.setNeedBind(needBind)
       return true
     } else {
       return false
@@ -200,7 +212,8 @@ onMounted(async () => {
       return
     }
 
-    if (needsLogin.value) {
+    const shouldLogin = isCurrentPage(LAUNCH_PATH) || needsLogin.value
+    if (!props.skipLogin && shouldLogin) {
       const loginOk = await mpWeixinLogin()
       if (!loginOk) {
         emitLoginEvent('login:fail')

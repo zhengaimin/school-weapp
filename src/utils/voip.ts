@@ -237,7 +237,7 @@ const VOIP_LIFECYCLE_HANGUP_GRACE_MS = 5000
  */
 export const CLOSE_AFTER_REMOTE_END_MS = 300
 /** VOIP 调试页版本，联调时用于确认设备加载的是否为最新小程序包 */
-export const VOIP_PAGE_VERSION = '20260727.1'
+export const VOIP_PAGE_VERSION = '20261014.1'
 
 /** 通话结束类事件名（统一小写比较） */
 const CALL_END_EVENT_NAMES = new Set([
@@ -1079,6 +1079,58 @@ export function resolveVoipEventName(event: unknown): string {
   return ''
 }
 
+/** 拨号失败提示文案：订阅状态异常时引导用户通知家长重新订阅设备组 */
+export const VOIP_SUBSCRIPTION_ABNORMAL_TIP = '当前订阅状态异常，请通知家长重新订阅设备组'
+
+/** 呼叫被对端拒绝或无应答的结束事件，属于拨号失败，需提示订阅异常 */
+const CALL_REJECTED_EVENT_NAMES = new Set([
+  'rejectvoip',
+  'busy',
+  'timeout',
+  'abortvoip',
+])
+
+/**
+ * 弹窗告知用户失败原因，确认后再关闭小程序。
+ * @param reason 关闭原因，写入日志并回传 App
+ * @param userTipContent 展示给用户的提示文案
+ * @param title 弹窗标题
+ */
+export function showVoipFailureTipThenClose(
+  reason: string,
+  userTipContent: string,
+  title = '无法发起通话',
+) {
+  try {
+    uni.showModal({
+      title,
+      content: userTipContent,
+      showCancel: false,
+      confirmText: '知道了',
+      complete() {
+        scheduleCloseVoipMiniProgram(reason, CLOSE_AFTER_CALL_MS)
+      },
+    })
+  } catch (error) {
+    console.error('showVoipFailureTipThenClose:', error)
+    scheduleCloseVoipMiniProgram(reason, CLOSE_AFTER_CALL_MS)
+  }
+}
+
+/**
+ * 当前插件结束事件是否属于拨号失败（对端拒接、忙线、超时或入房失败）。
+ * @param eventName 插件事件名称
+ * @returns 是否属于拨号失败
+ */
+function isVoipCallRejectedEvent(eventName: string): boolean {
+  const name = eventName.trim().toLowerCase()
+  if (CALL_REJECTED_EVENT_NAMES.has(name)) {
+    return true
+  }
+  // joinfail* 表示对端没能进入房间，同样属于拨号失败，需要提示订阅异常。
+  return name.startsWith(CALL_JOIN_FAIL_EVENT_PREFIX) && hasVoipEnteredActiveStage
+}
+
 /**
  * 是否为通话结束类事件。
  * @param eventName 插件事件名
@@ -1288,6 +1340,11 @@ export function ensureGlobalVoipEventGuard() {
       clearVoipSession()
       // 立刻通知 App 关壳并回首页（不等待结果页）
       notifyAppVoipEnded(`voip_event:${eventName}`, diagnostic)
+      if (isVoipCallRejectedEvent(eventName)) {
+        // 拨号失败：先让用户看清订阅异常提示，确认后再关闭。
+        showVoipFailureTipThenClose(`voip_event:${eventName}`, VOIP_SUBSCRIPTION_ABNORMAL_TIP)
+        return
+      }
       // 再延迟 close（二次 notify + exitMiniProgram）
       scheduleCloseVoipMiniProgram(`voip:${eventName}`, CLOSE_AFTER_REMOTE_END_MS)
     })

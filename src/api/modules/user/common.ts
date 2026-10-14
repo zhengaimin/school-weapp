@@ -6,7 +6,8 @@ import { http } from '@/http'
 const USER_COMMON_API = {
   PROFILE: `${API}/user/profile`,
   WX_LOGIN: `${API}/public/wx/login`,
-  WX_BIND_PHONE: `${API}/public/wx/bind-phone`,
+  WX_BIND_PHONE: `${API}/wx/bind-phone`,
+  WX_PUBLIC_BIND_PHONE: `${API}/public/wx/bind-phone`,
   WX_UPDATE_USERINFO: `${API}/wx/update-userinfo`,
   BALANCE: `${API}/user/balance`,
   BALANCE_DETAILS: `${API}/user/balance/details`,
@@ -45,12 +46,30 @@ export function postWxLoginApi(data: User.Common.ReqWxLoginApi) {
 }
 
 /**
- * @description 获取微信绑定的手机号
- * @param {User.Common.ReqWxPhoneApi} data
+ * @description 绑定微信手机号（需要认证）
+ * @param {User.Common.ReqWxPhoneApi} data 手机号授权凭证和微信登录凭证
+ * @returns {Promise<User.Common.ResWxPhoneApi>}
+ */
+export function postBindWxPhoneApi(data: User.Common.ReqWxPhoneApi) {
+  return http.post<User.Common.ResWxPhoneApi>(USER_COMMON_API.WX_BIND_PHONE, data)
+}
+
+/**
+ * @description 公开绑定微信手机号
+ * @param {User.Common.ReqWxPhoneApi} data 手机号授权凭证和微信登录凭证
+ * @returns {Promise<User.Common.ResWxPhoneApi>}
+ */
+export function postPublicBindWxPhoneApi(data: User.Common.ReqWxPhoneApi) {
+  return http.post<User.Common.ResWxPhoneApi>(USER_COMMON_API.WX_PUBLIC_BIND_PHONE, data)
+}
+
+/**
+ * @description 公开绑定微信手机号（兼容旧方法名）
+ * @param {User.Common.ReqWxPhoneApi} data 手机号授权凭证和微信登录凭证
  * @returns {Promise<User.Common.ResWxPhoneApi>}
  */
 export function postWxPhoneApi(data: User.Common.ReqWxPhoneApi) {
-  return http.post<User.Common.ResWxPhoneApi>(USER_COMMON_API.WX_BIND_PHONE, data)
+  return postPublicBindWxPhoneApi(data)
 }
 
 /**

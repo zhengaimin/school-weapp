@@ -30,7 +30,7 @@
       "layout": "default",
       "style": {
         "navigationStyle": "custom",
-        "navigationBarTitleText": "VOIP 通话",
+        "navigationBarTitleText": " ",
         "disableScroll": true
       }
     },

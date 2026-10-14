@@ -9,10 +9,11 @@
 </route>
 
 <script lang="ts" setup>
+import type { Ref } from 'vue'
 import type { IdentityOption } from './components/IdentityCard.vue'
 import { storeToRefs } from 'pinia'
-import { unref } from 'vue'
-import { getWxCode, postWxPhoneApi } from '@/api/modules/user'
+import { inject, ref, unref } from 'vue'
+import { getWxCode, postPublicBindWxPhoneApi } from '@/api/modules/user'
 import Page from '@/components/common/page/index.vue'
 import { PARENT_HOME_PATH, STUDENT_BIND_PATH } from '@/constant/router'
 import { usePage } from '@/hooks/usePage'
@@ -29,15 +30,28 @@ defineOptions({
 
 const userStore = useUserStore()
 const parentStore = useParentStore()
-const { userInfo } = storeToRefs(userStore)
-const { needBind, students } = storeToRefs(parentStore)
+
+/** 全局首次启动标记，首页初始化依赖它判断是否需要重新拉取资料 */
+const isFirstLaunch = inject<Ref<boolean>>('isFirstLaunch', ref(true))
+
+const { needBind } = storeToRefs(parentStore)
+const { phone, token, userInfo } = storeToRefs(userStore)
 const { pageLoading, pageError, onLoginSuccess, onLoginFail } = usePage()
+
+/** 登录成功后，已绑定家长直接加载资料并进入首页 */
+function handleLoginSuccess() {
+  onLoginSuccess()
+
+  if (!unref(needBind) && unref(token) && unref(userInfo)) {
+    void selectIdentity(identityOptions[0])
+  }
+}
 
 /** 绑定手机号 */
 async function axiosPostWxPhoneApi(phoneCode: string) {
   const { code: loginCode } = await getWxCode()
 
-  const result = await postWxPhoneApi({
+  const result = await postPublicBindWxPhoneApi({
     code: phoneCode,
     loginCode,
   })
@@ -61,32 +75,35 @@ async function selectIdentity(identity: IdentityOption) {
     const { id, code } = identity
     userStore.setRole(id)
 
-    if (code) {
-      await axiosPostWxPhoneApi(code)
-    }
-
     if (unref(needBind)) {
-      uni.navigateTo({
-        url: STUDENT_BIND_PATH,
-      })
-
+      if (!code) {
+        uni.showToast({ title: '请先授权手机号', icon: 'none' })
+        return
+      }
+      await axiosPostWxPhoneApi(code)
+      if (!unref(phone)) {
+        uni.showToast({ title: '手机号授权失败，请重试', icon: 'none' })
+        return
+      }
+      uni.navigateTo({ url: STUDENT_BIND_PATH })
       return
     }
 
-    // 获取用户信息
-    !unref(userInfo) && (await userStore.getUserInfo())
-
-    // 获取学生列表
-    if (!unref(students)?.length) {
-      const result = await parentStore.axiosGetStudentListApi()
-
-      if (result.code !== 0) {
-        uni.navigateTo({
-          url: `${STUDENT_BIND_PATH}`,
-        })
-        return
-      }
+    // 已完成手机号授权和学生绑定，无需再次触发微信手机号授权
+    const profileResult = await userStore.getUserInfo()
+    if (profileResult.code !== 0) {
+      onLoginFail()
+      return
     }
+
+    const result = await parentStore.axiosGetStudentListApi()
+    if (result.code !== 0) {
+      onLoginFail()
+      return
+    }
+
+    // 资料已在此处加载完毕，标记首次初始化完成，避免首页再次重复请求
+    isFirstLaunch.value = false
 
     uni.redirectTo({
       url: PARENT_HOME_PATH,
@@ -102,10 +119,11 @@ async function selectIdentity(identity: IdentityOption) {
 <template>
   <Page
     :show="false"
+    :skip-login="true"
     :show-tabbar="false"
     :loading="pageLoading"
     :error="pageError"
-    @login:success="onLoginSuccess"
+    @login:success="handleLoginSuccess"
     @login:fail="onLoginFail"
   >
     <!-- 身份选择页面 -->

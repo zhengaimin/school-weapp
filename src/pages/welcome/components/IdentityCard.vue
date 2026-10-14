@@ -1,6 +1,8 @@
 <script lang="ts" setup>
+import { storeToRefs } from 'pinia'
 import Icon from '@/components/icon/index.vue'
 
+import { useParentStore } from '@/store/auth/parent'
 import { useUserStore } from '@/store/user'
 
 import { isH5 } from '@/utils/platform'
@@ -37,7 +39,8 @@ defineOptions({
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
-const { phone } = useUserStore()
+const { phone } = storeToRefs(useUserStore())
+const { needBind } = storeToRefs(useParentStore())
 
 // 处理点击事件
 function onGetPhoneNumber(e) {
@@ -56,7 +59,7 @@ function onGetPhoneNumber(e) {
   })
 }
 function handleSubmit() {
-  if (!phone) {
+  if (needBind.value && !phone.value) {
     return
   }
 
@@ -73,7 +76,7 @@ function handleSubmit() {
     cursor="pointer"
     transition="all duration-300"
     class="identity-card"
-    :open-type="phone ? '' : 'getPhoneNumber'"
+    :open-type="needBind ? 'getPhoneNumber' : ''"
     @getphonenumber="onGetPhoneNumber"
     @click.stop="handleSubmit"
   >
